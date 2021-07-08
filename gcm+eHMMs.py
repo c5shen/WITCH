@@ -5,13 +5,17 @@ import logging
 from configs import *
 
 def main():
-    start_time = time.time()
     args = parseArgs()
     buildConfigs(args)
     Configs.log('GCM+eHMMs is running with: {}'.format(' '.join(sys.argv)))
-
     getConfigs()
 
+    # run the codes
+    s1 = time.time()
+    run_pipeline()
+    s2 = time.time()
+
+    Configs.log('GCM+eHMMs finished in {} seconds...'.format(s2 - s1))
 
 def parseArgs():
     parser = argparse.ArgumentParser()

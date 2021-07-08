@@ -128,7 +128,7 @@ def getBackbones(k, index_to_alignment, index_to_model, index_to_dir, ranks,
             # hmmalign
             hmmalign_result_path = '{}/hmmalign/hmmalign.results.{}.out'.format(
                     hmm_dir, index)
-            cmd = 'hmmalign -o {} {} {}'.format(hmmalign_result_path,
+            cmd = 'hmmalign --trim -o {} {} {}'.format(hmmalign_result_path,
                     this_hmm, frag_path)
             if not (os.path.exists(hmmalign_result_path) and os.path.getsize(
                 hmmalign_result_path) > 0):
