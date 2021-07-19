@@ -51,6 +51,7 @@ def getConfigs():
 
     print('\nConfigs.num_hmms:', Configs.num_hmms)
     print('Configs.use_weight:', Configs.use_weight)
+    print('Configs.normalize_weight:', Configs.normalize_weight)
     print('Configs.subset_size:', Configs.subset_size)
     print('Configs.num_threads:', Configs.num_threads)
 
@@ -78,6 +79,8 @@ def buildConfigs(args):
 
     if args.use_weight:
         Configs.use_weight = True
+    if args.normalize_weight:
+        Configs.normalize_weight = True
 
     if args.subset_size > 0:
         if args.subset_size >= 25:

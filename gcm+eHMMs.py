@@ -44,6 +44,9 @@ def parseArgs():
     parser.add_argument('-s', '--subset-size', type=int,
             help='Number of queries in a single GCM run, default: 10',
             required=False, default=10)
+    parser.add_argument('--normalize-weight', action='store_const', const=True,
+            default=False, required=False,
+            help='Normalize weights of HMMs of a query to sum to 1')
     parser.add_argument('-t', '--num-threads', type=int,
             help='Number of threads for multi-threading (currently only supported for MAGUS/GCM)',
             required=False, default=1)
