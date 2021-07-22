@@ -62,16 +62,20 @@ def readRuntime(file_path):
 # Function to read in a fastsp file and parse the results
 # return: a map of SPFN, SPFP, Expansion score
 def readFastSP(file_path):
-    ret = {'SPFN': np.nan, 'SPFP': np.nan, 'Expansion': np.nan}
+    ret = {'SPFN': np.nan, 'SPFP': np.nan, 'error': np.nan,
+            'Expansion': np.nan}
     if os.path.isfile(file_path):
         f = open(file_path, 'r')
         lines = f.read().split('\n')[:-1]
     else:
         return ret
     if len(lines) > 0:
+        ret['SP-Score'] = float(lines[0].split(' ')[1])
+        ret['Modeler-Score'] = float(lines[1].split(' ')[1])
         ret['SPFN'] = float(lines[2].split(' ')[1])
         ret['SPFP'] = float(lines[3].split(' ')[1])
         ret['Expansion'] = float(lines[4].split(' ')[1])
+        ret['TC'] = float(lines[5].split(' ')[1])
         ret['error'] = (ret['SPFN'] + ret['SPFP']) / 2
     return ret
 

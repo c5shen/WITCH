@@ -1,6 +1,7 @@
 import os, sys, re, math
 import numpy as np
 import logging
+import time
 from Bio import AlignIO
 sys.path.append("/home/chengze5/tallis")
 sys.path.append("/home/chengze5/tallis/softwares/sepp/sepp")
@@ -12,6 +13,12 @@ NUM_THREAD = 8
 SUBSET_SIZE = 1 
 TOP_FIT_THRESHOLD = 0.75
 WEIGHT_THRESHOLD = 0.95
+INFLATION_FACTOR = 4.0 # default MAGUS
+
+# GCM additional options (default values)
+graphtracemethod = 'minclusters'
+graphclustermethod = 'mcl'
+graphtraceoptimize = 'false'
 keeptemp = False 
 
 # function to calculate the HMM weighting, given the bitscores and sizes
@@ -103,7 +110,9 @@ def getBackbones(k, index_to_alignment, index_to_model, index_to_dir, ranks,
     # For each HMM, run HMMAlign on its fragment chunk to get a backbone
     # alignment
     weights_file = open(weights_path, 'w')
-
+    
+    # initialize the backbone index at backbone_start_index
+    bb_index = 0
     for index, names in ret.items():
         logging.warning("Generating fragment chunks/alignment for HMM {}".format(
             index))
@@ -120,6 +129,7 @@ def getBackbones(k, index_to_alignment, index_to_model, index_to_dir, ranks,
         # [NEW] save each single sequence to a fasta
         this_hmm = index_to_model[index]
         for taxon in names:
+            this_taxon_index = 0
             frag_path = '{}/fragments/fragment_{}.fasta'.format(hmm_dir,
                     index)
             frag = unaligned_frag.sub_alignment([taxon])
@@ -128,7 +138,7 @@ def getBackbones(k, index_to_alignment, index_to_model, index_to_dir, ranks,
             # hmmalign
             hmmalign_result_path = '{}/hmmalign/hmmalign.results.{}.out'.format(
                     hmm_dir, index)
-            cmd = 'hmmalign --trim -o {} {} {}'.format(hmmalign_result_path,
+            cmd = 'hmmalign -o {} {} {}'.format(hmmalign_result_path,
                     this_hmm, frag_path)
             if not (os.path.exists(hmmalign_result_path) and os.path.getsize(
                 hmmalign_result_path) > 0):
@@ -142,8 +152,18 @@ def getBackbones(k, index_to_alignment, index_to_model, index_to_dir, ranks,
             for key in ap_aln.keys():
                 ap_aln[key] = ap_aln[key].upper()
             # save extended alignment
-            this_bb_path = outdir + '/bb{}.fasta'.format(index)
+            this_bb_path = outdir + '/{}_{}.fasta'.format(taxon, index)
             ap_aln.write(this_bb_path, 'FASTA')
+            #this_taxon_index += 1
+            #bb_index += 1
+
+            # instead of doing extended alignment to merge all fragments
+            # HMMALIGN results of an HMM, write each one as an individual
+            # backbone alignment to the target folder
+            #this_bb_path = outdir + '/bb{}.fasta'.format(bb_index)
+            #cmd = 'cp {} {}'.format(hmmalign_result_path, this_bb_path)
+            #os.system(cmd)
+            #bb_index += 1
 
             # add the weights of the bb to weights.txt
             real_this_bb_path = os.popen('realpath -s {}'.format(this_bb_path))\
@@ -176,7 +196,8 @@ def getSubQueries(unaligned, outdir, num, num_subset):
 def alignSubQueries(align_subsets, index_to_alignment, index_to_model,
         index_to_dir, ranks,
         backbone_path, outdir, unaligned_dir, k, index, num_subset,
-        strategy, weights, weights_map):
+        strategy, weights, weights_map, time_file):
+    s11 = time.time()
     # add constraints
     constraints_dir = outdir + '/constraints/{}'.format(index)
     if not os.path.isdir(constraints_dir):
@@ -196,7 +217,11 @@ def alignSubQueries(align_subsets, index_to_alignment, index_to_model,
         single_frag.write('{}/c{}.fasta'.format(constraints_dir, c_index),
                 'FASTA')
         c_index += 1
-    
+    time_obtain_constraints = time.time() - s11
+    time_file.write('(alignSubQueries, i={}) Time to obtain constraints (s): {}\n'.format(
+        index, time_obtain_constraints))
+
+    s12 = time.time()
     # backbone alignments for GCM
     bb_dir = outdir + '/backbone_alignments/{}'.format(index)
     if not os.path.isdir(bb_dir):
@@ -208,25 +233,37 @@ def alignSubQueries(align_subsets, index_to_alignment, index_to_model,
 
     # get backbones with the information we have
     weights_path = hmmsearch_dir + '/weights.txt'
-    getBackbones(k, index_to_alignment, index_to_model, index_to_dir, ranks,
-            unaligned_path, unaligned, hmmsearch_dir, bb_dir,
+    getBackbones(k, index_to_alignment, index_to_model,
+            index_to_dir, ranks, unaligned_path, unaligned, hmmsearch_dir, bb_dir,
             weights, weights_map, weights_path, strategy=strategy)
-    
+    time_obtain_backbones = time.time() - s12
+    time_file.write('(alignSubQueries, i={}) Time to obtain backbones (s): {}\n'.format(
+        index, time_obtain_backbones))
+
+    s13 = time.time()
     # run GCM (modified MAGUS which takes in weights) on the subset
     #magusbin = '/home/chengze5/tallis/softwares/MAGUS/magus.py'
     magusbin = '/home/chengze5/tallis/softwares/modified_MAGUS/magus.py'
     est_path = outdir + '/magus_result_{}.txt'.format(index)
-    cmd = 'python3 {} -np {} -d {}/magus_outputs/{} -s {} -b {} -o {} -w {}'.format(
+    cmd = 'python3 {} -np {} -d {}/magus_outputs/{} \
+            -s {} -b {} -o {} \
+            -w {} -f {} --graphclustermethod {} \
+            --graphtracemethod {} \
+            --graphtraceoptimize {}'.format(
             magusbin, NUM_THREAD, outdir, index, constraints_dir, bb_dir,
-            est_path, weights_path)
+            est_path, weights_path, INFLATION_FACTOR, graphclustermethod,
+            graphtracemethod, graphtraceoptimize)
     os.system(cmd)
 
     # remove temp folders
     if not keeptemp:
         os.system('rm -r {}'.format(hmmsearch_dir))
-        os.system('rm -r {}/magus_outputs/{}'.format(outdir, index))
         os.system('rm -r {}/backbone_alignments/{}'.format(outdir, index))
         os.system('rm -r {}/constraints/{}'.format(outdir, index))
+        #os.system('rm -r {}/magus_outputs/{}'.format(outdir, index))
+    time_gcm = time.time() - s13
+    time_file.write('(alignSubQueries, i={}) Time to run GCM and clean temporary files (s): {}\n'.format(
+        index, time_gcm))
 
 def main():
     if len(sys.argv) < 6:
@@ -255,6 +292,21 @@ def main():
     if len(sys.argv) > 6:
         global NUM_THREAD
         NUM_THREAD = int(sys.argv[6])
+    if len(sys.argv) > 7:
+        global SUBSET_SIZE
+        SUBSET_SIZE = int(sys.argv[7])
+    if len(sys.argv) > 8:
+        global INFLATION_FACTOR
+        INFLATION_FACTOR = float(sys.argv[8])
+    if len(sys.argv) > 9:
+        global graphtracemethod
+        graphtracemethod = sys.argv[9]
+    if len(sys.argv) > 10:
+        global graphclustermethod
+        graphclustermethod = sys.argv[10]
+    if len(sys.argv) > 11:
+        global graphtraceoptimize
+        graphtraceoptimize = sys.argv[11]
 
     if not os.path.isdir(path):
         print("Path {} does not exist.".format(sys.argv[1]))
@@ -263,8 +315,11 @@ def main():
         print("Reference aln does not exist.")
         exit()
 
+    # runtime breakdown file
+    rt = open(outdir + '/runtime_breakdown.txt', 'w')
+
+    s1 = time.time()
     # get ref and unaligned
-    #ref = Alignment(); ref.read_file_object(ref_path)
     unaligned_path = '/'.join(ref_path.split('/')[:-1]) + '/unaligned_frag.txt'
     unaligned = Alignment(); unaligned.read_file_object(unaligned_path)
 
@@ -299,9 +354,13 @@ def main():
             f.write(taxon + ':' + ';'.join(
                 [str(z) for z in sorted_scores]) + '\n')
     logging.warning("Finished writing ranked scores to local")
+    time_load_files = time.time() - s1
+    rt.write('Time to load files and split queries (s): {}\n'.format(
+        time_load_files))
 
     # 1.3) obtain the weights of each query
     # - get sizes of each HMM
+    s2 = time.time()
     cmd = 'find {} -name hmmbuild.input.* -type f'.format(path)
     hmmbuild_inputs = os.popen(cmd).read().split('\n')[:-1]
     all_sizes = {}
@@ -327,6 +386,9 @@ def main():
         for taxon, weight in weights.items():
             w = [str(x) for x in weight]
             f.write(taxon + ':' + ';'.join(w) + '\n')
+    time_obtain_weights = time.time() - s2
+    rt.write('Time to obtain weights given bitscores (s): {}\n'.format(
+        time_obtain_weights))
 
     # 2) now deal with each subset alignment individually, and merge them
     # back at the end
@@ -334,29 +396,41 @@ def main():
         alignSubQueries(align_subsets, index_to_alignment,
                 index_to_model, index_to_dir, ranks,
                 backbone_path, outdir, data_dir, k_hmms, i, num_subset,
-                strategy, weights, weights_map)
+                strategy, weights, weights_map, rt)
     
     # 3) merge all magus results together to form a merged fasta
+    s3 = time.time()
     logging.info("merging %d MAGUS results...", num_subset)
     merged_path = outdir + '/merged.fasta'
-    cmd = 'python3 merger.py {} {}'.format(outdir, merged_path)
+    merger_bin = '/home/chengze5/tallis/playground/eHMMs_group/merger.py'
+    cmd = 'python3 {} {} {}'.format(merger_bin, outdir, merged_path)
     os.system(cmd)
+    time_merge_results = time.time() - s3
+    rt.write('Time to merge all outputs (s): {}\n'.format(
+        time_merge_results))
 
+    s4 = time.time()
     # 3.2) remove intermediate results
-    if not keeptemp:
-        os.system('rm {}/magus_result_*'.format(outdir))
+    #if not keeptemp:
+    #    os.system('rm {}/magus_result_*'.format(outdir))
     if not keeptemp and os.path.isdir('{}/backbone_alignments'.format(outdir)):
         os.system('rm -r {}/backbone_alignments'.format(outdir))
     if not keeptemp and os.path.isdir('{}/constraints'.format(outdir)):
         os.system('rm -r {}/constraints'.format(outdir))
-    if not keeptemp and os.path.isdir('{}/magus_outputs'.format(outdir)):
-        os.system('rm -r {}/magus_outputs'.format(outdir))
+    if not keeptemp and os.path.isdir('{}/search_results'.format(outdir)):
+        os.system('rm -r {}/search_results'.format(outdir))
+    #if not keeptemp and os.path.isdir('{}/magus_outputs'.format(outdir)):
+    #    os.system('rm -r {}/magus_outputs'.format(outdir))
 
     # 4) run FastSP to get the alignment metrics
     fastspbin = '/home/chengze5/tallis/softwares/FastSP/FastSP.jar'
     cmd = 'java -Xmx4096m -jar {} -ml -mlr -r {} -e {} -o {}/fastsp.out'.format(
             fastspbin, ref_path, merged_path, outdir)
     os.system(cmd)
+    time_clean_up_and_eval = time.time() - s4
+    rt.write('Time to clean up and run FastSP (s): {}\n'.format(
+        time_clean_up_and_eval))
+    rt.close()
 
 if __name__ == "__main__":
     main()
