@@ -15,6 +15,9 @@ TOP_FIT_THRESHOLD = 0.75
 WEIGHT_THRESHOLD = 0.95
 INFLATION_FACTOR = 4.0 # default MAGUS
 
+# weighting additional options
+weight_adjust = 'none'
+
 # GCM additional options (default values)
 graphtracemethod = 'minclusters'
 graphclustermethod = 'mcl'
@@ -97,9 +100,19 @@ def getBackbones(k, index_to_alignment, index_to_model, index_to_dir, ranks,
 
         # use different strategy to consider which HMMs to use for 
         # a query
+        # 1) a strategy to select the top k HMMs, k is user-defined
         if strategy == 'top_k':
-            # a strategy to select the top k HMMs, k is user-defined
-            for item in sorted_weights[:k]:
+            top_k_weights = sorted_weights[:k]
+            if weight_adjust == 'normalize':
+                cur_total_w = sum([w[1] for w in top_k_weights])
+                top_k_weights = [(w[0], w[1] * (1. / cur_total_w))
+                        for w in top_k_weights]
+            elif weight_adjust == 'adjust_to_1':
+                max_w = top_k_weights[0][1]
+                top_k_weights = [(w[0], w[1] / max_w) for w in top_k_weights]
+
+            logging.warning('weights for {}: {}'.format(taxon, top_k_weights))
+            for item in top_k_weights:
                 # append taxon to corresponding HMM i (defined by the index)
                 ret[item[0]].append(taxon)
         else:
@@ -307,6 +320,10 @@ def main():
     if len(sys.argv) > 11:
         global graphtraceoptimize
         graphtraceoptimize = sys.argv[11]
+    if len(sys.argv) > 12:
+        global weight_adjust
+        weight_adjust = sys.argv[12]
+
 
     if not os.path.isdir(path):
         print("Path {} does not exist.".format(sys.argv[1]))

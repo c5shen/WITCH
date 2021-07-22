@@ -21,36 +21,63 @@ def parseArgs():
     parser = argparse.ArgumentParser()
 
     # requirements
-    parser.add_argument('-p', '--hmmdir', type=str,
+    required_group = parser.add_argument_group(
+            "Required Parameters".upper(),
+            ' '.join(["These are required fields, assuming that an UPP",
+                "output and its temporary files are available."]))
+    parser.groups = dict()
+    parser.groups['required_group'] = required_group
+    required_group.add_argument('-p', '--hmmdir', type=str,
             help='Path to the HMMs directory generated from UPP', required=True)
-    parser.add_argument('-b', '--backbone-path', type=str,
+    required_group.add_argument('-b', '--backbone-path', type=str,
             help='Path to the backbone alignment from/for UPP', required=True)
-    parser.add_argument('-o', '--outdir', type=str,
+    required_group.add_argument('-o', '--outdir', type=str,
             help='Output directory, default: gcm+eHMMs_output/', required=False,
             default='gcm+eHMMs_output')
 
-    # temporary files
-    parser.add_argument('--keeptemp', action='store_const', const=True,
+    # GCM+eHMMs options
+    gcm_eHMMs_group = parser.add_argument_group(
+            "GCM+eHMMs options".upper(),
+            ' '.join(["These options are used to customize the GCM+eHMMs",
+                "pipeline."]))
+    parser.groups['gcm_eHMMs_group'] = gcm_eHMMs_group
+    gcm_eHMMs_group.add_argument('--keeptemp', action='store_const', const=True,
             help='Whether to keep temporary files for the run.',
             default=False)
-
-    # options
-    parser.add_argument('-k', '--num-hmms', type=int,
+    gcm_eHMMs_group.add_argument('-k', '--num-hmms', type=int,
             help='The number of top HMMs used for aligning a query',
             required=False, default=4)
-    parser.add_argument('-w', '--use-weight', action='store_const', const=True,
-            help='Whether to use adjusted bitscore, default: 0', required=False,
+    gcm_eHMMs_group.add_argument('-w', '--use-weight',
+            action='store_const', const=True, required=False,
+            help='Whether to use adjusted bitscore (weights), default: 0',
             default=False)
-    parser.add_argument('-s', '--subset-size', type=int,
+    gcm_eHMMs_group.add_argument('-s', '--subset-size', type=int,
             help='Number of queries in a single GCM run, default: 10',
             required=False, default=10)
-    parser.add_argument('--normalize-weight', action='store_const', const=True,
-            default=False, required=False,
-            help='Normalize weights of HMMs of a query to sum to 1')
-    parser.add_argument('-t', '--num-threads', type=int,
+    gcm_eHMMs_group.add_argument('--weight-adjust', type=str, required=False,
+            default='none', choices=['none', 'normalize', 'adjust_to_1'],
+            help='Optional adjustment of weights, default: none')
+    gcm_eHMMs_group.add_argument('-t', '--num-threads', type=int,
             help='Number of threads for multi-threading (currently only supported for MAGUS/GCM)',
             required=False, default=1)
 
+    # GCM option
+    gcm_group = parser.add_argument_group(
+            'MAGUS/GCM options'.upper(),
+            ' '.join(['These options are used to customize MAGUS/GCM,',
+                'for example the graph trace method.']))
+    parser.groups['gcm_group'] = gcm_group
+    gcm_group.add_argument('--graphclustermethod', type=str,
+            choices=['mcl', 'mlrmcl', 'rg', 'none'],
+            default='mcl', required=False,
+            help="Method for initial clustering of the alignment graph, default: mcl")
+    gcm_group.add_argument('--graphtracemethod', type=str,
+            choices=['minclusters', 'mwtgreedy', 'mwtsearch', 'fm', 'rg', 'rgfast'],
+            default='minclusteres', required=False,
+            help="Method for finding a trace from the alignment graph, default: minclusters")
+    gcm_group.add_argument('--graphtraceoptimize', type=str,
+            choices=['true', 'false'], required=False, default='false',
+            help="Run an optimization step on the graph trace, default: false")
     return parser.parse_args()
 
 
