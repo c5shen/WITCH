@@ -1,16 +1,20 @@
 import os
 import time
 
+'''
+Configurations defined by users
+'''
 class Configs:
     hmmdir = None
     backbone_path = None
+    query_path = None
     outdir = None
     keeptemp = False
     
     num_hmms = 4
     use_weight = False
-    subset_size = 10
-    num_threads = 1
+    subset_size = 1
+    num_threads = -1
 
     # hmmalign/hmmsearch/magus paths
     hmmalign_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmalign')
@@ -19,6 +23,15 @@ class Configs:
 
     log_path = None
     error_path = None
+    debug_path = None
+    runtime_path = None
+
+    # MAGUS/GCM configurations
+    keepgcmtemp = False
+    inflation_factor = 4
+    graphclustermethod = 'mcl'
+    graphtracemethod = 'minclusters'
+    graphtraceoptimize = 'false'
 
     @staticmethod
     def warning(msg, path=None):
@@ -31,9 +44,20 @@ class Configs:
         Configs.write(msg, 'LOG', path)
 
     @staticmethod
+    def debug(msg, path=None):
+        path = Configs.debug_path if path is None else path
+        Configs.write(msg, 'DEBUG', path)
+
+    @staticmethod
     def error(msg, path=None):
         path = Configs.error_path if path is None else path
         Configs.write(msg, 'ERROR', path)
+    
+    @staticmethod
+    def runtime(msg, path=None):
+        path = Configs.runtime_path if path is None else path
+        with open(path, 'a') as f:
+            f.write('{}\n'.format(msg))
 
     @staticmethod
     def write(msg, level, path):
@@ -60,19 +84,30 @@ def getConfigs():
     print('Configs.magus_path:', Configs.magus_path)
 
     print('\nConfigs.log_path:', Configs.log_path)
+    print('Configs.debug_path:', Configs.debug_path)
     print('Configs.error_path:', Configs.error_path)
+    print('Configs.runtime_path:', Configs.runtime_path)
+    
+    print('\nConfigs.keepgcmtemp:', Configs.keepgcmtemp)
+    print('Configs.inflation_factor:', Configs.inflation_factor)
+    print('Configs.graphclustermethod:', Configs.graphclustermethod)
+    print('Configs.graphtracemethod:', Configs.graphtracemethod)
+    print('Configs.graphtraceoptimize:', Configs.graphtraceoptimize)
 
 def buildConfigs(args):
     Configs.hmmdir = os.path.abspath(args.hmmdir)
     Configs.backbone_path = os.path.abspath(args.backbone_path)
+    Configs.query_path = os.path.abspath(args.query_path)
     
     if args.outdir is not None:
         Configs.outdir = os.path.abspath(args.outdir)
     if not os.path.exists(Configs.outdir):
         os.makedirs(Configs.outdir)
 
-    Configs.log_path = os.path.join(Configs.outdir, 'log.info')
-    Configs.error_path = os.path.join(Configs.outdir, 'error.info')
+    Configs.log_path = os.path.join(Configs.outdir, 'log.txt')
+    Configs.error_path = os.path.join(Configs.outdir, 'error.txt')
+    Configs.debug_path = os.path.join(Configs.outdir, 'debug.txt')
+    Configs.runtime_path = os.path.join(Configs.outdir, 'runtime_breakdown.txt')
 
     if args.num_hmms > 0:
         Configs.num_hmms = args.num_hmms
@@ -92,3 +127,10 @@ def buildConfigs(args):
         Configs.num_threads = args.num_threads
     else:
         Configs.num_threads = os.cpu_count()
+
+    # MAGUS/GCM options
+    Configs.keepgcmtemp = args.keepgcmtemp
+    Configs.inflation_factor = args.inflation_factor
+    Configs.graphclustermethod = args.graphclustermethod
+    Configs.graphtracemethod = args.graphtracemethod
+    Configs.graphtraceoptimize = args.graphtraceoptimize

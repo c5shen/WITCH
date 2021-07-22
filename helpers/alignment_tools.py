@@ -8,7 +8,7 @@ from functools import reduce
 from dendropy.datamodel.taxonmodel import Taxon
 import time
 import io
-from collections import defaultdict
+from collections import defaultdict, Mapping
 
 try:
     filetypes = (io.IOBase, file)
@@ -604,6 +604,28 @@ class CompactAlignment(dict,object):
         else:
             write_func = write_compact_to_fasta
         write_func(self, file_obj)
+
+def compact(alg):
+    comp = CompactAlignment()
+    comp.update_from_alignment(alg)
+    return comp
+
+################# Adapted from SEPP/alignment.py ################
+class ReadOnlyAlignment(Mapping, object):
+    def get_num_taxa(self):
+        return len(self.get_sequence_names())
+    
+    def get_length(self):
+        if self.is_empty():
+            raise ValueError("The alignment is empty.\n")
+        else:
+            return len(next(iter(self.values())))
+
+    def get_sequence_names(self):
+        return list(self.keys())
+
+    def 
+
 
 
 ################## Adapted from SEPP/jobs.py ####################

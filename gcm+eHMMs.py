@@ -3,6 +3,7 @@ import argparse
 import logging
 
 from configs import *
+from gcmm.gcmm import mainAlignmentProcess
 
 def main():
     args = parseArgs()
@@ -12,7 +13,7 @@ def main():
 
     # run the codes
     s1 = time.time()
-    run_pipeline()
+    mainAlignmentProcess()
     s2 = time.time()
 
     Configs.log('GCM+eHMMs finished in {} seconds...'.format(s2 - s1))
@@ -31,6 +32,8 @@ def parseArgs():
             help='Path to the HMMs directory generated from UPP', required=True)
     required_group.add_argument('-b', '--backbone-path', type=str,
             help='Path to the backbone alignment from/for UPP', required=True)
+    required_group.add_argument('-q', '--query-path', type=str,
+            help='Path to the queries file that we want to align', required=True)
     required_group.add_argument('-o', '--outdir', type=str,
             help='Output directory, default: gcm+eHMMs_output/', required=False,
             default='gcm+eHMMs_output')
@@ -52,14 +55,14 @@ def parseArgs():
             help='Whether to use adjusted bitscore (weights), default: 0',
             default=False)
     gcm_eHMMs_group.add_argument('-s', '--subset-size', type=int,
-            help='Number of queries in a single GCM run, default: 10',
-            required=False, default=10)
+            help='Number of queries in a single GCM run, default: 1',
+            required=False, default=1)
     gcm_eHMMs_group.add_argument('--weight-adjust', type=str, required=False,
-            default='none', choices=['none', 'normalize', 'adjust_to_1'],
+            default='none', choices=['none', 'normalize', 'maxto1'],
             help='Optional adjustment of weights, default: none')
     gcm_eHMMs_group.add_argument('-t', '--num-threads', type=int,
-            help='Number of threads for multi-threading (currently only supported for MAGUS/GCM)',
-            required=False, default=1)
+            help='Number of threads for multi-threading, default: -1 (all)',
+            required=False, default=-1)
 
     # GCM option
     gcm_group = parser.add_argument_group(
@@ -67,6 +70,12 @@ def parseArgs():
             ' '.join(['These options are used to customize MAGUS/GCM,',
                 'for example the graph trace method.']))
     parser.groups['gcm_group'] = gcm_group
+    gcm_group.add_argument('--keepgcmtemp', action='store_const',
+            const=True, default=False, required=False,
+            help='Whether to keep temporary files from MAGUS/GCM, default: False')
+    gcm_group.add_argument('-f', '--inflation-factor', type=float,
+            default=4, required=False,
+            help="Inflation factor for MCL, default: 4") 
     gcm_group.add_argument('--graphclustermethod', type=str,
             choices=['mcl', 'mlrmcl', 'rg', 'none'],
             default='mcl', required=False,
