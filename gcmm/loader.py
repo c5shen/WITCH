@@ -1,5 +1,8 @@
 import os
+import time
+import math
 from configs import Configs
+from collections import defaultdict
 from helpers.alignment_tools import Alignment, read_fasta
 
 '''
@@ -13,7 +16,7 @@ class HMMSubset(object):
 
         # get hmm build results from target directory
         cmd = "find {} -name hmmbuild.input* -type f".format(path)
-        Configs.debug("Command used: {}".format(cmd))
+        #Configs.debug("Command used: {}".format(cmd))
         self.alignment_path = os.path.abspath(
                 os.popen(cmd).read().split('\n')[0])
         self.alignment = Alignment()
@@ -21,7 +24,7 @@ class HMMSubset(object):
 
         # also get the hmm model path
         cmd = "find {} -name hmmbuild.model.* -type f".format(path)
-        configs.debug("command used: {}".format(cmd))
+        #Configs.debug("Command used: {}".format(cmd))
         self.hmm_model_path = os.popen(cmd).read().split('\n')[0]
 
 '''
@@ -50,9 +53,9 @@ Load in UPP decomposition output subsets
 '''
 def getAlignmentSubsets(path):
     cmd = "find {} -name A_0_* -type d".format(path)
-    Configs.debug("Command used: %s".format(cmd)
+    #Configs.debug("Command used: {}".format(cmd))
     align_dirs = os.popen(cmd).read().split('\n')[:-1]
-    Configs.log("Number of alignment subsets: %d", len(align_dirs))
+    Configs.log("Number of alignment subsets: {}".format(len(align_dirs)))
 
     # create an AlignmentSubset object for each align_dir
     index_to_hmm = {}
@@ -69,12 +72,12 @@ def readAndRankBitscore(index_to_hmm):
     total_num_models, counter = len(index_to_hmm), 0
     for index, subset in index_to_hmm.items():
         counter += 1
-        Configs.log("reading HMMSearch result {}/{}".format(counter,
+        Configs.log("Reading HMMSearch result {}/{}".format(counter,
             total_num_models))
 
         cmd = 'find {} -name hmmsearch.results.* -type f'.format(
             subset.alignment_dir)
-        Configs.debug("Command used: %s".format(cmd))
+        #Configs.debug("Command used: {}".format(cmd))
         hmmsearch_paths = os.popen(cmd).read().split('\n')[:-1]
         for each_path in hmmsearch_paths:
             with open(each_path, 'r') as f:
@@ -83,24 +86,26 @@ def readAndRankBitscore(index_to_hmm):
                 for taxon, scores in temp_map.items():
                     ranks[taxon].append((index, scores[1]))
     # write to local
+    ranked = defaultdict(list)
     with open(Configs.outdir + '/ranked_scores.txt', 'w') as f:
         for taxon, scores in ranks.items():
             sorted_scores = sorted(scores, key = lambda x: x[1], reverse=True)
+            ranked[taxon] = sorted_scores
             f.write(taxon + ':' + ';'.join(
                 [str(z) for z in sorted_scores]) + '\n')
     Configs.warning("Finished writing ranked scores to local!")
-    return ranks
+    return ranked
 
 '''
 Split query sequences into batches of a defined size
 '''
-def loadSubQueries():
+def loadSubQueries(unaligned):
     s1 = time.time()
-    unaligned = Alignment()
-    unaligned.read_file_object(Configs.query_path)
+    #unaligned = Alignment()
+    #unaligned.read_file_object(Configs.query_path)
+    num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
 
     # 1) get all sub-queries, write to [outdir]/data
-    num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
     data_dir = Configs.outdir + '/data'
     writeSubQueries(unaligned, data_dir, len(unaligned), num_subset)
  

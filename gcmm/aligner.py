@@ -1,12 +1,14 @@
 import os
 import time
+from collections import defaultdict
 from configs import Configs
 from gcmm.weighting import Weights
+from helpers.alignment_tools import Alignment, ExtendedAlignment
 
 '''
 Helper function to generate backbone alignments for the constraint sets
 '''
-def getBackbones(index_to_hmm, workdir):
+def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
     # return is a map from HMM index to a list of fragments that have high
     # bit scores at the HMM.
     ret = defaultdict(list)
@@ -17,20 +19,20 @@ def getBackbones(index_to_hmm, workdir):
 
     # for each taxon and its scores on HMMs, sort it in decreasing order
     for taxon, sorted_weights in weights.items():
-        if taxon not in unaligned_frag:
+        if taxon not in unaligned:
             continue
 
-        top_k_hmms = sorted_weights[:k]
+        top_k_hmms = sorted_weights[:Configs.num_hmms]
         if Configs.use_weight:
-            if weight_adjust == 'normalize':
+            if Configs.weight_adjust == 'normalize':
                 cur_total_w = sum([w[1] for w in top_k_hmms])
                 top_k_hmms = [(w[0], w[1] * (1. / cur_total_w))
                         for w in top_k_hmms]
-            elif weight_adjust == 'maxto1':
+            elif Configs.weight_adjust == 'maxto1':
                 max_w = top_k_hmms[0][1]
                 top_k_hmms = [(w[0], w[1] / max_w) for w in top_k_hmms]
         Configs.log('weights for {}: {}'.format(taxon, top_k_hmms))
-        for item in top_k_weights:
+        for item in top_k_hmms:
             # append taxon to corresponding HMM i (defined by the index)
             ret[item[0]].append(taxon)
 
@@ -43,31 +45,29 @@ def getBackbones(index_to_hmm, workdir):
     
     # initialize the backbone index at backbone_start_index
     bb_index = 0
-    for index, names in ret.items():
-        Configs.log("Generating fragment chunks/alignment for HMM {}".format(
-            index))
-        hmm_dir = workdir + '/A_0_{}'.format(index)
+    for i, names in ret.items():
+        Configs.log("Generating fragment chunks/alignment for HMM {}".format(i))
+        #hmm_dir = workdir + '/A_0_{}'.format(i)
+        hmm_dir = workdir
         if not os.path.isdir(hmm_dir):
             os.system('mkdir -p {}'.format(hmm_dir))
         if os.path.isdir(hmm_dir + '/fragments'):
             os.system('rm -r {}/fragments'.format(hmm_dir))
         os.system('mkdir -p {}/fragments'.format(hmm_dir))
-        if os.path.isdir(hmm_dir + '/hmmalign'):
-            os.system('rm -r {}/hmmalign'.format(hmm_dir))
-        os.system('mkdir -p {}/hmmalign'.format(hmm_dir))
+        #if os.path.isdir(hmm_dir + '/hmmalign'):
+        #    os.system('rm -r {}/hmmalign'.format(hmm_dir))
+        #os.system('mkdir -p {}/hmmalign'.format(hmm_dir))
 
         # [NEW] save each single sequence to a fasta
-        this_hmm = index_to_hmm[index].hmm_model_path
+        this_hmm = index_to_hmm[i].hmm_model_path
         for taxon in names:
-            this_taxon_index = 0
-            frag_path = '{}/fragments/fragment_{}.fasta'.format(hmm_dir,
-                    index)
+            frag_path = '{}/fragments/{}.fasta'.format(hmm_dir, taxon)
             frag = unaligned.sub_alignment([taxon])
             frag.write(frag_path, 'FASTA')
         
             # hmmalign
-            hmmalign_result_path = '{}/hmmalign/hmmalign.results.{}.out'.format(
-                    hmm_dir, index)
+            hmmalign_result_path = '{}/hmmalign.results.{}.{}.out'.format(
+                    hmm_dir, taxon, i)
             cmd = '{} -o {} {} {}'.format(Configs.hmmalign_path,
                     hmmalign_result_path, this_hmm, frag_path)
             if not (os.path.exists(hmmalign_result_path) and os.path.getsize(
@@ -76,13 +76,13 @@ def getBackbones(index_to_hmm, workdir):
         
             # Extended alignment
             ap_aln = ExtendedAlignment(frag.get_sequence_names())
-            ap_aln.build_extended_alignment(index_to_alignment[index],
+            ap_aln.build_extended_alignment(index_to_hmm[i].alignment,
                     [hmmalign_result_path], True)
             #ap_aln.relabel_original_columns(remaining_cols)
             for key in ap_aln.keys():
                 ap_aln[key] = ap_aln[key].upper()
-            # save extended alignment
-            this_bb_path = outdir + '/{}_{}.fasta'.format(taxon, index)
+            # save extended alignment to backbone directory
+            this_bb_path = backbone_dir + '/{}_{}.fasta'.format(taxon, i)
             ap_aln.write(this_bb_path, 'FASTA')
 
             # add the weights of the bb to weights.txt
@@ -90,7 +90,7 @@ def getBackbones(index_to_hmm, workdir):
                 real_this_bb_path = os.popen('realpath -s {}'.format(
                     this_bb_path)).read().split('\n')[0]
                 weights_file.write('{},{}\n'.format(
-                        real_this_bb_path, Weights.weights_map[taxon][index]))
+                        real_this_bb_path, Weights.weights_map[taxon][i]))
     weights_file.close()
 
 '''
@@ -126,7 +126,7 @@ def alignSubQueries(index, index_to_hmm):
     time_obtain_constraints = time.time() - s11
     Configs.runtime(' '.join(['(alignSubQueries,',
             'i={}) Time to obtain'.format(index),
-            'constraints (s):', time_obtain_constraints]))
+            'constraints (s):', str(time_obtain_constraints)]))
 
     s12 = time.time()
     # backbone alignments for GCM
@@ -139,32 +139,32 @@ def alignSubQueries(index, index_to_hmm):
         os.system('mkdir -p {}'.format(hmmsearch_dir))
 
     # get backbones with the information we have
-    getBackbones(index_to_hmm, hmmsearch_dir, unaligned)
+    getBackbones(index_to_hmm, unaligned, hmmsearch_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
     Configs.runtime(' '.join(['(alignSubQueries,',
             'i={}) Time to obtain backbones (s):'.format(index),
-            time_obtain_backbones]))
+            str(time_obtain_backbones)]))
 
     s13 = time.time()
     # run GCM (modified MAGUS which takes in weights) on the subset
     est_path = Configs.outdir + '/magus_result_{}.txt'.format(index)
     gcm_outdir = Configs.outdir + '/magus_outputs/{}'.format(index)
     if Configs.use_weight:
+        weights_path = hmmsearch_dir + '/weights.txt'
         cmd = 'python3 {} -np {} \
                 -d {} -s {} -b {} -o {} \
-                -w {} -f {} \
-                --graphclustermethod {} --graphtracemethod {} \
-                --graphtraceoptimize {}'.format(
+                -w {} -f {} --graphclustermethod {} \
+                --graphtracemethod {} --graphtraceoptimize {}'.format(
                 Configs.magus_path, Configs.num_threads,
                 gcm_outdir, constraints_dir, bb_dir, est_path,
-                weights_path, Configs.inflation_factor,
-                Configs.graphclustermethod, Configs.graphtracemethod,
-                Configs.graphtraceoptimize)
+                weights_path, Configs.inflation_factor, 
+                Configs.graphclustermethod,
+                Configs.graphtracemethod, Configs.graphtraceoptimize)
     else:
         cmd = 'python3 {} -np {} \
                 -d {} -s {} -b {} -o {} -f {} \
-                --graphclustermethod {} --graphtracemethod {} \
-                --graphtraceoptimize {}'.format(
+                --graphclustermethod {} \
+                --graphtracemethod {} --graphtraceoptimize {}'.format(
                 Configs.magus_path, Configs.num_threads,
                 gcm_outdir, constraints_dir, bb_dir, est_path,
                 Configs.inflation_factor,
@@ -183,4 +183,6 @@ def alignSubQueries(index, index_to_hmm):
     time_gcm = time.time() - s13
     Configs.runtime(' '.join(['(alignSubQueries,',
             'i={}) Time to run GCM and'.format(index),
-            'clean temporary files (s):', time_gcm]))
+            'clean temporary files (s):', str(time_gcm)]))
+    
+    return est_path

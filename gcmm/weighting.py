@@ -1,7 +1,7 @@
 import os
 import time
+import numpy as np
 from configs import Configs
-#from helpers.alignment_tools import Alignment
 
 class Weights(object):
     weights = dict()
@@ -53,7 +53,6 @@ def loadWeights(index_to_hmm, ranks):
         weights_map[taxon] = this_weights_map
     Weights.weights = weights
     Weights.weights_map = weights_map
-    Weights.ranked_bitscores = ranks
 
     # write weights to local
     with open('{}/all_weights.txt'.format(Configs.outdir), 'w') as f:

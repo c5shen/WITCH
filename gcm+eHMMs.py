@@ -82,7 +82,7 @@ def parseArgs():
             help="Method for initial clustering of the alignment graph, default: mcl")
     gcm_group.add_argument('--graphtracemethod', type=str,
             choices=['minclusters', 'mwtgreedy', 'mwtsearch', 'fm', 'rg', 'rgfast'],
-            default='minclusteres', required=False,
+            default='minclusters', required=False,
             help="Method for finding a trace from the alignment graph, default: minclusters")
     gcm_group.add_argument('--graphtraceoptimize', type=str,
             choices=['true', 'false'], required=False, default='false',

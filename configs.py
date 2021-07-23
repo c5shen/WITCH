@@ -13,6 +13,7 @@ class Configs:
     
     num_hmms = 4
     use_weight = False
+    weight_adjust = 'none'
     subset_size = 1
     num_threads = -1
 
@@ -63,7 +64,7 @@ class Configs:
     def write(msg, level, path):
         if path is not None:
             with open(path, 'a') as f:
-                f.write('{}\t[{}]{}\n'.format(time.strftime('%Y-%m-%d %H:%M:%S'),
+                f.write('{}\t[{}] {}\n'.format(time.strftime('%Y-%m-%d %H:%M:%S'),
                     level, msg))
 
 # print a list of all configurations
@@ -75,7 +76,7 @@ def getConfigs():
 
     print('\nConfigs.num_hmms:', Configs.num_hmms)
     print('Configs.use_weight:', Configs.use_weight)
-    print('Configs.normalize_weight:', Configs.normalize_weight)
+    print('Configs.weight_adjust:', Configs.weight_adjust)
     print('Configs.subset_size:', Configs.subset_size)
     print('Configs.num_threads:', Configs.num_threads)
 
@@ -104,6 +105,8 @@ def buildConfigs(args):
     if not os.path.exists(Configs.outdir):
         os.makedirs(Configs.outdir)
 
+    Configs.keeptemp = args.keeptemp
+
     Configs.log_path = os.path.join(Configs.outdir, 'log.txt')
     Configs.error_path = os.path.join(Configs.outdir, 'error.txt')
     Configs.debug_path = os.path.join(Configs.outdir, 'debug.txt')
@@ -114,8 +117,7 @@ def buildConfigs(args):
 
     if args.use_weight:
         Configs.use_weight = True
-    if args.normalize_weight:
-        Configs.normalize_weight = True
+        Configs.weight_adjust = args.weight_adjust 
 
     if args.subset_size > 0:
         if args.subset_size >= 25:
