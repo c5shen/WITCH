@@ -31,6 +31,8 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
             elif Configs.weight_adjust == 'maxto1':
                 max_w = top_k_hmms[0][1]
                 top_k_hmms = [(w[0], w[1] / max_w) for w in top_k_hmms]
+        else:
+            top_k_hmms = [(w[0], 1) for w in top_k_hmms]
         Configs.log('weights for {}: {}'.format(taxon, top_k_hmms))
         for item in top_k_hmms:
             # append taxon to corresponding HMM i (defined by the index)
