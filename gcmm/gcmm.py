@@ -17,6 +17,8 @@ def clearTempFiles():
         os.system('rm -r {}/constraints'.format(Configs.outdir))
     if os.path.isdir('{}/search_results'.format(Configs.outdir)):
         os.system('rm -r {}/search_results'.format(Configs.outdir))
+    if os.path.isdir('{}/data'.format(Configs.outdir)):
+        os.system('rm -r {}/data'.format(Configs.outdir))
     if not Configs.keepgcmtemp \
             and os.path.isdir('{}/magus_outputs'.format(Configs.outdir)):
         os.system('rm -r {}/magus_outputs'.format(Configs.outdir))
