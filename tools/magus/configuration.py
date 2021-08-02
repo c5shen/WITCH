@@ -40,7 +40,9 @@ class Configs:
     constrain = True
     onlyGuideTree = False
     recurse = True
-    
+    recurseGuideTree = "fasttree"
+    recurseThreshold = 200 
+
     clustalPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools/clustal/clustalo")
     mafftPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools/mafft/mafft")
     mclPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools/mcl/bin/mcl")
@@ -148,7 +150,9 @@ def buildConfigs(args):
     Configs.constrain = args.constrain.lower() == "true"
     Configs.onlyGuideTree = args.onlyguidetree.lower() == "true"
     Configs.recurse = args.recurse.lower() == "true"
-    
+    Configs.recurseGuideTree = args.recurseguidetree
+    Configs.recurseThreshold = args.recursethreshold 
+
     Configs.logPath = os.path.join(Configs.workingDir, "log.txt")    
     Configs.errorPath = os.path.join(Configs.workingDir, "log_errors.txt")
     Configs.debugPath = os.path.join(Configs.workingDir, "log_debug.txt")
