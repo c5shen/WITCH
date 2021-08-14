@@ -60,5 +60,6 @@ def loadWeights(index_to_hmm, ranks):
             w = [str(x) for x in weight]
             f.write(taxon + ':' + ';'.join(w) + '\n')
     time_obtain_weights = time.time() - s2
+    Configs.warning('Finished calculating weights!')
     Configs.runtime('Time to obtain weights given bitscores (s): {}'.format(
         time_obtain_weights))

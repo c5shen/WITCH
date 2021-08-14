@@ -15,6 +15,7 @@ def mergeAlignments(inpaths):
 
     for i in range(1, len(inpaths)):
         inpath = inpaths[i]
+        Configs.debug('Merging {}'.format(inpath))
         frag_aln = Alignment(); frag_aln.read_file_object(inpath)
         new_aln.merge_in(compact(frag_aln))
     new_aln.write(outpath, 'FASTA')

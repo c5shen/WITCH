@@ -187,4 +187,5 @@ def alignSubQueries(index, index_to_hmm):
             'i={}) Time to run GCM and'.format(index),
             'clean temporary files (s):', str(time_gcm)]))
     
+    Configs.warning('{} passed to main pipeline!'.format(est_path))
     return est_path
