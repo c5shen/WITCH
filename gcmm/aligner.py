@@ -4,6 +4,7 @@ from collections import defaultdict
 from configs import Configs
 from gcmm.weighting import Weights
 from helpers.alignment_tools import Alignment, ExtendedAlignment
+from multiprocessing import Lock
 
 '''
 Helper function to generate backbone alignments for the constraint sets
@@ -48,17 +49,13 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
     # initialize the backbone index at backbone_start_index
     bb_index = 0
     for i, names in ret.items():
-        Configs.log("Generating fragment chunks/alignment for HMM {}".format(i))
-        #hmm_dir = workdir + '/A_0_{}'.format(i)
+        #Configs.log("Generating fragment chunks/alignment for HMM {}".format(i))
         hmm_dir = workdir
         if not os.path.isdir(hmm_dir):
             os.system('mkdir -p {}'.format(hmm_dir))
         if os.path.isdir(hmm_dir + '/fragments'):
             os.system('rm -r {}/fragments'.format(hmm_dir))
         os.system('mkdir -p {}/fragments'.format(hmm_dir))
-        #if os.path.isdir(hmm_dir + '/hmmalign'):
-        #    os.system('rm -r {}/hmmalign'.format(hmm_dir))
-        #os.system('mkdir -p {}/hmmalign'.format(hmm_dir))
 
         # [NEW] save each single sequence to a fasta
         this_hmm = index_to_hmm[i].hmm_model_path
@@ -104,7 +101,7 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(index, index_to_hmm):
+def alignSubQueries(index_to_hmm, lock, index):
     s11 = time.time()
     # add constraints
     constraints_dir = Configs.outdir + '/constraints/{}'.format(index)
@@ -126,9 +123,6 @@ def alignSubQueries(index, index_to_hmm):
                 'FASTA')
         c_index += 1
     time_obtain_constraints = time.time() - s11
-    Configs.runtime(' '.join(['(alignSubQueries,',
-            'i={}) Time to obtain'.format(index),
-            'constraints (s):', str(time_obtain_constraints)]))
 
     s12 = time.time()
     # backbone alignments for GCM
@@ -143,9 +137,6 @@ def alignSubQueries(index, index_to_hmm):
     # get backbones with the information we have
     getBackbones(index_to_hmm, unaligned, hmmsearch_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
-    Configs.runtime(' '.join(['(alignSubQueries,',
-            'i={}) Time to obtain backbones (s):'.format(index),
-            str(time_obtain_backbones)]))
 
     s13 = time.time()
     # run GCM (modified MAGUS which takes in weights) on the subset
@@ -157,7 +148,7 @@ def alignSubQueries(index, index_to_hmm):
                 -d {} -s {} -b {} -o {} \
                 -w {} -f {} --graphclustermethod {} \
                 --graphtracemethod {} --graphtraceoptimize {}'.format(
-                Configs.magus_path, Configs.num_threads,
+                Configs.magus_path, 1,
                 gcm_outdir, constraints_dir, bb_dir, est_path,
                 weights_path, Configs.inflation_factor, 
                 Configs.graphclustermethod,
@@ -167,13 +158,12 @@ def alignSubQueries(index, index_to_hmm):
                 -d {} -s {} -b {} -o {} -f {} \
                 --graphclustermethod {} \
                 --graphtracemethod {} --graphtraceoptimize {}'.format(
-                Configs.magus_path, Configs.num_threads,
+                Configs.magus_path, 1,
                 gcm_outdir, constraints_dir, bb_dir, est_path,
                 Configs.inflation_factor,
                 Configs.graphclustermethod, Configs.graphtracemethod,
                 Configs.graphtraceoptimize)
     os.system(cmd)
-    Configs.debug("Command used: {}".format(cmd))
 
     # remove temp folders
     if not Configs.keeptemp:
@@ -183,9 +173,21 @@ def alignSubQueries(index, index_to_hmm):
         if not Configs.keepgcmtemp:
             os.system('rm -r {}'.format(gcm_outdir))
     time_gcm = time.time() - s13
-    Configs.runtime(' '.join(['(alignSubQueries,',
-            'i={}) Time to run GCM and'.format(index),
-            'clean temporary files (s):', str(time_gcm)]))
     
-    Configs.warning('{} passed to main pipeline!'.format(est_path))
+    lock.acquire()
+    try:
+        Configs.runtime(' '.join(['(alignSubQueries,',
+                'i={}) Time to obtain'.format(index),
+                'constraints (s):', str(time_obtain_constraints)]))
+        Configs.runtime(' '.join(['(alignSubQueries,',
+                'i={}) Time to obtain backbones (s):'.format(index),
+                str(time_obtain_backbones)]))
+        Configs.runtime(' '.join(['(alignSubQueries,',
+                'i={}) Time to run GCM and'.format(index),
+                'clean temporary files (s):', str(time_gcm)]))
+        Configs.debug("Command used: {}".format(cmd))
+        Configs.warning('{} passed to main pipeline!'.format(est_path))
+    finally:
+        lock.release()
+    
     return est_path

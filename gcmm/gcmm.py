@@ -6,6 +6,9 @@ from gcmm.aligner import alignSubQueries
 from gcmm.merger import mergeAlignments
 from helpers.alignment_tools import Alignment
 
+from multiprocessing import Process, Pool, Lock, Manager
+from functools import partial
+
 '''
 Delete all unnecessary intermediate files
 '''
@@ -27,6 +30,9 @@ def clearTempFiles():
 Main process for GCM+eHMMs
 '''
 def mainAlignmentProcess():
+    m = Manager()
+    lock = m.Lock()
+
     # 1) get all sub-queries, write to [outdir]/data
     unaligned = Alignment(); unaligned.read_file_object(Configs.query_path)
     num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
@@ -39,9 +45,16 @@ def mainAlignmentProcess():
 
     # 3) solve each subset
     sub_alignment_paths = []
-    for i in range(num_subset):
-        output_path = alignSubQueries(i, index_to_hmm)
-        sub_alignment_paths.append(os.path.abspath(output_path))
+    ############ multiprocessing with Pool ##########
+    pool = Pool(Configs.num_cpus)
+    index_list = [i for i in range(num_subset)]
+    func = partial(alignSubQueries, index_to_hmm, lock)
+    sub_alignment_paths = pool.map(func, index_list) 
+
+    ############ sequential version #################
+    #for i in range(num_subset):
+    #    output_path = alignSubQueries(i, index_to_hmm)
+    #    sub_alignment_paths.append(os.path.abspath(output_path))
 
     # 4) merge all results 
     print("\nAll GCM subproblems finished! Doing merging with transitivity...")

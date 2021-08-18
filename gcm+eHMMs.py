@@ -60,8 +60,8 @@ def parseArgs():
     gcm_eHMMs_group.add_argument('--weight-adjust', type=str, required=False,
             default='none', choices=['none', 'normalize', 'maxto1'],
             help='Optional adjustment of weights, default: none')
-    gcm_eHMMs_group.add_argument('-t', '--num-threads', type=int,
-            help='Number of threads for multi-threading, default: -1 (all)',
+    gcm_eHMMs_group.add_argument('-t', '--num-cpus', type=int,
+            help='Number of cpus for multi-processing, default: -1 (all)',
             required=False, default=-1)
 
     # GCM option

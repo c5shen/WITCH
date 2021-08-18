@@ -15,7 +15,7 @@ class Configs:
     use_weight = False
     weight_adjust = 'none'
     subset_size = 1
-    num_threads = -1
+    num_cpus = -1
 
     # hmmalign/hmmsearch/magus paths
     hmmalign_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmalign')
@@ -78,7 +78,7 @@ def getConfigs():
     print('Configs.use_weight:', Configs.use_weight)
     print('Configs.weight_adjust:', Configs.weight_adjust)
     print('Configs.subset_size:', Configs.subset_size)
-    print('Configs.num_threads:', Configs.num_threads)
+    print('Configs.num_cpus:', Configs.num_cpus)
 
     print('\nConfigs.hmmalign_path:', Configs.hmmalign_path)
     print('Configs.hmmsearch_path:', Configs.hmmsearch_path)
@@ -125,10 +125,10 @@ def buildConfigs(args):
                 args.subset_size))
         Configs.subset_size = args.subset_size
 
-    if args.num_threads > 0:
-        Configs.num_threads = args.num_threads
+    if args.num_cpus > 0:
+        Configs.num_cpus = args.num_cpus
     else:
-        Configs.num_threads = os.cpu_count()
+        Configs.num_cpus = os.cpu_count()
 
     # MAGUS/GCM options
     Configs.keepgcmtemp = args.keepgcmtemp
