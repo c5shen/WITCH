@@ -2,11 +2,11 @@ import os, math
 from configs import Configs
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import loadWeights, Weights
-from gcmm.aligner import alignSubQueries
+from gcmm.aligner import alignSubQueries, init_lock
 from gcmm.merger import mergeAlignments
 from helpers.alignment_tools import Alignment
 
-from multiprocessing import Process, Pool, Lock, Manager
+from multiprocessing import Process, Pool, Lock#, Manager
 from functools import partial
 
 '''
@@ -30,8 +30,9 @@ def clearTempFiles():
 Main process for GCM+eHMMs
 '''
 def mainAlignmentProcess():
-    m = Manager()
-    lock = m.Lock()
+    #m = Manager()
+    #lock = m.Lock()
+    l = Lock()
 
     # 1) get all sub-queries, write to [outdir]/data
     unaligned = Alignment(); unaligned.read_file_object(Configs.query_path)
@@ -46,10 +47,16 @@ def mainAlignmentProcess():
     # 3) solve each subset
     sub_alignment_paths = []
     ############ multiprocessing with Pool ##########
-    pool = Pool(Configs.num_cpus)
+    # manager version
+    #pool = Pool(Configs.num_cpus)
+    #index_list = [i for i in range(num_subset)]
+    #func = partial(alignSubQueries, index_to_hmm, lock)
+    #sub_alignment_paths = pool.map(func, index_list)
+    # global lock version
+    pool = Pool(Configs.num_cpus, initializer=init_lock, initargs=(l,))
     index_list = [i for i in range(num_subset)]
-    func = partial(alignSubQueries, index_to_hmm, lock)
-    sub_alignment_paths = pool.map(func, index_list) 
+    func = partial(alignSubQueries, index_to_hmm)
+    sub_alignment_paths = pool.map(func, index_list)
 
     ############ sequential version #################
     #for i in range(num_subset):

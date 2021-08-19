@@ -6,6 +6,12 @@ from gcmm.weighting import Weights
 from helpers.alignment_tools import Alignment, ExtendedAlignment
 from multiprocessing import Lock
 
+# initialize the lock for asynchronous safe logging
+# Lock is passed from the main process
+def init_lock(l):
+    global lock
+    lock = l
+
 '''
 Helper function to generate backbone alignments for the constraint sets
 '''
@@ -19,9 +25,14 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
         weights = Weights.ranked_bitscores
 
     # for each taxon and its scores on HMMs, sort it in decreasing order
-    for taxon, sorted_weights in weights.items():
-        if taxon not in unaligned:
-            continue
+    #for taxon, sorted_weights in weights.items():
+    ret_str = ''
+    for taxon, seq in unaligned.items():
+        if ret_str != '':
+            ret_str += '\n'
+        sorted_weights = weights[taxon]
+        #if taxon not in unaligned:
+        #    continue
 
         top_k_hmms = sorted_weights[:Configs.num_hmms]
         if Configs.use_weight:
@@ -34,7 +45,8 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
                 top_k_hmms = [(w[0], w[1] / max_w) for w in top_k_hmms]
         else:
             top_k_hmms = [(w[0], 1) for w in top_k_hmms]
-        Configs.log('weights for {}: {}'.format(taxon, top_k_hmms))
+        #Configs.log('weights for {}: {}'.format(taxon, top_k_hmms))
+        ret_str += 'weights for {}: {}'.format(taxon, top_k_hmms)
         for item in top_k_hmms:
             # append taxon to corresponding HMM i (defined by the index)
             ret[item[0]].append(taxon)
@@ -91,6 +103,8 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
                 weights_file.write('{},{}\n'.format(
                         real_this_bb_path, Weights.weights_map[taxon][i]))
     weights_file.close()
+    
+    return ret_str
 
 '''
 The core function of GCM+eHMMs. Merge the HMMAlign results of the set of
@@ -101,7 +115,9 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(index_to_hmm, lock, index):
+def alignSubQueries(index_to_hmm, index):
+    global lock
+
     s11 = time.time()
     # add constraints
     constraints_dir = Configs.outdir + '/constraints/{}'.format(index)
@@ -135,7 +151,7 @@ def alignSubQueries(index_to_hmm, lock, index):
         os.system('mkdir -p {}'.format(hmmsearch_dir))
 
     # get backbones with the information we have
-    getBackbones(index_to_hmm, unaligned, hmmsearch_dir, bb_dir)
+    weights_str = getBackbones(index_to_hmm, unaligned, hmmsearch_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
 
     s13 = time.time()
@@ -186,7 +202,8 @@ def alignSubQueries(index_to_hmm, lock, index):
                 'i={}) Time to run GCM and'.format(index),
                 'clean temporary files (s):', str(time_gcm)]))
         Configs.debug("Command used: {}".format(cmd))
-        Configs.warning('{} passed to main pipeline!'.format(est_path))
+        Configs.log(weights_str)
+        Configs.log('{} passed to main pipeline...'.format(est_path))
     finally:
         lock.release()
     

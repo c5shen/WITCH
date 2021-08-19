@@ -7,6 +7,7 @@ from helpers.alignment_tools import Alignment, read_fasta, \
 # function to take in a set of result paths for merging, and write
 # the merged alignment to an output path
 def mergeAlignments(inpaths):
+    Configs.log('Merging all GCM subproblems with transitivity...')
     start = time.time()
     outpath = Configs.outdir + '/merged.fasta'
     assert len(inpaths) > 0
