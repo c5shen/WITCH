@@ -45,8 +45,11 @@ def parseArgs():
                 "pipeline."]))
     parser.groups['gcm_eHMMs_group'] = gcm_eHMMs_group
     gcm_eHMMs_group.add_argument('--keeptemp', action='store_const', const=True,
-            help='Whether to keep temporary files for the run.',
-            default=False)
+            help='Keep temporary files in the process (constraints' \
+                    + ', HMMSearch results, etc.)', default=False)
+    gcm_eHMMs_group.add_argument('--keepsubalignment',
+            action='store_const', const=True,
+            help='Keep all subalignments by MAGUS/GCM', default=False)
     gcm_eHMMs_group.add_argument('-k', '--num-hmms', type=int,
             help='The number of top HMMs used for aligning a query',
             required=False, default=4)
@@ -72,7 +75,7 @@ def parseArgs():
     parser.groups['gcm_group'] = gcm_group
     gcm_group.add_argument('--keepgcmtemp', action='store_const',
             const=True, default=False, required=False,
-            help='Whether to keep temporary files from MAGUS/GCM, default: False')
+            help='Keep temporary files generated from MAGUS/GCM')
     gcm_group.add_argument('-f', '--inflation-factor', type=float,
             default=4, required=False,
             help="Inflation factor for MCL, default: 4") 

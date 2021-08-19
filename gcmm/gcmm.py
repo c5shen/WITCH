@@ -13,7 +13,8 @@ from functools import partial
 Delete all unnecessary intermediate files
 '''
 def clearTempFiles():
-    os.system('rm {}/magus_result_*'.format(Configs.outdir))
+    if not Configs.keepsubalignment:
+        os.system('rm {}/magus_result_*'.format(Configs.outdir))
     if os.path.isdir('{}/backbone_alignments'.format(Configs.outdir)):
         os.system('rm -r {}/backbone_alignments'.format(Configs.outdir))
     if os.path.isdir('{}/constraints'.format(Configs.outdir)):
@@ -57,6 +58,8 @@ def mainAlignmentProcess():
     index_list = [i for i in range(num_subset)]
     func = partial(alignSubQueries, index_to_hmm)
     sub_alignment_paths = pool.map(func, index_list)
+    pool.close()
+    pool.join()
 
     ############ sequential version #################
     #for i in range(num_subset):

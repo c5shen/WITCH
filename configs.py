@@ -10,6 +10,7 @@ class Configs:
     query_path = None
     outdir = None
     keeptemp = False
+    keepsubalignment = False
     
     num_hmms = 4
     use_weight = False
@@ -73,6 +74,7 @@ def getConfigs():
     print('Configs.backbone_path:', Configs.backbone_path)
     print('Configs.outdir:', Configs.outdir)
     print('Configs.keeptemp:', Configs.keeptemp)
+    print('Configs.keepsubalignment:', Configs.keepsubalignment)
 
     print('\nConfigs.num_hmms:', Configs.num_hmms)
     print('Configs.use_weight:', Configs.use_weight)
@@ -106,6 +108,7 @@ def buildConfigs(args):
         os.makedirs(Configs.outdir)
 
     Configs.keeptemp = args.keeptemp
+    Configs.keepsubalignment = args.keepsubalignment
 
     Configs.log_path = os.path.join(Configs.outdir, 'log.txt')
     Configs.error_path = os.path.join(Configs.outdir, 'error.txt')
@@ -124,6 +127,8 @@ def buildConfigs(args):
             Configs.warning('Subset size is recommended to be <= 25! Current: {}'.format(
                 args.subset_size))
         Configs.subset_size = args.subset_size
+    else:
+        Configs.warning('Subset size given was < 0! Using default value: 1')
 
     if args.num_cpus > 0:
         Configs.num_cpus = args.num_cpus
