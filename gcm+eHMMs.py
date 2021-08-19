@@ -45,8 +45,9 @@ def parseArgs():
                 "pipeline."]))
     parser.groups['gcm_eHMMs_group'] = gcm_eHMMs_group
     gcm_eHMMs_group.add_argument('--keeptemp', action='store_const', const=True,
-            help='Keep temporary files in the process (constraints' \
-                    + ', HMMSearch results, etc.)', default=False)
+            help='Keep ALL temporary files in the process (constraints' \
+                    + ', backbones, HMMSearch results, GCM results, etc.)',
+            default=False)
     gcm_eHMMs_group.add_argument('--keepsubalignment',
             action='store_const', const=True,
             help='Keep all subalignments by MAGUS/GCM', default=False)
