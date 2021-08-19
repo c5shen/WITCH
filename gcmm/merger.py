@@ -6,7 +6,9 @@ from helpers.alignment_tools import Alignment, read_fasta, \
 from multiprocessing import Pool
 from math import ceil
 
-# function to merge a set of input paths (to alignments) sequentially
+'''
+function to merge a set of input paths (to alignments) sequentially
+'''
 def sequential_merger(inpaths):
     init_aln = Alignment(); init_aln.read_file_object(inpaths[0])
     new_aln = compact(init_aln)
@@ -16,8 +18,10 @@ def sequential_merger(inpaths):
         new_aln.merge_in(compact(frag_aln))
     return new_aln
 
-# function to take in a set of result paths for merging, and write
-# the merged alignment to an output path
+'''
+function to take in a set of result paths for merging, and write
+the merged alignment to an output path
+'''
 def mergeAlignments(inpaths):
     Configs.log('Merging all GCM subproblems with transitivity...')
     start = time.time()
