@@ -47,4 +47,6 @@ def mergeAlignments(inpaths):
     final_aln.write(outpath, 'FASTA')
     end = time.time()
 
+    Configs.log('Finished merging all GCM subproblems, output file: {}'.format(
+        outpath))
     Configs.runtime('Time to merge all outputs (s): {}'.format(end - start))
