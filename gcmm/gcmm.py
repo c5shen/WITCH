@@ -2,11 +2,12 @@ import os, math
 from configs import Configs
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import loadWeights, Weights
-from gcmm.aligner import alignSubQueries, init_lock
+from gcmm.aligner import alignSubQueries
 from gcmm.merger import mergeAlignments
 from helpers.alignment_tools import Alignment
 
-from multiprocessing import Process, Pool, Lock#, Manager
+from multiprocessing import Pool, Lock, Queue, Manager
+from concurrent.futures.process import ProcessPoolExecutor
 from functools import partial
 
 '''
@@ -28,12 +29,18 @@ def clearTempFiles():
         os.system('rm -r {}/magus_outputs'.format(Configs.outdir))
 
 '''
+Init function for a queue
+'''
+def init_queue(q):
+    alignSubQueries.q = q
+
+'''
 Main process for GCM+eHMMs
 '''
 def mainAlignmentProcess():
-    #m = Manager()
-    #lock = m.Lock()
-    l = Lock()
+    m = Manager()
+    lock = m.Lock()
+    #l = Lock()
 
     # 1) get all sub-queries, write to [outdir]/data
     unaligned = Alignment(); unaligned.read_file_object(Configs.query_path)
@@ -47,19 +54,47 @@ def mainAlignmentProcess():
 
     # 3) solve each subset
     sub_alignment_paths = []
+    q = Queue()
+
     ############ multiprocessing with Pool ##########
     # manager version
-    #pool = Pool(Configs.num_cpus)
+    #pool = Pool(Configs.num_cpus, initializer=init_queue, initargs=(q,))
     #index_list = [i for i in range(num_subset)]
     #func = partial(alignSubQueries, index_to_hmm, lock)
     #sub_alignment_paths = pool.map(func, index_list)
-    # global lock version
-    pool = Pool(Configs.num_cpus, initializer=init_lock, initargs=(l,))
+    #pool.close()
+    #pool.join()
+
+    # ProcessPoolExecutor version
+    pool = ProcessPoolExecutor(Configs.num_cpus, initializer=init_queue,
+            initargs=(q,))
     index_list = [i for i in range(num_subset)]
-    func = partial(alignSubQueries, index_to_hmm)
-    sub_alignment_paths = pool.map(func, index_list)
-    pool.close()
-    pool.join()
+    func = partial(alignSubQueries, index_to_hmm, lock)
+    results = list(pool.map(func, index_list))
+    retry_results, success, failure = [], [], []
+    while len(success) < num_subset:
+        success.extend([r for r in results if not r is None])
+        success.extend([r for r in retry_results if not r is None])
+        failed_items = []
+        while not q.empty():
+            failed_items.append(q.get())
+        if failed_items:
+            Configs.log('Rerunning failed jobs: {}'.format(failed_items))
+            failure.append(failed_items)
+            retry_results = list(pool.map(func, failed_items))
+    Configs.warning('Closing ProcessPoolExecutor instance...')
+    pool.shutdown()
+    Configs.warning('ProcessPoolExecutor instance closed.')
+
+    sub_alignment_paths = success
+
+    # global lock version
+    #pool = Pool(Configs.num_cpus, initializer=init_lock, initargs=(l))
+    #index_list = [i for i in range(num_subset)]
+    #func = partial(alignSubQueries, index_to_hmm)
+    #sub_alignment_paths = pool.map(func, index_list)
+    #pool.close()
+    #pool.join()
 
     ############ sequential version #################
     #for i in range(num_subset):

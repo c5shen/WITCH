@@ -34,6 +34,7 @@ class Configs:
     graphclustermethod = 'mcl'
     graphtracemethod = 'minclusters'
     graphtraceoptimize = 'false'
+    timeout = 60
 
     @staticmethod
     def warning(msg, path=None):
@@ -141,3 +142,7 @@ def buildConfigs(args):
     Configs.graphclustermethod = args.graphclustermethod
     Configs.graphtracemethod = args.graphtracemethod
     Configs.graphtraceoptimize = args.graphtraceoptimize
+    
+    # additional MAGUS/GCM failsafe option to timeout a MAGUS process
+    # if [timeout] seconds are reached before the process finished
+    Configs.timeout = args.timeout

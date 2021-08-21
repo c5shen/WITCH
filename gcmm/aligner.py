@@ -1,16 +1,16 @@
-import os
+import os, subprocess, psutil
 import time
 from collections import defaultdict
 from configs import Configs
 from gcmm.weighting import Weights
 from helpers.alignment_tools import Alignment, ExtendedAlignment
-from multiprocessing import Lock
+from multiprocessing import Queue, Lock
 
-# initialize the lock for asynchronous safe logging
-# Lock is passed from the main process
-def init_lock(l):
-    global lock
-    lock = l
+## initialize the lock for asynchronous safe logging
+## Lock is passed from the main process
+#def init_lock(l):
+#    global lock
+#    lock = l
 
 '''
 Helper function to generate backbone alignments for the constraint sets
@@ -115,8 +115,8 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(index_to_hmm, index):
-    global lock
+def alignSubQueries(index_to_hmm, lock, index):
+    #global lock
 
     s11 = time.time()
     # add constraints
@@ -160,26 +160,51 @@ def alignSubQueries(index_to_hmm, index):
     gcm_outdir = Configs.outdir + '/magus_outputs/{}'.format(index)
     if Configs.use_weight:
         weights_path = hmmsearch_dir + '/weights.txt'
-        cmd = 'python3 {} -np {} \
-                -d {} -s {} -b {} -o {} \
-                -w {} -f {} --graphclustermethod {} \
-                --graphtracemethod {} --graphtraceoptimize {}'.format(
-                Configs.magus_path, 1,
-                gcm_outdir, constraints_dir, bb_dir, est_path,
-                weights_path, Configs.inflation_factor, 
-                Configs.graphclustermethod,
-                Configs.graphtracemethod, Configs.graphtraceoptimize)
+        #cmd = 'python3 {} -np {} \
+        #        -d {} -s {} -b {} -o {} \
+        #        -w {} -f {} --graphclustermethod {} \
+        #        --graphtracemethod {} --graphtraceoptimize {}'.format(
+        #        Configs.magus_path, 1,
+        #        gcm_outdir, constraints_dir, bb_dir, est_path,
+        #        weights_path, Configs.inflation_factor, 
+        #        Configs.graphclustermethod,
+        #        Configs.graphtracemethod, Configs.graphtraceoptimize)
+        cmd = ['python3', Configs.magus_path, '-np', '1',
+                '-d', gcm_outdir, '-s', constraints_dir, '-b', bb_dir,
+                '-o', est_path, '-w', weights_path,
+                '-f', str(Configs.inflation_factor),
+                '--graphclustermethod', Configs.graphclustermethod,
+                '--graphtracemethod', Configs.graphtracemethod,
+                '--graphtraceoptimize', Configs.graphtraceoptimize]
     else:
-        cmd = 'python3 {} -np {} \
-                -d {} -s {} -b {} -o {} -f {} \
-                --graphclustermethod {} \
-                --graphtracemethod {} --graphtraceoptimize {}'.format(
-                Configs.magus_path, 1,
-                gcm_outdir, constraints_dir, bb_dir, est_path,
-                Configs.inflation_factor,
-                Configs.graphclustermethod, Configs.graphtracemethod,
-                Configs.graphtraceoptimize)
-    os.system(cmd)
+        #cmd = 'python3 {} -np {} \
+        #        -d {} -s {} -b {} -o {} -f {} \
+        #        --graphclustermethod {} \
+        #        --graphtracemethod {} --graphtraceoptimize {}'.format(
+        #        Configs.magus_path, 1,
+        #        gcm_outdir, constraints_dir, bb_dir, est_path,
+        #        Configs.inflation_factor,
+        #        Configs.graphclustermethod, Configs.graphtracemethod,
+        #        Configs.graphtraceoptimize)
+        cmd = ['python3', Configs.magus_path, '-np', '1',
+                '-d', gcm_outdir, '-s', constraints_dir, '-b', bb_dir,
+                '-o', est_path, '-f', str(Configs.inflation_factor),
+                '--graphclustermethod', Configs.graphclustermethod,
+                '--graphtracemethod', Configs.graphtracemethod,
+                '--graphtraceoptimize', Configs.graphtraceoptimize]
+    #os.system(cmd)
+    p = subprocess.Popen(cmd)
+
+    # time out the process if exceeding [timeout] seconds
+    task_timed_out = False
+    try:
+        p.wait(Configs.timeout)
+    except subprocess.TimeoutExpired:
+        task_timed_out = True
+        parent = psutil.Process(p.pid)
+        for c in parent.children(recursive=True):
+            c.kill()
+        parent.kill()
 
     # remove temp folders
     if not Configs.keeptemp:
@@ -190,21 +215,29 @@ def alignSubQueries(index_to_hmm, index):
             os.system('rm -r {}'.format(gcm_outdir))
     time_gcm = time.time() - s13
     
-    lock.acquire()
-    try:
-        Configs.runtime(' '.join(['(alignSubQueries,',
-                'i={}) Time to obtain'.format(index),
-                'constraints (s):', str(time_obtain_constraints)]))
-        Configs.runtime(' '.join(['(alignSubQueries,',
-                'i={}) Time to obtain backbones (s):'.format(index),
-                str(time_obtain_backbones)]))
-        Configs.runtime(' '.join(['(alignSubQueries,',
-                'i={}) Time to run GCM and'.format(index),
-                'clean temporary files (s):', str(time_gcm)]))
-        Configs.debug("Command used: {}".format(cmd))
-        Configs.log(weights_str)
-        Configs.log('{} passed to main pipeline...'.format(est_path))
-    finally:
-        lock.release()
-    
-    return est_path
+    if not task_timed_out:
+        lock.acquire()
+        try:
+            Configs.runtime(' '.join(['(alignSubQueries,',
+                    'i={}) Time to obtain'.format(index),
+                    'constraints (s):', str(time_obtain_constraints)]))
+            Configs.runtime(' '.join(['(alignSubQueries,',
+                    'i={}) Time to obtain backbones (s):'.format(index),
+                    str(time_obtain_backbones)]))
+            Configs.runtime(' '.join(['(alignSubQueries,',
+                    'i={}) Time to run GCM and'.format(index),
+                    'clean temporary files (s):', str(time_gcm)]))
+            Configs.debug("Command used: {}".format(' '.join(cmd)))
+            Configs.log(weights_str)
+            Configs.log('{} passed to main pipeline...'.format(est_path))
+        finally:
+            lock.release()
+        return est_path
+    else:
+        lock.acquire()
+        try:
+            Configs.log('Task #{} failed, queuing for retry...'.format(index))
+            alignSubQueries.q.put(index)
+        finally:
+            lock.release()
+        return None

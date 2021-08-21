@@ -77,6 +77,9 @@ def parseArgs():
     gcm_group.add_argument('--keepgcmtemp', action='store_const',
             const=True, default=False, required=False,
             help='Keep temporary files generated from MAGUS/GCM')
+    gcm_group.add_argument('--timeout', type=int,
+            default=60, required=False,
+            help='Retry a MAGUS/GCM subtask after [timeout] seconds, default: 60')
     gcm_group.add_argument('-f', '--inflation-factor', type=float,
             default=4, required=False,
             help="Inflation factor for MCL, default: 4") 
