@@ -10,10 +10,17 @@ from math import ceil
 function to merge a set of input paths (to alignments) sequentially
 '''
 def sequential_merger(inpaths):
-    init_aln = Alignment(); init_aln.read_file_object(inpaths[0])
+    init_index = 0
+    while init_index < len(inpaths) and inpaths[init_index] == 'skipped':
+        init_index += 1
+    init_aln = Alignment(); init_aln.read_file_object(inpaths[init_index])
     new_aln = compact(init_aln)
-    for i in range(1, len(inpaths)):
+    for i in range(init_index + 1, len(inpaths)):
         inpath = inpaths[i]
+        
+        # skip these ones
+        if inpath == 'skipped':
+            continue
         frag_aln = Alignment(); frag_aln.read_file_object(inpath)
         new_aln.merge_in(compact(frag_aln))
     return new_aln

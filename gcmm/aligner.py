@@ -30,9 +30,10 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
     for taxon, seq in unaligned.items():
         if ret_str != '':
             ret_str += '\n'
+
+        if not taxon in weights:
+            return 'N/A'
         sorted_weights = weights[taxon]
-        #if taxon not in unaligned:
-        #    continue
 
         top_k_hmms = sorted_weights[:Configs.num_hmms]
         if Configs.use_weight:
@@ -155,63 +156,43 @@ def alignSubQueries(index_to_hmm, lock, index):
     time_obtain_backbones = time.time() - s12
 
     s13 = time.time()
-    # run GCM (modified MAGUS which takes in weights) on the subset
-    est_path = Configs.outdir + '/magus_result_{}.txt'.format(index)
+
+    # time out the process if exceeding [timeout] seconds
+    task_timed_out = False
     gcm_outdir = Configs.outdir + '/magus_outputs/{}'.format(index)
-    if Configs.use_weight:
-        weights_path = hmmsearch_dir + '/weights.txt'
-        #cmd = 'python3 {} -np {} \
-        #        -d {} -s {} -b {} -o {} \
-        #        -w {} -f {} --graphclustermethod {} \
-        #        --graphtracemethod {} --graphtraceoptimize {}'.format(
-        #        Configs.magus_path, 1,
-        #        gcm_outdir, constraints_dir, bb_dir, est_path,
-        #        weights_path, Configs.inflation_factor, 
-        #        Configs.graphclustermethod,
-        #        Configs.graphtracemethod, Configs.graphtraceoptimize)
-        cmd = ['python3', Configs.magus_path, '-np', '1',
-                '-d', gcm_outdir, '-s', constraints_dir, '-b', bb_dir,
-                '-o', est_path, '-w', weights_path,
-                '-f', str(Configs.inflation_factor),
-                '--graphclustermethod', Configs.graphclustermethod,
-                '--graphtracemethod', Configs.graphtracemethod,
-                '--graphtraceoptimize', Configs.graphtraceoptimize]
-    else:
-        #cmd = 'python3 {} -np {} \
-        #        -d {} -s {} -b {} -o {} -f {} \
-        #        --graphclustermethod {} \
-        #        --graphtracemethod {} --graphtraceoptimize {}'.format(
-        #        Configs.magus_path, 1,
-        #        gcm_outdir, constraints_dir, bb_dir, est_path,
-        #        Configs.inflation_factor,
-        #        Configs.graphclustermethod, Configs.graphtracemethod,
-        #        Configs.graphtraceoptimize)
+
+    if weights_str != 'N/A':
+        # run GCM (modified MAGUS which takes in weights) on the subset
+        est_path = Configs.outdir + '/magus_result_{}.txt'.format(index)
         cmd = ['python3', Configs.magus_path, '-np', '1',
                 '-d', gcm_outdir, '-s', constraints_dir, '-b', bb_dir,
                 '-o', est_path, '-f', str(Configs.inflation_factor),
                 '--graphclustermethod', Configs.graphclustermethod,
                 '--graphtracemethod', Configs.graphtracemethod,
                 '--graphtraceoptimize', Configs.graphtraceoptimize]
-    #os.system(cmd)
-    p = subprocess.Popen(cmd)
+        if Configs.use_weight:
+            weights_path = hmmsearch_dir + '/weights.txt'
+            cmd += ['-w', weights_path] 
+        #os.system(cmd)
+        p = subprocess.Popen(cmd)
 
-    # time out the process if exceeding [timeout] seconds
-    task_timed_out = False
-    try:
-        p.wait(Configs.timeout)
-    except subprocess.TimeoutExpired:
-        task_timed_out = True
-        parent = psutil.Process(p.pid)
-        for c in parent.children(recursive=True):
-            c.kill()
-        parent.kill()
+        try:
+            p.wait(Configs.timeout)
+        except subprocess.TimeoutExpired:
+            task_timed_out = True
+            parent = psutil.Process(p.pid)
+            for c in parent.children(recursive=True):
+                c.kill()
+            parent.kill()
+    else:
+        est_path = 'skipped'
 
     # remove temp folders
     if not Configs.keeptemp:
         os.system('rm -r {}'.format(hmmsearch_dir))
         os.system('rm -r {}'.format(bb_dir))
         os.system('rm -r {}'.format(constraints_dir))
-        if not Configs.keepgcmtemp:
+        if not Configs.keepgcmtemp and os.path.isdir(gcm_outdir):
             os.system('rm -r {}'.format(gcm_outdir))
     time_gcm = time.time() - s13
     
@@ -227,16 +208,21 @@ def alignSubQueries(index_to_hmm, lock, index):
             Configs.runtime(' '.join(['(alignSubQueries,',
                     'i={}) Time to run GCM and'.format(index),
                     'clean temporary files (s):', str(time_gcm)]))
-            Configs.debug("Command used: {}".format(' '.join(cmd)))
-            Configs.log(weights_str)
-            Configs.log('{} passed to main pipeline...'.format(est_path))
+            if weights_str != 'N/A':
+                Configs.debug("Command used: {}".format(' '.join(cmd)))
+                Configs.log(weights_str)
+                Configs.log('{} passed to main pipeline...'.format(est_path))
+            else:
+                Configs.warning('Some taxa in task #{}'.format(index) \
+                        + ' do not have any matching HMMs, skipping...')
         finally:
             lock.release()
         return est_path
     else:
         lock.acquire()
         try:
-            Configs.log('Task #{} failed, queuing for retry...'.format(index))
+            Configs.warning('Task #{} failed, queuing for retry...'.format(
+                index))
             alignSubQueries.q.put(index)
         finally:
             lock.release()

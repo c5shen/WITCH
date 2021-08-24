@@ -53,6 +53,7 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset):
         os.system('mkdir -p {}'.format(outdir))
     frag_names = unaligned.get_sequence_names()
 
+    Configs.log('Started splitting queries to subsets...')
     args = []
     for i in range(0, num_subset):
         start_ind, end_ind = i * Configs.subset_size, \
@@ -63,6 +64,8 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset):
     pool.starmap(func, args)
     pool.close()
     pool.join()
+
+    Configs.log('Finished splitting queries to local.')
 
     ## get #[num] names from top of frag_names
     #ind = 0
