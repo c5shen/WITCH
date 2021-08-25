@@ -73,6 +73,7 @@ class Configs:
 def getConfigs():
     print('Configs.hmmdir:', Configs.hmmdir)
     print('Configs.backbone_path:', Configs.backbone_path)
+    print('Configs.query_path:', Configs.query_path)
     print('Configs.outdir:', Configs.outdir)
     print('Configs.keeptemp:', Configs.keeptemp)
     print('Configs.keepsubalignment:', Configs.keepsubalignment)
