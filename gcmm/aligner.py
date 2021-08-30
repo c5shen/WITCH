@@ -1,4 +1,4 @@
-import os, subprocess, psutil
+import os, subprocess, psutil, shutil
 import time
 from collections import defaultdict
 from configs import Configs
@@ -65,10 +65,10 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
         #Configs.log("Generating fragment chunks/alignment for HMM {}".format(i))
         hmm_dir = workdir
         if not os.path.isdir(hmm_dir):
-            os.system('mkdir -p {}'.format(hmm_dir))
-        if os.path.isdir(hmm_dir + '/fragments'):
-            os.system('rm -r {}/fragments'.format(hmm_dir))
-        os.system('mkdir -p {}/fragments'.format(hmm_dir))
+            os.makedirs(hmm_dir)
+        if not os.path.isdir(hmm_dir + '/fragments'):
+            #os.system('rm -r {}/fragments'.format(hmm_dir))
+            os.makedirs('{}/fragments'.format(hmm_dir))
 
         # [NEW] save each single sequence to a fasta
         this_hmm = index_to_hmm[i].hmm_model_path
@@ -82,9 +82,10 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
                     hmm_dir, taxon, i)
             cmd = '{} -o {} {} {}'.format(Configs.hmmalign_path,
                     hmmalign_result_path, this_hmm, frag_path)
-            if not (os.path.exists(hmmalign_result_path) and os.path.getsize(
-                hmmalign_result_path) > 0):
-                os.system(cmd)
+            subprocess.run(cmd, check=True)
+            #if not (os.path.exists(hmmalign_result_path) and os.path.getsize(
+            #    hmmalign_result_path) > 0):
+            #    os.system(cmd)
         
             # Extended alignment
             ap_aln = ExtendedAlignment(frag.get_sequence_names())
@@ -123,9 +124,9 @@ def alignSubQueries(index_to_hmm, lock, index):
     # add constraints
     constraints_dir = Configs.outdir + '/constraints/{}'.format(index)
     if not os.path.isdir(constraints_dir):
-        os.system('mkdir -p {}'.format(constraints_dir))
+        os.makedirs(constraints_dir)
     # 0-th constraint set comes from the input alignment
-    os.system('cp {} {}/c0.fasta'.format(Configs.backbone_path,
+    shutil.copyfile(Configs.backbone_path, '{}/c0.fasta'.format(
         constraints_dir))
 
     unaligned_dir = Configs.outdir + '/data'
@@ -145,11 +146,11 @@ def alignSubQueries(index_to_hmm, lock, index):
     # backbone alignments for GCM
     bb_dir = Configs.outdir + '/backbone_alignments/{}'.format(index)
     if not os.path.isdir(bb_dir):
-        os.system('mkdir -p {}'.format(bb_dir))
+        os.makedirs(bb_dir)
     # hmmsearch directory
     hmmsearch_dir = Configs.outdir + '/search_results/{}'.format(index)
     if not os.path.isdir(hmmsearch_dir):
-        os.system('mkdir -p {}'.format(hmmsearch_dir))
+        os.makedirs(hmmsearch_dir)
 
     # get backbones with the information we have
     weights_str = getBackbones(index_to_hmm, unaligned, hmmsearch_dir, bb_dir)
@@ -189,11 +190,16 @@ def alignSubQueries(index_to_hmm, lock, index):
 
     # remove temp folders
     if not Configs.keeptemp:
-        os.system('rm -r {}'.format(hmmsearch_dir))
-        os.system('rm -r {}'.format(bb_dir))
-        os.system('rm -r {}'.format(constraints_dir))
+        # trying shutil.rmtree to remove the directory
+        shutil.rmtree(hmmsearch_dir)
+        shutil.rmtree(bb_dir)
+        shutil.rmtree(constraints_dir)
+        #os.system('rm -r {}'.format(hmmsearch_dir))
+        #os.system('rm -r {}'.format(bb_dir))
+        #os.system('rm -r {}'.format(constraints_dir))
         if not Configs.keepgcmtemp and os.path.isdir(gcm_outdir):
-            os.system('rm -r {}'.format(gcm_outdir))
+            #os.system('rm -r {}'.format(gcm_outdir))
+            shutil.rmtree(gcm_outdir)
     time_gcm = time.time() - s13
     
     if not task_timed_out:

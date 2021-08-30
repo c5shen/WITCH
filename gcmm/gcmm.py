@@ -1,4 +1,4 @@
-import os, math 
+import os, math, psutil 
 from configs import Configs
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import loadWeights, Weights
@@ -51,6 +51,10 @@ def mainAlignmentProcess():
     Weights.ranked_bitscores = ranked_bitscores
     if Configs.use_weight:
         loadWeights(index_to_hmm, ranked_bitscores)
+
+    #print('current usage of memory: {} MB'.format(
+    #    psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2))
+    #exit()
 
     # 3) solve each subset
     sub_alignment_paths = []
