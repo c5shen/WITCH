@@ -33,11 +33,14 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
             ret_str += '\n'
 
         # load weights from local
-        weights, this_weights_map = readWeights(taxon)
-        if weights == None:
+        if Configs.use_weight:
+            sorted_weights, this_weights_map = readWeights(taxon)
+            weights_map[taxon] = this_weights_map
+        else:
+            sorted_weights = Weights.ranked_bitscores[taxon]
+
+        if sorted_weights == None:
             return 'N/A'
-        sorted_weights = weights
-        weights_map[taxon] = this_weights_map
         #if not taxon in weights:
         #    return 'N/A'
         #sorted_weights = weights[taxon]
