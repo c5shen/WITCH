@@ -186,10 +186,10 @@ Read in and rank bitscores from UPP decomposition
 '''
 Split query sequences into batches of a defined size
 '''
-def loadSubQueries(unaligned):
+def loadSubQueries():
     s1 = time.time()
-    #unaligned = Alignment()
-    #unaligned.read_file_object(Configs.query_path)
+    unaligned = Alignment()
+    unaligned.read_file_object(Configs.query_path)
     num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
 
     # 1) get all sub-queries, write to [outdir]/data
@@ -205,4 +205,4 @@ def loadSubQueries(unaligned):
     time_load_files = time.time() - s1
     Configs.runtime('Time to load files and split queries (s): {}'.format(
         time_load_files))
-    return index_to_hmm, ranked_bitscore
+    return num_subset, index_to_hmm, ranked_bitscore

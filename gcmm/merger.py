@@ -3,7 +3,7 @@ import time
 from configs import Configs
 from helpers.alignment_tools import Alignment, read_fasta, \
         CompactAlignment, compact 
-from multiprocessing import Pool
+from concurrent.futures.process import ProcessPoolExecutor
 from math import ceil
 
 '''
@@ -29,7 +29,7 @@ def sequential_merger(inpaths):
 function to take in a set of result paths for merging, and write
 the merged alignment to an output path
 '''
-def mergeAlignments(inpaths):
+def mergeAlignments(inpaths, pool):
     Configs.log('Merging all GCM subproblems with transitivity...')
     start = time.time()
     outpath = Configs.outdir + '/merged.fasta'
@@ -42,10 +42,10 @@ def mergeAlignments(inpaths):
         chunks.append(inpaths[i:min(i+chunk_size, len(inpaths))])
 
     # initialize Pool for multiprocessing
-    pool = Pool(Configs.num_cpus)
-    merged_alns = pool.map(sequential_merger, chunks)
-    pool.close()
-    pool.join()
+    #pool = Pool(Configs.num_cpus)
+    merged_alns = list(pool.map(sequential_merger, chunks))
+    #pool.close()
+    #pool.join()
 
     # for the merged chunks, merge them into one alignment 
     final_aln = merged_alns[0]

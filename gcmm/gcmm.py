@@ -1,4 +1,4 @@
-import os, math, psutil 
+import os, math, psutil, shutil 
 from configs import Configs
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import loadWeights, Weights
@@ -15,18 +15,20 @@ Delete all unnecessary intermediate files
 '''
 def clearTempFiles():
     if not Configs.keepsubalignment:
-        os.system('rm {}/magus_result_*'.format(Configs.outdir))
+        os.system('rm -r {}/magus_result_*'.format(Configs.outdir))
     if os.path.isdir('{}/backbone_alignments'.format(Configs.outdir)):
-        os.system('rm -r {}/backbone_alignments'.format(Configs.outdir))
+        shutil.rmtree('{}/backbone_alignments'.format(Configs.outdir))
     if os.path.isdir('{}/constraints'.format(Configs.outdir)):
-        os.system('rm -r {}/constraints'.format(Configs.outdir))
+        shutil.rmtree('{}/constraints'.format(Configs.outdir))
     if os.path.isdir('{}/search_results'.format(Configs.outdir)):
-        os.system('rm -r {}/search_results'.format(Configs.outdir))
+        shutil.rmtree('{}/search_results'.format(Configs.outdir))
     if os.path.isdir('{}/data'.format(Configs.outdir)):
-        os.system('rm -r {}/data'.format(Configs.outdir))
+        shutil.rmtree('{}/data'.format(Configs.outdir))
+    if os.path.isdir('{}/weights'.format(Configs.outdir)):
+        shutil.rmtree('{}/weights'.format(Configs.outdir))
     if not Configs.keepgcmtemp \
             and os.path.isdir('{}/magus_outputs'.format(Configs.outdir)):
-        os.system('rm -r {}/magus_outputs'.format(Configs.outdir))
+        shutil.rmtree('{}/magus_outputs'.format(Configs.outdir))
 
 '''
 Init function for a queue
@@ -35,30 +37,37 @@ def init_queue(q):
     alignSubQueries.q = q
 
 '''
+Dummy function
+'''
+def dummy():
+    pass
+
+'''
 Main process for GCM+eHMMs
 '''
 def mainAlignmentProcess():
     m = Manager()
     lock = m.Lock()
     #l = Lock()
+    q = Queue()
+
+    # initialize the main pool at the start so that it's not memory
+    # intensive
+    Configs.warning('Initializing ProcessorPoolExecutor instance...')
+    pool = ProcessPoolExecutor(Configs.num_cpus, initializer=init_queue,
+            initargs=(q,))
+    _ = pool.submit(dummy)
 
     # 1) get all sub-queries, write to [outdir]/data
-    unaligned = Alignment(); unaligned.read_file_object(Configs.query_path)
-    num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
-    index_to_hmm, ranked_bitscores = loadSubQueries(unaligned)
+    num_subset, index_to_hmm, ranked_bitscores = loadSubQueries()
 
     # 2) calculate weights, if needed 
     Weights.ranked_bitscores = ranked_bitscores
     if Configs.use_weight:
         loadWeights(index_to_hmm, ranked_bitscores)
 
-    #print('current usage of memory: {} MB'.format(
-    #    psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2))
-    #exit()
-
     # 3) solve each subset
     sub_alignment_paths = []
-    q = Queue()
 
     ############ multiprocessing with Pool ##########
     # manager version
@@ -70,8 +79,6 @@ def mainAlignmentProcess():
     #pool.join()
 
     # ProcessPoolExecutor version
-    pool = ProcessPoolExecutor(Configs.num_cpus, initializer=init_queue,
-            initargs=(q,))
     index_list = [i for i in range(num_subset)]
     func = partial(alignSubQueries, index_to_hmm, lock)
     results = list(pool.map(func, index_list))
@@ -86,10 +93,6 @@ def mainAlignmentProcess():
             Configs.log('Rerunning failed jobs: {}'.format(failed_items))
             failure.append(failed_items)
             retry_results = list(pool.map(func, failed_items))
-    Configs.warning('Closing ProcessPoolExecutor instance...')
-    pool.shutdown()
-    Configs.warning('ProcessPoolExecutor instance closed.')
-
     sub_alignment_paths = success
 
     # global lock version
@@ -107,7 +110,10 @@ def mainAlignmentProcess():
 
     # 4) merge all results 
     print("\nAll GCM subproblems finished! Doing merging with transitivity...")
-    mergeAlignments(sub_alignment_paths)
+    mergeAlignments(sub_alignment_paths, pool)
 
+    Configs.warning('Closing ProcessPoolExecutor instance...')
+    pool.shutdown()
+    Configs.warning('ProcessPoolExecutor instance closed.')
     if not Configs.keeptemp:
         clearTempFiles()

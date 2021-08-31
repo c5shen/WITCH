@@ -2,7 +2,7 @@ import os, subprocess, psutil, shutil
 import time
 from collections import defaultdict
 from configs import Configs
-from gcmm.weighting import Weights
+from gcmm.weighting import Weights, readWeights
 from helpers.alignment_tools import Alignment, ExtendedAlignment
 from multiprocessing import Queue, Lock
 
@@ -19,21 +19,28 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
     # return is a map from HMM index to a list of fragments that have high
     # bit scores at the HMM.
     ret = defaultdict(list)
-    if Configs.use_weight:
-        weights = Weights.weights 
-    else:
-        weights = Weights.ranked_bitscores
+    #if Configs.use_weight:
+    #    weights = Weights.weights 
+    #else:
+    #    weights = Weights.ranked_bitscores
 
     # for each taxon and its scores on HMMs, sort it in decreasing order
     #for taxon, sorted_weights in weights.items():
     ret_str = ''
+    weights_map = {}
     for taxon, seq in unaligned.items():
         if ret_str != '':
             ret_str += '\n'
 
-        if not taxon in weights:
+        # load weights from local
+        weights, this_weights_map = readWeights(taxon)
+        if weights == None:
             return 'N/A'
-        sorted_weights = weights[taxon]
+        sorted_weights = weights
+        weights_map[taxon] = this_weights_map
+        #if not taxon in weights:
+        #    return 'N/A'
+        #sorted_weights = weights[taxon]
 
         top_k_hmms = sorted_weights[:Configs.num_hmms]
         if Configs.use_weight:
@@ -82,10 +89,10 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
                     hmm_dir, taxon, i)
             cmd = '{} -o {} {} {}'.format(Configs.hmmalign_path,
                     hmmalign_result_path, this_hmm, frag_path)
-            subprocess.run(cmd, check=True)
             #if not (os.path.exists(hmmalign_result_path) and os.path.getsize(
             #    hmmalign_result_path) > 0):
             #    os.system(cmd)
+            subprocess.run(cmd.split(' '))
         
             # Extended alignment
             ap_aln = ExtendedAlignment(frag.get_sequence_names())
@@ -102,8 +109,10 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
             if Configs.use_weight:
                 real_this_bb_path = os.popen('realpath -s {}'.format(
                     this_bb_path)).read().split('\n')[0]
+                #weights_file.write('{},{}\n'.format(
+                #        real_this_bb_path, Weights.weights_map[taxon][i]))
                 weights_file.write('{},{}\n'.format(
-                        real_this_bb_path, Weights.weights_map[taxon][i]))
+                        real_this_bb_path, weights_map[taxon][i]))
     weights_file.close()
     
     return ret_str
@@ -194,11 +203,7 @@ def alignSubQueries(index_to_hmm, lock, index):
         shutil.rmtree(hmmsearch_dir)
         shutil.rmtree(bb_dir)
         shutil.rmtree(constraints_dir)
-        #os.system('rm -r {}'.format(hmmsearch_dir))
-        #os.system('rm -r {}'.format(bb_dir))
-        #os.system('rm -r {}'.format(constraints_dir))
         if not Configs.keepgcmtemp and os.path.isdir(gcm_outdir):
-            #os.system('rm -r {}'.format(gcm_outdir))
             shutil.rmtree(gcm_outdir)
     time_gcm = time.time() - s13
     
