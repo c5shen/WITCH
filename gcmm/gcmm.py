@@ -62,7 +62,6 @@ def mainAlignmentProcess():
     num_subset, index_to_hmm, ranked_bitscores = loadSubQueries()
 
     # 2) calculate weights, if needed 
-    Weights.ranked_bitscores = ranked_bitscores
     if Configs.use_weight:
         loadWeights(index_to_hmm, ranked_bitscores)
 
@@ -80,7 +79,7 @@ def mainAlignmentProcess():
 
     # ProcessPoolExecutor version
     index_list = [i for i in range(num_subset)]
-    func = partial(alignSubQueries, index_to_hmm, lock)
+    func = partial(alignSubQueries, index_to_hmm, ranked_bitscores, lock)
     results = list(pool.map(func, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:

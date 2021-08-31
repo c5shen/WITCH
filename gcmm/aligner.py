@@ -15,7 +15,8 @@ from multiprocessing import Queue, Lock
 '''
 Helper function to generate backbone alignments for the constraint sets
 '''
-def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
+def getBackbones(index_to_hmm, ranked_bitscores,
+        unaligned, workdir, backbone_dir):
     # return is a map from HMM index to a list of fragments that have high
     # bit scores at the HMM.
     ret = defaultdict(list)
@@ -37,7 +38,7 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
             sorted_weights, this_weights_map = readWeights(taxon)
             weights_map[taxon] = this_weights_map
         else:
-            sorted_weights = Weights.ranked_bitscores[taxon]
+            sorted_weights = ranked_bitscores[taxon]
 
         if sorted_weights == None:
             return 'N/A'
@@ -129,7 +130,7 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(index_to_hmm, lock, index):
+def alignSubQueries(index_to_hmm, ranked_bitscores, lock, index):
     #global lock
 
     s11 = time.time()
@@ -165,7 +166,8 @@ def alignSubQueries(index_to_hmm, lock, index):
         os.makedirs(hmmsearch_dir)
 
     # get backbones with the information we have
-    weights_str = getBackbones(index_to_hmm, unaligned, hmmsearch_dir, bb_dir)
+    weights_str = getBackbones(index_to_hmm, ranked_bitscores,
+            unaligned, hmmsearch_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
 
     s13 = time.time()
