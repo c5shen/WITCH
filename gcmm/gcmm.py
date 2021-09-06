@@ -8,7 +8,7 @@ from helpers.alignment_tools import Alignment
 
 from multiprocessing import Pool, Lock, Queue, Manager
 from concurrent.futures.process import ProcessPoolExecutor
-from functools import partial
+From functools import partial
 
 '''
 Delete all unnecessary intermediate files
@@ -63,7 +63,7 @@ def mainAlignmentProcess():
 
     # 2) calculate weights, if needed 
     if Configs.use_weight:
-        loadWeights(index_to_hmm, ranked_bitscores)
+        loadWeights(index_to_hmm, ranked_bitscores, pool)
 
     # 3) solve each subset
     sub_alignment_paths = []

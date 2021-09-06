@@ -2,7 +2,7 @@ import os
 import time
 import numpy as np
 from configs import Configs
-from multiprocessing import Pool
+from concurrent.futures.process import PoolProcessExecutor
 
 class Weights(object):
     weights = dict()
@@ -57,9 +57,9 @@ def readWeights(taxon):
 '''
 Obtain and write weights to local based on bitscores
 '''
-def loadWeights(index_to_hmm, ranks):
+def loadWeights(index_to_hmm, ranks, pool):
     s2 = time.time()
-    pool = Pool(Configs.num_cpus)
+    #pool = Pool(Configs.num_cpus)
 
     # - get sizes of each HMM
     all_sizes = {}
@@ -76,16 +76,16 @@ def loadWeights(index_to_hmm, ranks):
         indexes = [x[0] for x in sorted_scores]
         bitscores = [x[1] for x in sorted_scores]
         sizes = [all_sizes[x] for x in indexes]
-        args.append([taxon, indexes, bitscores, sizes])
+        args.append((taxon, indexes, bitscores, sizes))
 
         ## sequential version to calculate weights
         #this_weights_map,_ = calculateWeights(taxon, indexes, bitscores, sizes)
         #weights[taxon] = sorted([(ind, w) for ind, w in this_weights_map.items()],
         #        key = lambda x: x[1], reverse=True)
         #weights_map[taxon] = this_weights_map
-    all_weights_and_temps = pool.starmap(calculateWeights, args)
-    pool.close()
-    pool.join()
+    all_weights_and_temps = list(pool.map(calculateWeights, args))
+    #pool.close()
+    #pool.join()
 
     #for item in all_weights_and_temps:
     #    weights[item[0]] = sorted([(ind, w) for ind, w in item[1].items()],
