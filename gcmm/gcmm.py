@@ -8,7 +8,7 @@ from helpers.alignment_tools import Alignment
 
 from multiprocessing import Pool, Lock, Queue, Manager
 from concurrent.futures.process import ProcessPoolExecutor
-From functools import partial
+from functools import partial
 
 '''
 Delete all unnecessary intermediate files
