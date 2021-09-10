@@ -140,16 +140,18 @@ def readAndRankBitscoreMP(index_to_hmm):
             for pair in ind_score_pairs:
                 ranks[taxon].append(pair)
 
-    # write to local
-    ranked = defaultdict(list)
-    with open(Configs.outdir + '/ranked_scores.txt', 'w') as f:
-        for taxon, scores in ranks.items():
-            sorted_scores = sorted(scores, key = lambda x: x[1], reverse=True)
-            ranked[taxon] = sorted_scores
-            f.write(taxon + ':' + ';'.join(
-                [str(z) for z in sorted_scores]) + '\n')
-    Configs.warning("Finished writing ranked scores to local!")
-    return ranked
+    # sort the bitscores and write to local
+    ranked_bitscores = defaultdict(list)
+    #with open(Configs.outdir + '/ranked_scores.txt', 'w') as f:
+    for taxon, scores in ranks.items():
+        sorted_scores = sorted(scores, key = lambda x: x[1], reverse=True)
+        ranked_bitscores[taxon] = sorted_scores
+        #f.write(taxon + ':' + ';'.join(
+        #    [str(z) for z in sorted_scores]) + '\n')
+    #Configs.warning("Finished writing ranked bitscores to local!")
+    #else:
+    #    Configs.warning("keeptemp=False, not writing ranked bitscore to local.")
+    return ranked_bitscores
 
 '''
 Read in and rank bitscores from UPP decomposition

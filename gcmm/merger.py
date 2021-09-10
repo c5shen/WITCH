@@ -3,7 +3,7 @@ import time
 from configs import Configs
 from helpers.alignment_tools import Alignment, read_fasta, \
         CompactAlignment, compact 
-from concurrent.futures.process import ProcessPoolExecutor
+#from concurrent.futures.process import ProcessPoolExecutor
 from math import ceil
 
 '''

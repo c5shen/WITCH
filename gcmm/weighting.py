@@ -2,7 +2,6 @@ import os
 import time
 import numpy as np
 from configs import Configs
-from concurrent.futures.process import PoolProcessExecutor
 
 class Weights(object):
     weights = dict()
@@ -12,12 +11,44 @@ class Weights(object):
         pass
 
 '''
+Function to read in weights from local given the taxon name
+'''
+def readWeights(taxon):
+    infile = Configs.outdir + '/weights/w_{}.txt'.format(taxon)
+    if not os.path.isfile(infile):
+        return None, None
+    else:
+        weights, weights_map = [], [] 
+        with open(infile, 'r') as f:
+            line = f.read()
+            taxon, raw = line.split(':')
+            weights = [eval(x) for x in raw.split(';')]
+            weights_map = {ind: w for (ind, w) in weights}
+        return weights, weights_map
+
+'''
+Function to read in bitscores from local given the taxon name
+'''
+def readBitscores(taxon):
+    infile = Configs.outdir + '/bitscores/b_{}.txt'.format(taxon)
+    if not os.path.isfile(infile):
+        return None, None
+    else:
+        bitscores = [] 
+        with open(infile, 'r') as f:
+            line = f.read()
+            taxon, raw = line.split(':')
+            bitscores = [eval(x) for x in raw.split(';')]
+        return bitscores
+
+'''
 Function to calculate the HMM weighting, given the bitscores and sizes
 of the HMMs (for a given query taxon)
 inputs: ensemble of HMMs H (with their bitscores and sizes)
 outputs: weights for HMMs H
 '''
-def calculateWeights(taxon, indexes, bitscores, sizes):
+def calculateWeights(packed_data):
+    taxon, indexes, bitscores, sizes = packed_data
     #logging.debug('working with: {}'.format(taxon))
     weights = {}
     
@@ -39,26 +70,41 @@ def calculateWeights(taxon, indexes, bitscores, sizes):
     return None
 
 '''
-Function to read in weights from local given the taxon name
+Function to write a single taxon with its ranked bitscore to local
 '''
-def readWeights(taxon):
-    infile = Configs.outdir + '/weights/w_{}.txt'.format(taxon)
-    if not os.path.isfile(infile):
-        return None, None
-    else:
-        weights, weights_map = [], [] 
-        with open(infile, 'r') as f:
-            line = f.read()
-            taxon, raw = line.split(':')
-            weights = [eval(x) for x in raw.split(';')]
-            weights_map = {ind: w for (ind, w) in weights}
-        return weights, weights_map
+def writeQueryBitscores(packed_data):
+    taxon, sorted_scores = packed_data
+    str_sorted_scores = [str(x) for x in sorted_scores]
+
+    with open(Configs.outdir + '/bitscores/b_{}.txt'.format(taxon), 'w') as f:
+        f.write(taxon + ':' + ';'.join(str_sorted_scores) + '\n')
+    return None
+
+'''
+Write bitscores to local (the same way as we write weights)
+'''
+def writeBitscores(ranked_bitscores, pool):
+    s2 = time.time()
+    Configs.warning('Starting to write bitscores...')
+    if not os.path.isdir(Configs.outdir + '/bitscores'):
+        os.makedirs(Configs.outdir + '/bitscores')
+
+    args = []
+    for taxon, sorted_scores in ranked_bitscores.items():
+        args.append((taxon, sorted_scores))
+    all_score_temps = list(pool.map(writeQueryBitscores, args))
+
+    time_write_scores = time.time() - s2
+    Configs.warning('Finished writing bitscores to local!')
+    Configs.runtime('Time to write ranked bitscores to local (s): {}'.format(
+        time_write_scores))
 
 '''
 Obtain and write weights to local based on bitscores
 '''
-def loadWeights(index_to_hmm, ranks, pool):
+def writeWeights(index_to_hmm, ranked_bitscores, pool):
     s2 = time.time()
+    Configs.warning('Starting to calculate weights...')
     #pool = Pool(Configs.num_cpus)
 
     # - get sizes of each HMM
@@ -72,7 +118,7 @@ def loadWeights(index_to_hmm, ranks, pool):
         os.makedirs(Configs.outdir + '/weights')
     weights, weights_map = {}, {}
     args = []
-    for taxon, sorted_scores in ranks.items():
+    for taxon, sorted_scores in ranked_bitscores.items():
         indexes = [x[0] for x in sorted_scores]
         bitscores = [x[1] for x in sorted_scores]
         sizes = [all_sizes[x] for x in indexes]
@@ -84,21 +130,7 @@ def loadWeights(index_to_hmm, ranks, pool):
         #        key = lambda x: x[1], reverse=True)
         #weights_map[taxon] = this_weights_map
     all_weights_and_temps = list(pool.map(calculateWeights, args))
-    #pool.close()
-    #pool.join()
 
-    #for item in all_weights_and_temps:
-    #    weights[item[0]] = sorted([(ind, w) for ind, w in item[1].items()],
-    #            key = lambda x: x[1], reverse=True)
-    #    weights_map[item[0]] = item[1]
-    #Weights.weights = weights
-    #Weights.weights_map = weights_map
-
-    # write weights to local
-    #with open('{}/all_weights.txt'.format(Configs.outdir), 'w') as f:
-    #    for taxon, weight in weights.items():
-    #        w = [str(x) for x in weight]
-    #        f.write(taxon + ':' + ';'.join(w) + '\n')
     time_obtain_weights = time.time() - s2
     Configs.warning('Finished calculating weights!')
     Configs.runtime('Time to obtain weights given bitscores (s): {}'.format(

@@ -1,7 +1,7 @@
 import os, math, psutil, shutil 
 from configs import Configs
 from gcmm.loader import loadSubQueries 
-from gcmm.weighting import loadWeights, Weights
+from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
 from gcmm.merger import mergeAlignments
 from helpers.alignment_tools import Alignment
@@ -26,6 +26,8 @@ def clearTempFiles():
         shutil.rmtree('{}/data'.format(Configs.outdir))
     if os.path.isdir('{}/weights'.format(Configs.outdir)):
         shutil.rmtree('{}/weights'.format(Configs.outdir))
+    if os.path.isdir('{}/bitscores'.format(Configs.outdir)):
+        shutil.rmtree('{}/bitscores'.format(Configs.outdir))
     if not Configs.keepgcmtemp \
             and os.path.isdir('{}/magus_outputs'.format(Configs.outdir)):
         shutil.rmtree('{}/magus_outputs'.format(Configs.outdir))
@@ -63,7 +65,9 @@ def mainAlignmentProcess():
 
     # 2) calculate weights, if needed 
     if Configs.use_weight:
-        loadWeights(index_to_hmm, ranked_bitscores, pool)
+        writeWeights(index_to_hmm, ranked_bitscores, pool)
+    else:
+        writeBitscores(ranked_bitscores, pool)
 
     # 3) solve each subset
     sub_alignment_paths = []
@@ -79,7 +83,7 @@ def mainAlignmentProcess():
 
     # ProcessPoolExecutor version
     index_list = [i for i in range(num_subset)]
-    func = partial(alignSubQueries, index_to_hmm, ranked_bitscores, lock)
+    func = partial(alignSubQueries, index_to_hmm, lock)
     results = list(pool.map(func, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:
