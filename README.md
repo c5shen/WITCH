@@ -33,7 +33,7 @@ PLACEHOLDER
 ---------------------------
 Installation
 ---------------------------
-This section lays out necessary steps to do to run GCM+eHMMs. We tested GCM+eHMMs on Linux. If you experience any difficulty running GCM+eHMMs, please contact Chengze Shen at chengze5@illinois.edu.
+This section lays out necessary steps to do to run GCM+eHMMs. We tested GCM+eHMMs on Linux. If you experience any difficulty running GCM+eHMMs, please contact Chengze Shen chengze5@illinois.edu).
 
 ### Requirements
 ```
