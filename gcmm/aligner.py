@@ -175,7 +175,7 @@ def alignSubQueries(index_to_hmm, lock, index):
 
     if weights_str != 'N/A':
         # run GCM (modified MAGUS which takes in weights) on the subset
-        est_path = Configs.outdir + '/magus_result_{}.txt'.format(index)
+        est_path = Configs.outdir + '/temp/magus_result_{}.txt'.format(index)
         cmd = ['python3', Configs.magus_path, '-np', '1',
                 '-d', gcm_outdir, '-s', constraints_dir, '-b', bb_dir,
                 '-o', est_path, '-f', str(Configs.inflation_factor),

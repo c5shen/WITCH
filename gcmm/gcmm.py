@@ -15,7 +15,8 @@ Delete all unnecessary intermediate files
 '''
 def clearTempFiles():
     if not Configs.keepsubalignment:
-        os.system('rm -r {}/magus_result_*'.format(Configs.outdir))
+        os.system('find ./ -name {}/temp/magus_result_* -type f -delete'.format(Configs.outdir))
+        shutil.rmtree('{}/temp'.format(Configs.outdir))
     if os.path.isdir('{}/backbone_alignments'.format(Configs.outdir)):
         shutil.rmtree('{}/backbone_alignments'.format(Configs.outdir))
     if os.path.isdir('{}/constraints'.format(Configs.outdir)):
@@ -71,6 +72,8 @@ def mainAlignmentProcess():
 
     # 3) solve each subset
     sub_alignment_paths = []
+    if not os.path.isdir(Configs.outdir + '/temp'):
+        os.makedirs(Configs.outdir + '/temp')
 
     ############ multiprocessing with Pool ##########
     # manager version
