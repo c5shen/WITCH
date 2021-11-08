@@ -15,7 +15,7 @@ Delete all unnecessary intermediate files
 '''
 def clearTempFiles():
     if not Configs.keepsubalignment:
-        os.system('find ./ -name {}/temp/magus_result_* -type f -delete'.format(Configs.outdir))
+        os.system('find {}/temp/ -type f -delete'.format(Configs.outdir))
         shutil.rmtree('{}/temp'.format(Configs.outdir))
     if os.path.isdir('{}/backbone_alignments'.format(Configs.outdir)):
         shutil.rmtree('{}/backbone_alignments'.format(Configs.outdir))
