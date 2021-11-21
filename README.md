@@ -47,7 +47,7 @@ Dendropy >= 4.4.0
 2. Execute the python file as `python gcm+eHMMs.py`.
 
 ----------------------------
-Ruuning GCM+eHMMs
+Running GCM+eHMMs
 ----------------------------
 General command to run GCM+eHMMs is:
 ```
