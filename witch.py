@@ -8,7 +8,7 @@ from gcmm.gcmm import mainAlignmentProcess
 def main():
     args = parseArgs()
     buildConfigs(args)
-    Configs.log('GCM+eHMMs is running with: {}'.format(' '.join(sys.argv)))
+    Configs.log('WITCH is running with: {}'.format(' '.join(sys.argv)))
     getConfigs()
 
     # run the codes
@@ -16,57 +16,66 @@ def main():
     mainAlignmentProcess()
     s2 = time.time()
 
-    Configs.log('GCM+eHMMs finished in {} seconds...'.format(s2 - s1))
+    Configs.log('WITCH finished in {} seconds...'.format(s2 - s1))
 
 def parseArgs():
     parser = argparse.ArgumentParser()
 
-    # requirements
-    required_group = parser.add_argument_group(
-            "Required Parameters".upper(),
-            ' '.join(["These are required fields, assuming that an UPP",
-                "output and its temporary files are available."]))
+    # basic settings
+    basic_group = parser.add_argument_group(
+            "Basic parameters".upper(),
+            ' '.join(["These are basic fields.",
+                "Users can choose to provide the backbone alignment/tree,",
+                "or even the path to the eHMM from a previous UPP run.",
+                "Otherwise, WITCH will generate them."]))
     parser.groups = dict()
-    parser.groups['required_group'] = required_group
-    required_group.add_argument('-p', '--hmmdir', type=str,
-            help='Path to the HMMs directory generated from UPP', required=True)
-    required_group.add_argument('-b', '--backbone-path', type=str,
-            help='Path to the backbone alignment from/for UPP', required=True)
-    required_group.add_argument('-q', '--query-path', type=str,
-            help='Path to the queries file that we want to align', required=True)
-    required_group.add_argument('-o', '--outdir', type=str,
-            help='Output directory, default: gcm+eHMMs_output/', required=False,
-            default='gcm+eHMMs_output')
+    parser.groups['basic_group'] = basic_group
+    basic_group.add_argument('-i', '--input', type=str,
+            help='Path to the input unaligned file. Required.', required=False)
+    basic_group.add_argument('-p', '--hmmdir', type=str,
+            help='Path to the HMMs directory generated from UPP', required=False)
+    basic_group.add_argument('-b', '--backbone-path', type=str,
+            help='Path to the backbone alignment', required=False)
+    basic_group.add_argument('-e', '--backbone-tree-path', type=str,
+            help='Path to the backbone tree', required=False)
+    basic_group.add_argument('-q', '--query-path', type=str,
+            help='Path to the queries file that we want to align', required=False)
+    basic_group.add_argument('-o', '--outdir', type=str,
+            help='Output directory, default: witch_output/', required=False,
+            default='witch_output')
 
-    # GCM+eHMMs options
-    gcm_eHMMs_group = parser.add_argument_group(
-            "GCM+eHMMs options".upper(),
-            ' '.join(["These options are used to customize the GCM+eHMMs",
+    # WITCH options
+    witch_group = parser.add_argument_group(
+            "WITCH options".upper(),
+            ' '.join(["These options are used to customize WITCH",
                 "pipeline."]))
-    parser.groups['gcm_eHMMs_group'] = gcm_eHMMs_group
-    gcm_eHMMs_group.add_argument('--keeptemp', action='store_const', const=True,
+    parser.groups['witch_group'] = witch_group
+    witch_group.add_argument('--keeptemp', action='store_const', const=True,
             help='Keep ALL temporary files in the process (constraints' \
                     + ', backbones, HMMSearch results, GCM results, etc.)',
             default=False)
-    gcm_eHMMs_group.add_argument('--keepsubalignment',
+    witch_group.add_argument('--keepsubalignment',
             action='store_const', const=True,
             help='Keep all subalignments by MAGUS/GCM', default=False)
-    gcm_eHMMs_group.add_argument('-k', '--num-hmms', type=int,
+    witch_group.add_argument('-k', '--num-hmms', type=int,
             help='The number of top HMMs used for aligning a query',
             required=False, default=4)
-    gcm_eHMMs_group.add_argument('-w', '--use-weight',
+    witch_group.add_argument('-w', '--use-weight',
             action='store_const', const=True, required=False,
             help='Whether to use adjusted bitscore (weights), default: 0',
             default=False)
-    gcm_eHMMs_group.add_argument('-s', '--subset-size', type=int,
+    witch_group.add_argument('-s', '--subset-size', type=int,
             help='Number of queries in a single GCM run, default: 1',
             required=False, default=1)
-    gcm_eHMMs_group.add_argument('--weight-adjust', type=str, required=False,
+    witch_group.add_argument('--weight-adjust', type=str, required=False,
             default='none', choices=['none', 'normalize', 'maxto1'],
             help='Optional adjustment of weights, default: none')
-    gcm_eHMMs_group.add_argument('-t', '--num-cpus', type=int,
+    witch_group.add_argument('-t', '--num-cpus', type=int,
             help='Number of cpus for multi-processing, default: -1 (all)',
             required=False, default=-1)
+    witch_group.add_argument('--molecule', type=str,
+            help='Whether input is amino/dna/rna, default: dna',
+            required=False, default='dna', choices=['amino', 'dna', 'rna'])
 
     # GCM option
     gcm_group = parser.add_argument_group(

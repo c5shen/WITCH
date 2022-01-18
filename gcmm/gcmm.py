@@ -1,9 +1,11 @@
 import os, math, psutil, shutil 
 from configs import Configs
+from gcmm.algorithm import DecompositionAlgorithm
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
 from gcmm.merger import mergeAlignments
+
 from helpers.alignment_tools import Alignment
 
 from multiprocessing import Pool, Lock, Queue, Manager
@@ -46,7 +48,7 @@ def dummy():
     pass
 
 '''
-Main process for GCM+eHMMs
+Main process for WITCH 
 '''
 def mainAlignmentProcess():
     m = Manager()
@@ -60,6 +62,13 @@ def mainAlignmentProcess():
     pool = ProcessPoolExecutor(Configs.num_cpus, initializer=init_queue,
             initargs=(q,))
     _ = pool.submit(dummy)
+
+    # 0) obtain the backbone alignment/tree and eHMMs
+    if not Configs.hmmdir:
+        if Configs.backbone_path:
+            decomp = DecompositionAlgorithm()
+            decomp.decomposition(lock, pool)
+    exit()
 
     # 1) get all sub-queries, write to [outdir]/data
     num_subset, index_to_hmm, ranked_bitscores = loadSubQueries()

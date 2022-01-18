@@ -7,6 +7,7 @@ Configurations defined by users
 class Configs:
     hmmdir = None
     backbone_path = None
+    backbone_tree_path = None
     query_path = None
     outdir = None
     keeptemp = False
@@ -17,10 +18,12 @@ class Configs:
     weight_adjust = 'none'
     subset_size = 1
     num_cpus = -1
+    molecule = 'dna'
 
     # hmmalign/hmmsearch/magus paths
     hmmalign_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmalign')
     hmmsearch_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmsearch')
+    hmmbuild_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmbuild')
     magus_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/magus/magus.py')
 
     log_path = None
@@ -71,8 +74,10 @@ class Configs:
 
 # print a list of all configurations
 def getConfigs():
+    print('Configs.input:', Configs.input)
     print('Configs.hmmdir:', Configs.hmmdir)
     print('Configs.backbone_path:', Configs.backbone_path)
+    print('Configs.backbone_tree_path:', Configs.backbone_tree_path)
     print('Configs.query_path:', Configs.query_path)
     print('Configs.outdir:', Configs.outdir)
     print('Configs.keeptemp:', Configs.keeptemp)
@@ -100,12 +105,19 @@ def getConfigs():
     print('Configs.graphtraceoptimize:', Configs.graphtraceoptimize)
 
 def buildConfigs(args):
-    Configs.hmmdir = os.path.abspath(args.hmmdir)
-    Configs.backbone_path = os.path.abspath(args.backbone_path)
-    Configs.query_path = os.path.abspath(args.query_path)
+    #Configs.input = os.path.abspath(args.input)
+    Configs.input = None
+
+    if args.hmmdir != None:
+        Configs.hmmdir = os.path.abspath(args.hmmdir)
+    if args.backbone_path != None:
+        Configs.backbone_path = os.path.abspath(args.backbone_path)
+    if args.backbone_tree_path != None:
+        Configs.backbone_tree_path = os.path.abspath(args.backbone_tree_path)
+    if args.query_path != None:
+        Configs.query_path = os.path.abspath(args.query_path)
     
-    if args.outdir is not None:
-        Configs.outdir = os.path.abspath(args.outdir)
+    Configs.outdir = os.path.abspath(args.outdir)
     if not os.path.exists(Configs.outdir):
         os.makedirs(Configs.outdir)
 
@@ -136,6 +148,8 @@ def buildConfigs(args):
         Configs.num_cpus = args.num_cpus
     else:
         Configs.num_cpus = os.cpu_count()
+
+    Configs.molecule = args.molecule
 
     # MAGUS/GCM options
     Configs.keepgcmtemp = args.keepgcmtemp
