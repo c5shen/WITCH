@@ -1,3 +1,9 @@
+'''
+Created on 1.22.2022 by Chengze Shen
+
+Algorithms for tree decomposition and hmmsearch.
+'''
+
 import os, subprocess, math, time, psutil, shutil 
 from configs import Configs
 from helpers.alignment_tools import Alignment, MutableAlignment 
@@ -116,7 +122,7 @@ class DecompositionAlgorithm(object):
         dur = time.time() - start
         Configs.runtime('Time to decompose the backbone (s): {}'.format(
             dur))
-        return alignment, tree, hmmbuild_paths
+        return hmmbuild_paths
 
 '''
 Class to perform HMMSearch on all hmmbuild subsets and fragment sequences

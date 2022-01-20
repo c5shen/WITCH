@@ -31,7 +31,7 @@ def parseArgs():
     parser.groups = dict()
     parser.groups['basic_group'] = basic_group
     basic_group.add_argument('-i', '--input', type=str,
-            help='Path to the input unaligned file. Required.', required=False)
+            help='Path to the input unaligned file (all sequences).', required=False)
     basic_group.add_argument('-p', '--hmmdir', type=str,
             help='Path to the HMMs directory generated from UPP', required=False)
     basic_group.add_argument('-b', '--backbone-path', type=str,

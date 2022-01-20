@@ -1,3 +1,10 @@
+'''
+Created on 10.28.2021 by Chengze Shen
+
+Merger of all query alignments to form the final alignment. The merging step
+is exactly the same one from PASTA and UPP (by transitivity).
+'''
+
 import os, sys, re
 import time
 from configs import Configs

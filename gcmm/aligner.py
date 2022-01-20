@@ -4,7 +4,7 @@ from collections import defaultdict
 from configs import Configs
 from gcmm.weighting import readWeights, readBitscores
 from helpers.alignment_tools import Alignment, ExtendedAlignment
-from multiprocessing import Queue, Lock
+from multiprocessing import Queue#, Lock
 
 ## initialize the lock for asynchronous safe logging
 ## Lock is passed from the main process

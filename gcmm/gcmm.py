@@ -1,9 +1,16 @@
+'''
+Created on 1.22.2022 by Chengze Shen
+
+Main pipeline of WITCH,
+'''
+
 import os, math, psutil, shutil 
 from configs import Configs
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
+from gcmm.backbone import BackboneAlignmentJob, BackboneTreeJob
 from gcmm.merger import mergeAlignments
 
 from helpers.alignment_tools import Alignment
@@ -64,21 +71,31 @@ def mainAlignmentProcess():
     _ = pool.submit(dummy)
 
     # 0) obtain the backbone alignment/tree and eHMMs
-    backbone, backbone_tree, queries = None, None, None
+    # If no UPP eHMM directory provided, decompose from the backbone
     if not Configs.hmmdir:
+        # if both backbone alignment/tree present
         if Configs.backbone_path and Configs.backbone_tree_path:
-            decomp = DecompositionAlgorithm(Configs.backbone_path,
-                    Configs.backbone_tree_path)
-            backbone, backbone_tree, hmmbuild_paths = \
-                    decomp.decomposition(lock, pool)
-            search = SearchAlgorithm(hmmbuild_paths)
-            hmmsearch_paths = search.search(lock, pool)
+            pass
         else:
-            raise NotImplementedError
+            # if missing backbone alignment, do a MAGUS alignment
+            Configs.backbone_path = alignBackbone(Configs.input_path)
+
+        decomp = DecompositionAlgorithm(Configs.backbone_path,
+                Configs.backbone_tree_path)
+        hmmbuild_paths = decomp.decomposition(lock, pool)
+        search = SearchAlgorithm(hmmbuild_paths)
+        hmmsearch_paths = search.search(lock, pool)
+        
+        # default to <outdir>/tree_comp
         Configs.hmmdir = Configs.outdir + '/tree_decomp'
 
+    # sanity check before moving on
+    assert os.path.isfile(Configs.backbone_path), 'backbone alignment missing'
+    assert os.path.isfile(Configs.backbone_tree_path), 'backbone tree missing'
+    assert os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
+
     # 1) get all sub-queries, write to [outdir]/data
-    num_subset, index_to_hmm, ranked_bitscores = loadSubQueries()
+    num_subset, index_to_hmm, ranked_bitscores = loadSubQueries(lock, pool)
 
     # 2) calculate weights, if needed 
     if Configs.use_weight:

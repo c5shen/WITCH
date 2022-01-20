@@ -1,3 +1,9 @@
+'''
+Created on 1.22.2022 by Chengze Shen
+
+Global configuration class.
+'''
+
 import os
 import time
 
@@ -6,6 +12,7 @@ Configurations defined by users
 '''
 class Configs:
     hmmdir = None
+    input_path = None
     backbone_path = None
     backbone_tree_path = None
     query_path = None
@@ -74,7 +81,7 @@ class Configs:
 
 # print a list of all configurations
 def getConfigs():
-    print('Configs.input:', Configs.input)
+    print('Configs.input:', Configs.input_path)
     print('Configs.hmmdir:', Configs.hmmdir)
     print('Configs.backbone_path:', Configs.backbone_path)
     print('Configs.backbone_tree_path:', Configs.backbone_tree_path)
@@ -105,9 +112,8 @@ def getConfigs():
     print('Configs.graphtraceoptimize:', Configs.graphtraceoptimize)
 
 def buildConfigs(args):
-    #Configs.input = os.path.abspath(args.input)
-    Configs.input = None
-
+    if args.input != None:
+        Configs.input_path = os.path.abspath(args.input)
     if args.hmmdir != None:
         Configs.hmmdir = os.path.abspath(args.hmmdir)
     if args.backbone_path != None:
