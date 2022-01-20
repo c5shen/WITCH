@@ -284,6 +284,20 @@ class Alignment(dict, object):
     def from_string_to_bytearray(self):
         for k,v in self.items():
             self[k] = bytearray(v)   
+    
+    def divide_to_equal_chunks(self, chunks, max_chunk_size=None):
+        names = self.get_sequence_names()
+        ret = []
+        if max_chunk_size and len(names) / chunks > max_chunk_size:
+            chunks = len(names) // max_chunk_size + 1
+        for i in range(0, chunks):
+            subset = names[i:len(names):chunks]
+            if subset:
+                subset_alg = self.sub_alignment(subset)
+            else:
+                subset_alg = None
+            ret.append(subset_alg)
+        return ret
 
     def mask_gapy_sites(self,minimum_seq_requirement):        
         n = len(list(self.values())[0])
@@ -700,7 +714,7 @@ class MutableAlignment(dict, ReadOnlyAlignment, object):
         be replaced.
         """
         if file_format.upper() == 'FASTA':
-            read_func = _read_fasta
+            read_func = read_fasta
 #        elif (file_format.upper() == 'NEXUS'):
 #            read_func = read_nexus
 #        elif (file_format.upper() == 'PHYLIP'):

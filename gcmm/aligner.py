@@ -186,7 +186,8 @@ def alignSubQueries(index_to_hmm, lock, index):
             weights_path = hmmsearch_dir + '/weights.txt'
             cmd += ['-w', weights_path] 
         #os.system(cmd)
-        p = subprocess.Popen(cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
 
         try:
             p.wait(Configs.timeout)
@@ -222,7 +223,7 @@ def alignSubQueries(index_to_hmm, lock, index):
                     'i={}) Time to run GCM and'.format(index),
                     'clean temporary files (s):', str(time_gcm)]))
             if weights_str != 'N/A':
-                Configs.debug("Command used: {}".format(' '.join(cmd)))
+                Configs.debug("[MAGUS] Command used: {}".format(' '.join(cmd)))
                 Configs.log(weights_str)
                 Configs.log('{} passed to main pipeline...'.format(est_path))
             else:

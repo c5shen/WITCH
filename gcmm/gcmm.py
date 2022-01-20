@@ -1,6 +1,6 @@
 import os, math, psutil, shutil 
 from configs import Configs
-from gcmm.algorithm import DecompositionAlgorithm
+from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
@@ -64,11 +64,18 @@ def mainAlignmentProcess():
     _ = pool.submit(dummy)
 
     # 0) obtain the backbone alignment/tree and eHMMs
+    backbone, backbone_tree, queries = None, None, None
     if not Configs.hmmdir:
-        if Configs.backbone_path:
-            decomp = DecompositionAlgorithm()
-            decomp.decomposition(lock, pool)
-    exit()
+        if Configs.backbone_path and Configs.backbone_tree_path:
+            decomp = DecompositionAlgorithm(Configs.backbone_path,
+                    Configs.backbone_tree_path)
+            backbone, backbone_tree, hmmbuild_paths = \
+                    decomp.decomposition(lock, pool)
+            search = SearchAlgorithm(hmmbuild_paths)
+            hmmsearch_paths = search.search(lock, pool)
+        else:
+            raise NotImplementedError
+        Configs.hmmdir = Configs.outdir + '/tree_decomp'
 
     # 1) get all sub-queries, write to [outdir]/data
     num_subset, index_to_hmm, ranked_bitscores = loadSubQueries()
