@@ -1,23 +1,13 @@
 #!/bin/bash
+cd ../
 
-# WITCH settings: -w 1 (using weights)
-#                 -k 4 (using 4 HMMs to align each query sequence)
-#                 -d witch_output (output directory)
-#                 -o aligned.txt (alignment file, will be in output directory)
+## Scenario A - unaligned sequences only
+#python3 witch.py -i examples/data/unaligned_all.txt -d scenarioA_output -o aligned.txt
 
-## 1) input: unaligned sequences only
-#python3 ../witch.py -i data/unaligned_all.txt \
-#        -w 1 -k 4 -d witch_output -o aligned.txt
+## Scenario B - unaligned sequences only; using bit scores;
+##              using 10 HMMs to align a sequence
+#python3 witch.py -i examples/data/unaligned_all.txt -d scenarioB_output -o aligned.txt -w 0 -k 10
 
-# 2) input: a backbone alignment (but no backbone tree),
-#           and a set of query sequences
-python3 ../witch.py -b data/backbone.aln.fasta \
-        -q data/unaligned_frag.txt \
-        -w 1 -k 4 -d witch_output -o aligned.txt
-
-# 3) input: an ensemble of HMMs generated from a backbone alignment/tree,
-#           the backbone alignment, and a set of query sequences 
-#python3 ../witch.py -b data/backbone.aln.fasta \
-#        -q data/unaligned_frag.txt \
-#        -p data/hmmdir \
-#        -w 1 -k 4 -d witch_output -o aligned.txt
+## 3) Scenario C - backbone alignment available; backbone tree missing;
+##                 query sequences available 
+#python3 witch.py -b examples/data/backbone.aln.fasta -q examples/data/unaligned_frag.txt -d scenarioC_output -o aligned.txt
