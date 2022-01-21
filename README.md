@@ -50,7 +50,7 @@ git clone https://github.com/c5shen/WITCH.git
 
 # 2. install all requirements
 cd WITCH
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # 3. execute the WITCH python script with -h
 python3 witch.py -h
