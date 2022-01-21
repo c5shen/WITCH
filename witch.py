@@ -10,7 +10,6 @@ version = "0.1.0"
 def main():
     parser = _init_parser()
     buildConfigs(parser, sys.argv[1:])
-    Configs.log('WITCH is running with: {}'.format(' '.join(sys.argv)))
     getConfigs()
 
     # run the codes

@@ -107,9 +107,11 @@ def mainAlignmentProcess():
 
     # sanity check before moving on
     assert Configs.backbone_path != None \
-            and os.path.isfile(Configs.backbone_path), 'backbone alignment missing'
+            and os.path.exists(Configs.backbone_path), 'backbone alignment missing'
     assert Configs.backbone_tree_path != None \
-            and os.path.isfile(Configs.backbone_tree_path), 'backbone tree missing'
+            and os.path.exists(Configs.backbone_tree_path), 'backbone tree missing'
+    assert Configs.query_path != None \
+            and os.path.exists(Configs.query_path), 'query sequences missing'
     assert Configs.hmmdir != None \
             and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
 

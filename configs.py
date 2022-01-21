@@ -176,8 +176,8 @@ def buildConfigs(parser, cmdline_args):
     main_cmd_defaults = []
 
     if os.path.exists(main_config_path):
-        print('Found main configuration file at {}, '.format(
-            main_config_path) + 'loading in...')
+        #print('Found main configuration file at {}, '.format(
+        #    main_config_path) + 'loading in...')
         with open(main_config_path, 'r') as cfile:
             main_cmd_defaults = _read_config_file(cfile, opts)
     input_args = main_cmd_defaults + cmdline_args
@@ -259,6 +259,7 @@ def buildConfigs(parser, cmdline_args):
     #    setattr(Configs.backbone, 'alignment_method', args.backbone_method)
 
     # Bandaid way of logging main.config to log.txt
+    Configs.log('WITCH is running with: {}'.format(' '.join(cmdline_args)))
     if os.path.exists(main_config_path):
         Configs.log('Main configuration loaded from {}'.format(
             main_config_path))
