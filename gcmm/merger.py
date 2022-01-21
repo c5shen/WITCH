@@ -1,3 +1,10 @@
+'''
+Created on 10.28.2021 by Chengze Shen
+
+Merger of all query alignments to form the final alignment. The merging step
+is exactly the same one from PASTA and UPP (by transitivity).
+'''
+
 import os, sys, re
 import time
 from configs import Configs
@@ -32,7 +39,7 @@ the merged alignment to an output path
 def mergeAlignments(inpaths, pool):
     Configs.log('Merging all GCM subproblems with transitivity...')
     start = time.time()
-    outpath = Configs.outdir + '/merged.fasta'
+    outpath = Configs.output_path
     assert len(inpaths) > 0
 
     # split paths into NUM_CPUS chunks

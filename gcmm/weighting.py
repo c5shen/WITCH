@@ -1,3 +1,9 @@
+'''
+Created on 10.28.2021 by Chengze Shen
+
+Bitscore to weight calculation.
+'''
+
 import os
 import time
 import numpy as np

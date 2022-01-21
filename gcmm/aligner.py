@@ -4,7 +4,7 @@ from collections import defaultdict
 from configs import Configs
 from gcmm.weighting import readWeights, readBitscores
 from helpers.alignment_tools import Alignment, ExtendedAlignment
-from multiprocessing import Queue, Lock
+from multiprocessing import Queue#, Lock
 
 ## initialize the lock for asynchronous safe logging
 ## Lock is passed from the main process
@@ -128,7 +128,7 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(index_to_hmm, lock, index):
+def alignSubQueries(backbone_path, index_to_hmm, lock, index):
     #global lock
 
     s11 = time.time()
@@ -137,7 +137,7 @@ def alignSubQueries(index_to_hmm, lock, index):
     if not os.path.isdir(constraints_dir):
         os.makedirs(constraints_dir)
     # 0-th constraint set comes from the input alignment
-    shutil.copyfile(Configs.backbone_path, '{}/c0.fasta'.format(
+    shutil.copyfile(backbone_path, '{}/c0.fasta'.format(
         constraints_dir))
 
     unaligned_dir = Configs.outdir + '/data'
@@ -186,7 +186,8 @@ def alignSubQueries(index_to_hmm, lock, index):
             weights_path = hmmsearch_dir + '/weights.txt'
             cmd += ['-w', weights_path] 
         #os.system(cmd)
-        p = subprocess.Popen(cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
 
         try:
             p.wait(Configs.timeout)
@@ -222,7 +223,7 @@ def alignSubQueries(index_to_hmm, lock, index):
                     'i={}) Time to run GCM and'.format(index),
                     'clean temporary files (s):', str(time_gcm)]))
             if weights_str != 'N/A':
-                Configs.debug("Command used: {}".format(' '.join(cmd)))
+                Configs.debug("[MAGUS] Command used: {}".format(' '.join(cmd)))
                 Configs.log(weights_str)
                 Configs.log('{} passed to main pipeline...'.format(est_path))
             else:

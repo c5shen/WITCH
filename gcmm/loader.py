@@ -4,7 +4,8 @@ import math
 from configs import Configs
 from collections import defaultdict
 from helpers.alignment_tools import Alignment, read_fasta
-from multiprocessing import Lock, Pool
+
+#from multiprocessing import Lock, Pool
 from functools import partial
 
 '''
@@ -32,14 +33,15 @@ class HMMSubset(object):
 '''
 Initialize global lock for writing to log file
 '''
-def init_lock_loader(l):
-    global lock
-    lock = l
+#def init_lock_loader(l):
+#    global lock
+#    lock = l
 
 '''
 Function to write a single set of queries to local, given its index, etc
 '''
-def writeOneQuerySet(frag_names, unaligned, outdir, index, start_ind, end_ind):
+def writeOneQuerySet(frag_names, unaligned, outdir, args):
+    index, start_ind, end_ind = args
     chosen_frags = frag_names[start_ind:end_ind]
     sub_unaligned = unaligned.sub_alignment(chosen_frags)
     sub_unaligned.write(outdir + '/unaligned_frag_{}.txt'.format(index),
@@ -48,7 +50,7 @@ def writeOneQuerySet(frag_names, unaligned, outdir, index, start_ind, end_ind):
 '''
 Split and write sub-queries to local
 '''
-def writeSubQueries(unaligned, outdir, num_seq, num_subset):
+def writeSubQueries(unaligned, outdir, num_seq, num_subset, pool):
     if not os.path.isdir(outdir):
         os.system('mkdir -p {}'.format(outdir))
     frag_names = unaligned.get_sequence_names()
@@ -59,11 +61,12 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset):
         start_ind, end_ind = i * Configs.subset_size, \
                 min(num_seq, (i + 1) * Configs.subset_size)
         args.append((i, start_ind, end_ind))
-    pool = Pool(Configs.num_cpus)
+    #pool = Pool(Configs.num_cpus)
     func = partial(writeOneQuerySet, frag_names, unaligned, outdir)
-    pool.starmap(func, args)
-    pool.close()
-    pool.join()
+    pool.map(func, args)
+    #pool.starmap(func, args)
+    #pool.close()
+    #pool.join()
 
     Configs.log('Finished splitting queries to local.')
 
@@ -99,8 +102,7 @@ def getAlignmentSubsets(path):
 '''
 Read HMMSearch results given an HMMSubset object
 '''
-def readHMMSearch(total_num_models, subset):
-    global lock
+def readHMMSearch(lock, total_num_models, subset):
     lock.acquire()
     try:
         Configs.log('Reading HMMSearch result {}/{}'.format(subset.index,
@@ -122,17 +124,17 @@ def readHMMSearch(total_num_models, subset):
 '''
 MP version of reading in and ranking bitscores from HMM subsets (from UPP)
 '''
-def readAndRankBitscoreMP(index_to_hmm):
+def readAndRankBitscoreMP(index_to_hmm, lock, pool):
     ranks = defaultdict(list)
     total_num_models = len(index_to_hmm)
-    l = Lock()
+    #l = Lock()
 
     # submit jobs to Pool
-    pool = Pool(Configs.num_cpus, initializer=init_lock_loader, initargs=(l,))
-    func = partial(readHMMSearch, total_num_models)
-    all_subset_ranks = pool.map(func, index_to_hmm.values())
-    pool.close()
-    pool.join()
+    #pool = Pool(Configs.num_cpus, initializer=init_lock_loader, initargs=(l,))
+    func = partial(readHMMSearch, lock, total_num_models)
+    all_subset_ranks = list(pool.map(func, index_to_hmm.values()))
+    #pool.close()
+    #pool.join()
 
     # merge all MP results
     for subset_ranks in all_subset_ranks:
@@ -188,7 +190,7 @@ Read in and rank bitscores from UPP decomposition
 '''
 Split query sequences into batches of a defined size
 '''
-def loadSubQueries():
+def loadSubQueries(lock, pool):
     s1 = time.time()
     unaligned = Alignment()
     unaligned.read_file_object(Configs.query_path)
@@ -196,14 +198,14 @@ def loadSubQueries():
 
     # 1) get all sub-queries, write to [outdir]/data
     data_dir = Configs.outdir + '/data'
-    writeSubQueries(unaligned, data_dir, len(unaligned), num_subset)
+    writeSubQueries(unaligned, data_dir, len(unaligned), num_subset, pool)
  
     # 1.2) read in all HMMSearch results (from UPP)
     index_to_hmm = getAlignmentSubsets(Configs.hmmdir)
 
     # 1.3) read and rank bitscores
     #ranked_bitscore = readAndRankBitscore(index_to_hmm)
-    ranked_bitscore = readAndRankBitscoreMP(index_to_hmm)
+    ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, lock, pool)
     time_load_files = time.time() - s1
     Configs.runtime('Time to load files and split queries (s): {}'.format(
         time_load_files))
