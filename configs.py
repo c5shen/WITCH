@@ -6,32 +6,45 @@ Global configuration class.
 
 import os
 import time
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+from argparse import ArgumentParser, Namespace
+
+_root_dir = os.path.dirname(os.path.abspath(__file__))
+main_config_path = os.path.join(_root_dir, 'main.config')
 
 '''
 Configurations defined by users
 '''
 class Configs:
+    global _root_dir
+
     hmmdir = None
     input_path = None
     backbone_path = None
     backbone_tree_path = None
     query_path = None
     outdir = None
+    output_path = None
+
     keeptemp = False
     keepsubalignment = False
     
     num_hmms = 4
-    use_weight = False
+    use_weight = True 
     weight_adjust = 'none'
     subset_size = 1
     num_cpus = -1
     molecule = 'dna'
 
     # hmmalign/hmmsearch/magus paths
-    hmmalign_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmalign')
-    hmmsearch_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmsearch')
-    hmmbuild_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/hmmer/hmmbuild')
-    magus_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tools/magus/magus.py')
+    hmmalign_path = os.path.join(_root_dir, 'tools/hmmer/hmmalign')
+    hmmsearch_path = os.path.join(_root_dir, 'tools/hmmer/hmmsearch')
+    hmmbuild_path = os.path.join(_root_dir, 'tools/hmmer/hmmbuild')
+    magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
+    fasttree_path = os.path.join(_root_dir, 'tools/FastTreeMP')
 
     log_path = None
     error_path = None
@@ -45,6 +58,7 @@ class Configs:
     graphtracemethod = 'minclusters'
     graphtraceoptimize = 'false'
     timeout = 60
+
 
     @staticmethod
     def warning(msg, path=None):
@@ -79,41 +93,99 @@ class Configs:
                 f.write('{}\t[{}] {}\n'.format(time.strftime('%Y-%m-%d %H:%M:%S'),
                     level, msg))
 
+# valid configuration check
+def valid_configuration(name, conf):
+    assert isinstance(conf, Namespace), \
+            'Looking for Namespace object but find {}'.format(type(conf))
+
+    # backbone alignment settings
+    if name.lower() == 'backbone':
+        for k in conf.__dict__.keys():
+            attr = getattr(conf, k)
+            if not attr:
+                continue
+
+            if k == 'alignment_method':
+                assert str(attr).lower() in ['magus', 'pasta', 'mafft'], \
+                    'Backbone alignment method {} not implemented'.format(attr)
+            elif k == 'backbone_size':
+                assert int(attr) > 0, 'Backbone size needs to be > 0'
+            elif k == 'selection_strategy':
+                assert str(attr).lower() in ['median_length', 'random'], \
+                    'Selection strategy {} not implemented'.format(attr)
+            elif k == 'path':
+                assert os.path.exists(os.path.abspath(str(attr))), \
+                    '{} does not exist'.format(os.path.abspath(str(attr)))
+    
+
+# valid attribute check
+def valid_attribute(k, v):
+    assert isinstance(k, str)
+    if isinstance(v, staticmethod):
+        return False
+    if not k.startswith('_'):
+        return True
+    return False
+
 # print a list of all configurations
 def getConfigs():
-    print('Configs.input:', Configs.input_path)
-    print('Configs.hmmdir:', Configs.hmmdir)
-    print('Configs.backbone_path:', Configs.backbone_path)
-    print('Configs.backbone_tree_path:', Configs.backbone_tree_path)
-    print('Configs.query_path:', Configs.query_path)
-    print('Configs.outdir:', Configs.outdir)
-    print('Configs.keeptemp:', Configs.keeptemp)
-    print('Configs.keepsubalignment:', Configs.keepsubalignment)
+    print('\n********* Configurations **********')
+    for k, v in Configs.__dict__.items():
+        if valid_attribute(k, v):
+            print('\tConfigs.{}: {}'.format(k, v))
 
-    print('\nConfigs.num_hmms:', Configs.num_hmms)
-    print('Configs.use_weight:', Configs.use_weight)
-    print('Configs.weight_adjust:', Configs.weight_adjust)
-    print('Configs.subset_size:', Configs.subset_size)
-    print('Configs.num_cpus:', Configs.num_cpus)
+'''
+Read in from config file if it exists. Any cmd-line provided configs will
+override the config file.
 
-    print('\nConfigs.hmmalign_path:', Configs.hmmalign_path)
-    print('Configs.hmmsearch_path:', Configs.hmmsearch_path)
-    print('Configs.magus_path:', Configs.magus_path)
+Original functionality comes from SEPP -> sepp/config.py
+'''
+def _read_config_file(filename, opts, expand=None):
+    Configs.debug('Reading config from {}'.format(filename))
+    config_defaults = []
+    cparser = configparser.ConfigParser()
+    cparser.optionxform = str
+    cparser.read_file(filename)
 
-    print('\nConfigs.log_path:', Configs.log_path)
-    print('Configs.debug_path:', Configs.debug_path)
-    print('Configs.error_path:', Configs.error_path)
-    print('Configs.runtime_path:', Configs.runtime_path)
-    
-    print('\nConfigs.keepgcmtemp:', Configs.keepgcmtemp)
-    print('Configs.inflation_factor:', Configs.inflation_factor)
-    print('Configs.graphclustermethod:', Configs.graphclustermethod)
-    print('Configs.graphtracemethod:', Configs.graphtracemethod)
-    print('Configs.graphtraceoptimize:', Configs.graphtraceoptimize)
+    if cparser.has_section('commandline'):
+        for k, v in cparser.items('commandline'):
+            config_defaults.append('--{}'.format(k))
+            config_defaults.append(v)
 
-def buildConfigs(args):
-    if args.input != None:
-        Configs.input_path = os.path.abspath(args.input)
+    for section in cparser.sections():
+        if section == 'commandline':
+            continue
+        if getattr(opts, section, None):
+            section_name_space = getattr(opts, section)
+        else:
+            section_name_space = Namespace()
+        for k, v in cparser.items(section):
+            if expand and k == 'path':
+                v = os.path.join(expand, v)
+            section_name_space.__setattr__(k, v)
+        opts.__setattr__(section, section_name_space)
+    return config_defaults
+
+'''
+Build configurations
+'''
+def buildConfigs(parser, cmdline_args):
+    # read in from config file first
+    global main_config_path
+    opts = Namespace()
+    main_cmd_defaults = []
+
+    if os.path.exists(main_config_path):
+        print('Found main configuration file at {}, '.format(
+            main_config_path) + 'loading in...')
+        with open(main_config_path, 'r') as cfile:
+            main_cmd_defaults = _read_config_file(cfile, opts)
+    input_args = main_cmd_defaults + cmdline_args
+
+    args = parser.parse_args(input_args, namespace=opts)
+
+    if args.input_path != None:
+        Configs.input_path = os.path.abspath(args.input_path)
     if args.hmmdir != None:
         Configs.hmmdir = os.path.abspath(args.hmmdir)
     if args.backbone_path != None:
@@ -126,6 +198,7 @@ def buildConfigs(args):
     Configs.outdir = os.path.abspath(args.outdir)
     if not os.path.exists(Configs.outdir):
         os.makedirs(Configs.outdir)
+    Configs.output_path = os.path.join(Configs.outdir, args.output_path)
 
     Configs.keeptemp = args.keeptemp
     Configs.keepsubalignment = args.keepsubalignment
@@ -138,9 +211,8 @@ def buildConfigs(args):
     if args.num_hmms > 0:
         Configs.num_hmms = args.num_hmms
 
-    if args.use_weight:
-        Configs.use_weight = True
-        Configs.weight_adjust = args.weight_adjust 
+    Configs.use_weight = args.use_weight == 1
+    Configs.weight_adjust = args.weight_adjust 
 
     if args.subset_size > 0:
         if args.subset_size >= 25:
@@ -167,3 +239,26 @@ def buildConfigs(args):
     # additional MAGUS/GCM failsafe option to timeout a MAGUS process
     # if [timeout] seconds are reached before the process finished
     Configs.timeout = args.timeout
+
+    # add any additional arguments to Configs
+    for k in args.__dict__.keys():
+        if k not in Configs.__dict__:
+            k_attr = getattr(args, k)
+
+            # check whether the configuration is valid
+            valid_configuration(k, k_attr)
+
+            setattr(Configs, k, k_attr)
+
+    ## backbone options
+    #if args.backbone_size != None:
+    #    setattr(Configs.backbone, 'backbone_size', args.backbone_size)
+    #if args.selection_strategy != None:
+    #    setattr(Configs.backbone, 'selection_strategy', args.selection_strategy)
+    #if args.backbone_method != None:
+    #    setattr(Configs.backbone, 'alignment_method', args.backbone_method)
+
+    # Bandaid way of logging main.config to log.txt
+    if os.path.exists(main_config_path):
+        Configs.log('Main configuration loaded from {}'.format(
+            main_config_path))

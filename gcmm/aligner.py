@@ -128,7 +128,7 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(index_to_hmm, lock, index):
+def alignSubQueries(backbone_path, index_to_hmm, lock, index):
     #global lock
 
     s11 = time.time()
@@ -137,7 +137,7 @@ def alignSubQueries(index_to_hmm, lock, index):
     if not os.path.isdir(constraints_dir):
         os.makedirs(constraints_dir)
     # 0-th constraint set comes from the input alignment
-    shutil.copyfile(Configs.backbone_path, '{}/c0.fasta'.format(
+    shutil.copyfile(backbone_path, '{}/c0.fasta'.format(
         constraints_dir))
 
     unaligned_dir = Configs.outdir + '/data'

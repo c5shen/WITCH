@@ -1,13 +1,23 @@
 #!/bin/bash
 
-# weighted, k=4
-#python3 ../gcm+eHMMs.py \
-#        -p ~/tallis/playground/eHMMs_group/benchmark_results/upp/A\=10/high_frag/1000M1/R0/temp_pasta_upp_align/ \
-#        -b ../../R0/backbone.aln.fasta -q ../../R0/unaligned_frag.txt \
-#        -w -k 4 -o 1000M1_hf_R0_weighted/k=4/ 
+# WITCH settings: -w 1 (using weights)
+#                 -k 4 (using 4 HMMs to align each query sequence)
+#                 -d witch_output (output directory)
+#                 -o aligned.txt (alignment file, will be in output directory)
 
-# weighted, k=4, normalized
-python3 ../gcm+eHMMs.py \
-        -p ~/tallis/playground/eHMMs_group/benchmark_results/upp/A\=10/high_frag/1000M1/R0/temp_pasta_upp_align/ \
-        -b ../../R0/backbone.aln.fasta -q ../../R0/unaligned_frag.txt \
-        -w -k 4 --weight-adjust normalize -o 1000M1_hf_R0_weighted_normalize/k=4/ 
+## 1) input: unaligned sequences only
+#python3 ../witch.py -i data/unaligned_all.txt \
+#        -w 1 -k 4 -d witch_output -o aligned.txt
+
+# 2) input: a backbone alignment (but no backbone tree),
+#           and a set of query sequences
+python3 ../witch.py -b data/backbone.aln.fasta \
+        -q data/unaligned_frag.txt \
+        -w 1 -k 4 -d witch_output -o aligned.txt
+
+# 3) input: an ensemble of HMMs generated from a backbone alignment/tree,
+#           the backbone alignment, and a set of query sequences 
+#python3 ../witch.py -b data/backbone.aln.fasta \
+#        -q data/unaligned_frag.txt \
+#        -p data/hmmdir \
+#        -w 1 -k 4 -d witch_output -o aligned.txt

@@ -109,15 +109,17 @@ class DecompositionAlgorithm(object):
             len(subset_args)))
 
         # create all subset alignments and HMMBuild them
+        outdirprefix = self.outdir + '/root'
         func = partial(subset_alignment_and_hmmbuild, lock, 
-                self.path, self.outdir + '/root',
+                self.path, outdirprefix,
                 self.molecule, self.ere, self.symfrac,
                 self.informat, alignment)
         hmmbuild_paths = list(pool.map(func, subset_args))
         assert len(hmmbuild_paths) == len(subset_args), \
                 'Number of HMMs created does not match ' \
                 'the original number of subsets'
-        Configs.log('Finished creating {} HMMs.'.format(len(hmmbuild_paths)))
+        Configs.log('Finished creating {} HMMs to {}'.format(
+            len(hmmbuild_paths), outdirprefix))
         
         dur = time.time() - start
         Configs.runtime('Time to decompose the backbone (s): {}'.format(
@@ -221,7 +223,8 @@ class SearchAlgorithm(object):
                 Configs.debug('Writing alignment chunk #{} to {}'.format(
                     i, temp_file))
             ret.append(temp_file)
-        Configs.log("Finished breaking fragments into chunks")
+        Configs.log("Finished breaking fragments into chunks to {}".format(
+            fc_outdir))
         return ret
 
 

@@ -1,7 +1,7 @@
 '''
-Created on 1.22.2022 by Chengze Shen
+Created on 1.19.2022 by Chengze Shen
 
-Main pipeline of WITCH,
+Main pipeline of WITCH
 '''
 
 import os, math, psutil, shutil 
@@ -10,12 +10,12 @@ from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
-from gcmm.backbone import BackboneAlignmentJob, BackboneTreeJob
+from gcmm.backbone import BackboneJob
 from gcmm.merger import mergeAlignments
 
 from helpers.alignment_tools import Alignment
 
-from multiprocessing import Pool, Lock, Queue, Manager
+from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
 from functools import partial
 
@@ -77,28 +77,49 @@ def mainAlignmentProcess():
         if Configs.backbone_path and Configs.backbone_tree_path:
             pass
         else:
-            # if missing backbone alignment, do a MAGUS alignment
-            Configs.backbone_path = alignBackbone(Configs.input_path)
+            # if missing backbone alignment, first perform an UPP-like
+            # sequence split into backbone/query sets (i.e., randomly select
+            # up to 1,000 sequences from 25% of the median length to be
+            # backbone sequences)
+            # Then, align the backbone sequences using MAGUS/PASTA
+            # Finally, generate a FastTree2 backbone tree
 
+            # jobs will only run if the corresponding paths are missing
+            print('\nPerforming backbone alignment and/or tree estimation...')
+            bb_job = BackboneJob()
+            bb_job.setup()
+
+            Configs.backbone_path, Configs.query_path = \
+                    bb_job.run_alignment()
+            Configs.backbone_tree_path = bb_job.run_tree()
+
+        # after obtaining backbone alignment/tree, perform decomposition
+        # and HMMSearches
+        print('\nDecomposing the backbone tree...')
         decomp = DecompositionAlgorithm(Configs.backbone_path,
                 Configs.backbone_tree_path)
         hmmbuild_paths = decomp.decomposition(lock, pool)
         search = SearchAlgorithm(hmmbuild_paths)
         hmmsearch_paths = search.search(lock, pool)
         
-        # default to <outdir>/tree_comp
-        Configs.hmmdir = Configs.outdir + '/tree_decomp'
+        # default to <outdir>/tree_comp/root
+        Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
 
     # sanity check before moving on
-    assert os.path.isfile(Configs.backbone_path), 'backbone alignment missing'
-    assert os.path.isfile(Configs.backbone_tree_path), 'backbone tree missing'
-    assert os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
+    assert Configs.backbone_path != None \
+            and os.path.isfile(Configs.backbone_path), 'backbone alignment missing'
+    assert Configs.backbone_tree_path != None \
+            and os.path.isfile(Configs.backbone_tree_path), 'backbone tree missing'
+    assert Configs.hmmdir != None \
+            and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
+
 
     # 1) get all sub-queries, write to [outdir]/data
     num_subset, index_to_hmm, ranked_bitscores = loadSubQueries(lock, pool)
 
-    # 2) calculate weights, if needed 
+    # 2) calculate weights, if needed
     if Configs.use_weight:
+        print('\nCalculating weights...')
         writeWeights(index_to_hmm, ranked_bitscores, pool)
     else:
         writeBitscores(ranked_bitscores, pool)
@@ -118,8 +139,10 @@ def mainAlignmentProcess():
     #pool.join()
 
     # ProcessPoolExecutor version
+    print('\nPerforming GCM alignments on query subsets...')
     index_list = [i for i in range(num_subset)]
-    func = partial(alignSubQueries, index_to_hmm, lock)
+    func = partial(alignSubQueries, Configs.backbone_path,
+            index_to_hmm, lock)
     results = list(pool.map(func, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:
@@ -148,7 +171,7 @@ def mainAlignmentProcess():
     #    sub_alignment_paths.append(os.path.abspath(output_path))
 
     # 4) merge all results 
-    print("\nAll GCM subproblems finished! Doing merging with transitivity...")
+    print('\nAll GCM subproblems finished! Doing merging with transitivity...')
     mergeAlignments(sub_alignment_paths, pool)
 
     Configs.warning('Closing ProcessPoolExecutor instance...')
@@ -156,3 +179,5 @@ def mainAlignmentProcess():
     Configs.warning('ProcessPoolExecutor instance closed.')
     if not Configs.keeptemp:
         clearTempFiles()
+
+    print('\nAll done!')

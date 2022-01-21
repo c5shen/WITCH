@@ -5,9 +5,11 @@ import logging
 from configs import *
 from gcmm.gcmm import mainAlignmentProcess
 
+version = "0.1.0"
+
 def main():
-    args = parseArgs()
-    buildConfigs(args)
+    parser = _init_parser()
+    buildConfigs(parser, sys.argv[1:])
     Configs.log('WITCH is running with: {}'.format(' '.join(sys.argv)))
     getConfigs()
 
@@ -18,8 +20,14 @@ def main():
 
     Configs.log('WITCH finished in {} seconds...'.format(s2 - s1))
 
-def parseArgs():
-    parser = argparse.ArgumentParser()
+def _init_parser():
+    parser = argparse.ArgumentParser(
+            description=(
+                "This program runs WITCH, an alignment method "
+                "extended from UPP and MAGUS."),
+            conflict_handler='resolve')
+    parser.add_argument('-v', '--version', action='version',
+            version="%(prog)s " + version)
 
     # basic settings
     basic_group = parser.add_argument_group(
@@ -30,7 +38,7 @@ def parseArgs():
                 "Otherwise, WITCH will generate them."]))
     parser.groups = dict()
     parser.groups['basic_group'] = basic_group
-    basic_group.add_argument('-i', '--input', type=str,
+    basic_group.add_argument('-i', '--input-path', type=str,
             help='Path to the input unaligned file (all sequences).', required=False)
     basic_group.add_argument('-p', '--hmmdir', type=str,
             help='Path to the HMMs directory generated from UPP', required=False)
@@ -40,9 +48,31 @@ def parseArgs():
             help='Path to the backbone tree', required=False)
     basic_group.add_argument('-q', '--query-path', type=str,
             help='Path to the queries file that we want to align', required=False)
-    basic_group.add_argument('-o', '--outdir', type=str,
+    basic_group.add_argument('-d', '--outdir', type=str,
             help='Output directory, default: witch_output/', required=False,
             default='witch_output')
+    basic_group.add_argument('-o', '--output-path', type=str,
+            help='Output file name, default: merged.fasta', required=False,
+            default='merged.fasta')
+
+    ## backbone alignment/tree options
+    #backbone_group = parser.add_argument_group(
+    #        "backbone options".upper(),
+    #        ' '.join(["These options control how backbone sequences",
+    #            "are selected and aligned."]))
+    #parser.groups['backbone_group'] = backbone_group
+    #backbone_group.add_argument('--backbone-size', type=int,
+    #        help='Number of sequences to include in the backbone, ' \
+    #                + 'default: min(1000, len(all_taxa))', default=None)
+    #backbone_group.add_argument('--selection-strategy', type=str,
+    #        choices=['median_length', 'random'],
+    #        help='Backbone sequence selection strategy, default: ' \
+    #                + 'sequences with lengths 25% around the median',
+    #                default=None)
+    #backbone_group.add_argument('--backbone-method', type=str,
+    #        choices=['magus', 'pasta', 'mafft'],
+    #        help='Alignment method on the backbone sequences, default: ' \
+    #                + 'magus', default=None)
 
     # WITCH options
     witch_group = parser.add_argument_group(
@@ -58,12 +88,12 @@ def parseArgs():
             action='store_const', const=True,
             help='Keep all subalignments by MAGUS/GCM', default=False)
     witch_group.add_argument('-k', '--num-hmms', type=int,
-            help='The number of top HMMs used for aligning a query',
+            help='The number of top-scored HMMs used for aligning a query',
             required=False, default=4)
     witch_group.add_argument('-w', '--use-weight',
-            action='store_const', const=True, required=False,
-            help='Whether to use adjusted bitscore (weights), default: 0',
-            default=False)
+            type=int, required=False,
+            help='Whether to use adjusted bitscore (weights), default: 1',
+            default=1)
     witch_group.add_argument('-s', '--subset-size', type=int,
             help='Number of queries in a single GCM run, default: 1',
             required=False, default=1)
@@ -103,7 +133,7 @@ def parseArgs():
     gcm_group.add_argument('--graphtraceoptimize', type=str,
             choices=['true', 'false'], required=False, default='false',
             help="Run an optimization step on the graph trace, default: false")
-    return parser.parse_args()
+    return parser
 
 
 if __name__ == '__main__':

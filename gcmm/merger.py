@@ -39,7 +39,7 @@ the merged alignment to an output path
 def mergeAlignments(inpaths, pool):
     Configs.log('Merging all GCM subproblems with transitivity...')
     start = time.time()
-    outpath = Configs.outdir + '/merged.fasta'
+    outpath = Configs.output_path
     assert len(inpaths) > 0
 
     # split paths into NUM_CPUS chunks
