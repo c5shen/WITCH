@@ -2,6 +2,7 @@
 ![visitors](https://visitor-badge.glitch.me/badge?page_id=c5shen.visitor-badge&left_color=blue&right_color=black)
 
 (C) Chengze Shen
+
 -----------------------------
 Method Overview
 -----------------------------
