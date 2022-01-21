@@ -37,10 +37,10 @@ If you experience any difficulty running WITCH, please contact Chengze Shen (che
 
 ### Requirements
 ```
-configparser>=5.0.0
-DendroPy>=4.4.0
-numpy>=1.21.0
-psutil>=5.6.7
+configparser==5.0.0
+DendroPy==4.4.0
+numpy==1.21.0
+psutil==5.6.7
 ```
 
 ### Installation Steps
@@ -63,9 +63,10 @@ General command to run WITCH:
 ```
 python3 witch.py -i <unaligned sequence file> -d <output directory> -o <output filename>
 ```
+**Default behavior**: WITCH will pick at most 1,000 sequences from the input around the median length as the backbone sequences. Then, it uses MAGUS to align the backbone sequences and FastTree2 to estimate a tree. It uses UPP decomposition strategy to generate an eHMM, and uses HMMSearch to calculate bit scores between HMMs and unaligned sequences. Bit scores are used to calculate weights, and each unaligned sequence is aligned to top `k=4` HMMs ranked by weights.
 
 #### Use regular bit scores
-By default, WITCH uses HMMSearch to obtain bit scores, and then uses bit scores to calculate weights between a query sequence and an HMM. To use bit scores instead of weights, run WITCH by the following command:
+By default, WITCH uses HMMSearch to obtain bit scores, and then uses bit scores to calculate weights between unaligned sequences and HMMs. To use bit scores instead of weights, run WITCH by the following command:
 ```bash
 python3 witch.py -w 0 [...other parameters...]
 ```
@@ -81,4 +82,18 @@ To obtain the full list of parameters and options, please use `python3 witch.py 
 -------------------------
 Examples
 -------------------------
-### Scenario A - 
+All the following examples can be found in the **examples/run.sh** bash script.
+### Scenario A - unaligned sequences only
+```bash
+python3 witch.py -i examples/data/unaligned_all.txt -d scenarioA_output -o aligned.txt
+```
+
+### Scenario B - unaligned sequences only; using bit scores; using 10 HMMs to align a sequence
+```bash
+python3 witch.py -i examples/data/unaligned_all.txt -d scenarioB_output -o aligned.txt -w 0 -k 10
+```
+
+### Scenario C - backbone alignment available; backbone tree missing; query sequences available
+```bash
+python3 witch.py -b examples/data/backbone.aln.fasta -q examples/data/unaligned_frag.txt -d scenarioC_output -o aligned.txt
+```
