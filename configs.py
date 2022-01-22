@@ -11,6 +11,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 from argparse import ArgumentParser, Namespace
+from platform import platform
 
 _root_dir = os.path.dirname(os.path.abspath(__file__))
 main_config_path = os.path.join(_root_dir, 'main.config')
@@ -40,11 +41,16 @@ class Configs:
     molecule = 'dna'
 
     # hmmalign/hmmsearch/magus paths
-    hmmalign_path = os.path.join(_root_dir, 'tools/hmmer/hmmalign')
-    hmmsearch_path = os.path.join(_root_dir, 'tools/hmmer/hmmsearch')
-    hmmbuild_path = os.path.join(_root_dir, 'tools/hmmer/hmmbuild')
     magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
-    fasttree_path = os.path.join(_root_dir, 'tools/FastTreeMP')
+    if 'macOS' in platform():
+        hmmer_dir = os.path.join(_root_dir, 'tools/hmmer_macOS')
+        fasttree_path = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP_macOS')
+    else:
+        hmmer_dir = os.path.join(_root_dir, 'tools/hmmer')
+        fasttree_path = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP')
+    hmmalign_path = os.path.join(hmmer_dir, 'hmmalign')
+    hmmsearch_path = os.path.join(hmmer_dir, 'hmmsearch')
+    hmmbuild_path = os.path.join(hmmer_dir, 'hmmbuild')
 
     log_path = None
     error_path = None
@@ -58,7 +64,6 @@ class Configs:
     graphtracemethod = 'minclusters'
     graphtraceoptimize = 'false'
     timeout = 60
-
 
     @staticmethod
     def warning(msg, path=None):
