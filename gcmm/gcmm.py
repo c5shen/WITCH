@@ -15,6 +15,7 @@ from gcmm.merger import mergeAlignments
 
 from helpers.alignment_tools import Alignment
 
+import multiprocessing as mp
 from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
 from functools import partial
@@ -66,8 +67,9 @@ def mainAlignmentProcess():
     # initialize the main pool at the start so that it's not memory
     # intensive
     Configs.warning('Initializing ProcessorPoolExecutor instance...')
-    pool = ProcessPoolExecutor(Configs.num_cpus, initializer=init_queue,
-            initargs=(q,))
+    pool = ProcessPoolExecutor(Configs.num_cpus,
+            mp_context=mp.get_context('fork'),
+            initializer=init_queue, initargs=(q,))
     _ = pool.submit(dummy)
 
     # 0) obtain the backbone alignment/tree and eHMMs
