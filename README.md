@@ -33,6 +33,8 @@ This section lays out necessary steps to do to run WITCH. We tested WITCH on the
 * Red Hat Enterprise Linux Server release 7.9 (Maipo) with **Python 3.7.0**
 * Ubuntu 18.04.6 LTS with **Python 3.7.6**
 
+_Warning: currently implementing for multi-platform supports (e.g., macOS). Please run WITCH on Linux system for now._
+
 If you experience any difficulty running WITCH, please contact Chengze Shen (chengze5@illinois.edu).
 
 ### Requirements
