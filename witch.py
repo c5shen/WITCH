@@ -87,8 +87,8 @@ def _init_parser():
             action='store_const', const=True,
             help='Keep all subalignments by MAGUS/GCM', default=False)
     witch_group.add_argument('-k', '--num-hmms', type=int,
-            help='The number of top-scored HMMs used for aligning a query',
-            required=False, default=4)
+            help='The number of top-scored HMMs used for aligning a query, default: 10',
+            required=False, default=10)
     witch_group.add_argument('-w', '--use-weight',
             type=int, required=False,
             help='Whether to use adjusted bitscore (weights), default: 1',
