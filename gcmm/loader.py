@@ -1,6 +1,7 @@
 import os
 import time
 import math
+import tempfile
 from configs import Configs
 from collections import defaultdict
 from helpers.alignment_tools import Alignment, read_fasta
@@ -55,6 +56,16 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset, pool):
         os.system('mkdir -p {}'.format(outdir))
     frag_names = unaligned.get_sequence_names()
 
+    # rename taxon name with illegal characters
+    renamed_taxa = {}
+    for taxon in frag_names:
+        if '/' in taxon:
+            taxon_name = tempfile.mktemp().split('/')[-1]
+            renamed_taxa[taxon] = taxon_name
+            unaligned[taxon_name] = unaligned[taxon]
+            unaligned.pop(taxon)
+    frag_names = unaligned.get_sequence_names()
+
     Configs.log('Started splitting queries to subsets...')
     args = []
     for i in range(0, num_subset):
@@ -69,19 +80,11 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset, pool):
     #pool.join()
 
     Configs.log('Finished splitting queries to local.')
-
-    ## get #[num] names from top of frag_names
-    #ind = 0
-    #for i in range(0, num_subset):
-    #    start_ind, end_ind = i * Configs.subset_size, \
-    #            min(num_seq, (i + 1) * Configs.subset_size)
-    #    # get subsets of sequences
-    #    chosen_frags = frag_names[start_ind:end_ind]
-    #    sub_unaligned = unaligned.sub_alignment(chosen_frags)
-
-    #    # save to outdir
-    #    sub_unaligned.write(outdir + '/unaligned_frag_{}.txt'.format(i),
-    #            'FASTA')
+    if len(renamed_taxa) > 0:
+        Configs.log('The following taxa are renamed '
+                '(names will be reverted in the output): '
+                '{}'.format(renamed_taxa))
+    return renamed_taxa
 
 '''
 Load in UPP decomposition output subsets
@@ -124,7 +127,7 @@ def readHMMSearch(lock, total_num_models, subset):
 '''
 MP version of reading in and ranking bitscores from HMM subsets (from UPP)
 '''
-def readAndRankBitscoreMP(index_to_hmm, lock, pool):
+def readAndRankBitscoreMP(index_to_hmm, renamed_taxa, lock, pool):
     ranks = defaultdict(list)
     total_num_models = len(index_to_hmm)
     #l = Lock()
@@ -144,15 +147,12 @@ def readAndRankBitscoreMP(index_to_hmm, lock, pool):
 
     # sort the bitscores and write to local
     ranked_bitscores = defaultdict(list)
-    #with open(Configs.outdir + '/ranked_scores.txt', 'w') as f:
     for taxon, scores in ranks.items():
         sorted_scores = sorted(scores, key = lambda x: x[1], reverse=True)
-        ranked_bitscores[taxon] = sorted_scores
-        #f.write(taxon + ':' + ';'.join(
-        #    [str(z) for z in sorted_scores]) + '\n')
-    #Configs.warning("Finished writing ranked bitscores to local!")
-    #else:
-    #    Configs.warning("keeptemp=False, not writing ranked bitscore to local.")
+        taxon_name = taxon
+        if taxon in renamed_taxa:
+            taxon_name = renamed_taxa[taxon]
+        ranked_bitscores[taxon_name] = sorted_scores
     return ranked_bitscores
 
 '''
@@ -198,15 +198,17 @@ def loadSubQueries(lock, pool):
 
     # 1) get all sub-queries, write to [outdir]/data
     data_dir = Configs.outdir + '/data'
-    writeSubQueries(unaligned, data_dir, len(unaligned), num_subset, pool)
+    renamed_taxa = writeSubQueries(unaligned, data_dir,
+                                    len(unaligned), num_subset, pool)
  
     # 1.2) read in all HMMSearch results (from UPP)
     index_to_hmm = getAlignmentSubsets(Configs.hmmdir)
 
     # 1.3) read and rank bitscores
     #ranked_bitscore = readAndRankBitscore(index_to_hmm)
-    ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, lock, pool)
+    ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, renamed_taxa,
+                                            lock, pool)
     time_load_files = time.time() - s1
     Configs.runtime('Time to load files and split queries (s): {}'.format(
         time_load_files))
-    return num_subset, index_to_hmm, ranked_bitscore
+    return num_subset, index_to_hmm, ranked_bitscore, renamed_taxa

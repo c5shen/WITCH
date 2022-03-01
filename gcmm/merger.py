@@ -36,7 +36,7 @@ def sequential_merger(inpaths):
 function to take in a set of result paths for merging, and write
 the merged alignment to an output path
 '''
-def mergeAlignments(inpaths, pool):
+def mergeAlignments(inpaths, renamed_taxa, pool):
     Configs.log('Merging all GCM subproblems with transitivity...')
     start = time.time()
     outpath = Configs.output_path
@@ -58,6 +58,12 @@ def mergeAlignments(inpaths, pool):
     final_aln = merged_alns[0]
     for i in range(1, len(merged_alns)):
         final_aln.merge_in(merged_alns[i])
+    
+    # revert back names of renamed taxa
+    for original_name, rename in renamed_taxa.items():
+        if rename in final_aln:
+            final_aln[original_name] = final_aln[rename]
+            final_aln.pop(rename)
     final_aln.write(outpath, 'FASTA')
     end = time.time()
 

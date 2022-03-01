@@ -143,10 +143,9 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
     unaligned_dir = Configs.outdir + '/data'
     unaligned_path = unaligned_dir + '/unaligned_frag_{}.txt'.format(index)
     unaligned = Alignment(); unaligned.read_file_object(unaligned_path)
-    unaligned_names = unaligned.get_sequence_names()
 
     c_index = 1
-    for name in unaligned_names:
+    for name in unaligned.keys():
         single_frag = unaligned.sub_alignment([name])
         single_frag.write('{}/c{}.fasta'.format(constraints_dir, c_index),
                 'FASTA')

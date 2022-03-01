@@ -27,18 +27,13 @@ def clearTempFiles():
     if not Configs.keepsubalignment:
         os.system('find {}/temp/ -type f -delete'.format(Configs.outdir))
         shutil.rmtree('{}/temp'.format(Configs.outdir))
-    if os.path.isdir('{}/backbone_alignments'.format(Configs.outdir)):
-        shutil.rmtree('{}/backbone_alignments'.format(Configs.outdir))
-    if os.path.isdir('{}/constraints'.format(Configs.outdir)):
-        shutil.rmtree('{}/constraints'.format(Configs.outdir))
-    if os.path.isdir('{}/search_results'.format(Configs.outdir)):
-        shutil.rmtree('{}/search_results'.format(Configs.outdir))
-    if os.path.isdir('{}/data'.format(Configs.outdir)):
-        shutil.rmtree('{}/data'.format(Configs.outdir))
-    if os.path.isdir('{}/weights'.format(Configs.outdir)):
-        shutil.rmtree('{}/weights'.format(Configs.outdir))
-    if os.path.isdir('{}/bitscores'.format(Configs.outdir)):
-        shutil.rmtree('{}/bitscores'.format(Configs.outdir))
+
+    directories = ['tree_decomp', 'backbone_alignments', 'constraints',
+            'search_results', 'data', 'weights', 'bitscores']
+    for d in directories:
+        if os.path.isdir('{}/{}'.format(Configs.outdir, d)):
+            shutil.rmtree('{}/{}'.format(Configs.outdir, d))
+
     if not Configs.keepgcmtemp \
             and os.path.isdir('{}/magus_outputs'.format(Configs.outdir)):
         shutil.rmtree('{}/magus_outputs'.format(Configs.outdir))
@@ -119,7 +114,8 @@ def mainAlignmentProcess():
 
 
     # 1) get all sub-queries, write to [outdir]/data
-    num_subset, index_to_hmm, ranked_bitscores = loadSubQueries(lock, pool)
+    num_subset, index_to_hmm, ranked_bitscores, renamed_taxa \
+            = loadSubQueries(lock, pool)
 
     # 2) calculate weights, if needed
     if Configs.use_weight:
@@ -145,8 +141,7 @@ def mainAlignmentProcess():
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
     index_list = [i for i in range(num_subset)]
-    func = partial(alignSubQueries, Configs.backbone_path,
-            index_to_hmm, lock)
+    func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
     results = list(pool.map(func, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:
@@ -176,7 +171,7 @@ def mainAlignmentProcess():
 
     # 4) merge all results 
     print('\nAll GCM subproblems finished! Doing merging with transitivity...')
-    mergeAlignments(sub_alignment_paths, pool)
+    mergeAlignments(sub_alignment_paths, renamed_taxa, pool)
 
     Configs.warning('Closing ProcessPoolExecutor instance...')
     pool.shutdown()
