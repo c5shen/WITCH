@@ -179,7 +179,7 @@ class SearchAlgorithm(object):
     def read_and_divide_unaligned(self, num_chunks, extra_frags={}):
         max_chunk_size = self.max_chunk_size
         Configs.log('Reading in fragment files and breaking ' + 
-                'them into {} chunks '.format(num_chunks) +
+                'them into at most {} chunks '.format(num_chunks) +
                 '(each having at most {} sequences)'.format(max_chunk_size))
 
         # read in query paths (either provided or produced by separating
@@ -222,9 +222,9 @@ class SearchAlgorithm(object):
                 alg_chunks[i].write(temp_file, 'FASTA')
                 Configs.debug('Writing alignment chunk #{} to {}'.format(
                     i, temp_file))
-            ret.append(temp_file)
-        Configs.log("Finished breaking fragments into chunks to {}".format(
-            fc_outdir))
+                ret.append(temp_file)
+        Configs.log("Finished breaking fragments into {} chunks to {}".format(
+            len(ret), fc_outdir))
         return ret
 
 
