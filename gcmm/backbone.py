@@ -196,6 +196,8 @@ class BackboneJob(object):
             stdoutdata = open(self.backbone_path, 'w')
 
         print('\nRunning {}...'.format(self.alignment_method))
+        Configs.log('Running {} backbone alignment...'.format(
+            self.alignment_method))
         Configs.debug('[{}] Command used: {}'.format(
             self.alignment_method.upper(), ' '.join(cmd)))
         p = subprocess.Popen(cmd, stdout=stdoutdata, stderr=stderrdata)
@@ -212,7 +214,7 @@ class BackboneJob(object):
             Configs.error('Failed to generate {} backbone alignment, '.format(
                 self.alignment_method) + 'please check log at {}'.format(
                     logfile_name))
-            notifyError('gcmm/backbone.py')
+            notifyError('gcmm/backbone.py - BackboneJob.run_alignment()')
 
         # need to cast all character to upper for MAFFT
         if self.alignment_method == 'mafft':
@@ -249,7 +251,7 @@ class BackboneJob(object):
         if self.backbone_path is None:
             Configs.error('Did not find a backbone alignment when '
                     + 'estimating the backbone tree.')
-            notifyError('gcmm/backbone.py')
+            notifyError('gcmm/backbone.py - BackboneJob.run_tree()')
 
         # MP-version of FastTree2
         self.backbone_tree_path = self.outdir + '/backbone.tre'
@@ -263,6 +265,8 @@ class BackboneJob(object):
             cmd.extend(['-nt'])
         cmd.extend([self.backbone_path])
         print('\nRunning {}...'.format(self.tree_method))
+        Configs.log('Running {} backbone tree estimation...'.format(
+            self.tree_method))
         Configs.debug('[{}] Command used: {}'.format(
             self.tree_method.upper(), ' '.join(cmd)))
 
@@ -279,7 +283,7 @@ class BackboneJob(object):
             Configs.error('Failed to generate {} backbone tree, '.format(
                 self.tree_method) + 'please check log at {}'.format(
                     logfile_name))
-            notifyError('gcmm/backbone.py')
+            notifyError('gcmm/backbone.py - BackboneJob.run_tree()')
 
         Configs.log('Finished {} backbone tree, tree file: {}'.format(
             self.tree_method, self.backbone_tree_path))
