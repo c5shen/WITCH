@@ -28,7 +28,8 @@ def clearTempFiles():
         os.system('find {}/temp/ -type f -delete'.format(Configs.outdir))
         shutil.rmtree('{}/temp'.format(Configs.outdir))
 
-    directories = ['tree_decomp', 'backbone_alignments', 'constraints',
+    directories = ['tree_decomp/fragment_chunks', 'tree_decomp/root',
+            'backbone_alignments', 'constraints',
             'search_results', 'data', 'weights', 'bitscores']
     for d in directories:
         if os.path.isdir('{}/{}'.format(Configs.outdir, d)):
