@@ -99,3 +99,8 @@ python3 witch.py -i examples/data/unaligned_all.txt -d scenarioB_output -o align
 ```bash
 python3 witch.py -b examples/data/backbone.aln.fasta -q examples/data/unaligned_frag.txt -d scenarioC_output -o aligned.txt
 ```
+
+-------------------------
+To-do
+-------------------------
+1. Optimize how merging is done to reduce the output file size (need to do a similar task as UPP where insertion columns are marked as lower cases and squeezed together.
