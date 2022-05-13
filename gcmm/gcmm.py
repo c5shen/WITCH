@@ -24,20 +24,33 @@ from functools import partial
 Delete all unnecessary intermediate files
 '''
 def clearTempFiles():
+    # make an empty dir for rsync removal
+    blank_dir = os.path.join(Configs.outdir, 'blank')
+    if not os.path.isdir(blank_dir):
+        os.makedirs(blank_dir)
     if not Configs.keepsubalignment:
-        os.system('find {}/temp/ -type f -delete'.format(Configs.outdir))
-        shutil.rmtree('{}/temp'.format(Configs.outdir))
+        if os.path.isdir('{}/temp'.format(Configs.outdir)):
+            os.system('rsync -a --delete {}/ {}/temp/'.format(blank_dir,
+                Configs.outdir))
+            os.system('rmdir {}/temp'.format(Configs.outdir))
 
-    directories = ['tree_decomp/fragment_chunks', 'tree_decomp/root',
+    dirs_to_remove = ['tree_decomp/fragment_chunks', 'tree_decomp/root',
             'backbone_alignments', 'constraints',
             'search_results', 'data', 'weights', 'bitscores']
-    for d in directories:
-        if os.path.isdir('{}/{}'.format(Configs.outdir, d)):
-            shutil.rmtree('{}/{}'.format(Configs.outdir, d))
+    for _d in dirs_to_remove:
+        if os.path.isdir('{}/{}'.format(Configs.outdir, _d)):
+            os.system('rsync -a --delete {}/ {}/{}/'.format(blank_dir,
+                Configs.outdir, _d))
+            os.system('rmdir {}/{}'.format(Configs.outdir, _d))
 
     if not Configs.keepgcmtemp \
             and os.path.isdir('{}/magus_outputs'.format(Configs.outdir)):
-        shutil.rmtree('{}/magus_outputs'.format(Configs.outdir))
+        os.system('rsync -a --delete {}/ {}/magus_outputs/'.format(blank_dir,
+            Configs.outdir))
+        os.system('rmdir {}/magus_outputs'.format(Configs.outdir))
+
+    if os.path.isdir(blank_dir):
+        os.system('rmdir {}'.format(blank_dir))
 
 '''
 Init function for a queue

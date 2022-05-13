@@ -45,7 +45,9 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
         #    return 'N/A'
         #sorted_weights = weights[taxon]
 
-        top_k_hmms = sorted_weights[:Configs.num_hmms]
+        # if there are not k HMMs in the sort, use all of them
+        num_hmms = min(len(sorted_weights), Configs.num_hmms)
+        top_k_hmms = sorted_weights[:num_hmms]
         if Configs.use_weight:
             if Configs.weight_adjust == 'normalize':
                 cur_total_w = sum([w[1] for w in top_k_hmms])
@@ -201,12 +203,12 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
 
     # remove temp folders
     if not Configs.keeptemp:
-        # trying shutil.rmtree to remove the directory
-        shutil.rmtree(hmmsearch_dir)
-        shutil.rmtree(bb_dir)
-        shutil.rmtree(constraints_dir)
+        dirs_to_delete = [hmmsearch_dir, bb_dir, constraints_dir]
+        for _dir in dirs_to_delete:
+            if os.path.isdir(_dir):
+                os.system('rm -rf {}'.format(_dir))
         if not Configs.keepgcmtemp and os.path.isdir(gcm_outdir):
-            shutil.rmtree(gcm_outdir)
+            os.system('rm -rf {}'.format(gcm_outdir))
     time_gcm = time.time() - s13
     
     if not task_timed_out:
