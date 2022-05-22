@@ -16,7 +16,7 @@ WITCH is a new multiple sequence alignment (MSA) tool that combines techniques f
 For a more detailed explanation of the WITCH algorithm, please refer to the publication below:
 
 #### Publication
-PLACEHOLDER
+Shen, Chengze, Minhyuk Park, and Tandy Warnow. “WITCH: Improved Multiple Sequence Alignment Through Weighted Consensus Hidden Markov Model Alignment.” Journal of Computational Biology, May 17, 2022. https://doi.org/10.1089/cmb.2021.0585.
 
 ### Note and Acknowledgement
 - WITCH includes and uses:
