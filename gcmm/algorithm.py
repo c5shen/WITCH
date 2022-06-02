@@ -145,6 +145,8 @@ class SearchAlgorithm(object):
         self.outdir = Configs.outdir + '/tree_decomp'
 
     def search(self, lock, pool):
+        Configs.log('Running all-against-all HMM searches between queries ' \
+                'and HMMs...')
         start = time.time()
         # create fragment chunks and run HMMSearch on all subsets
         # **** USING SEPP exhaustive implementation to find the best number
