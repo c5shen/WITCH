@@ -161,14 +161,12 @@ def mainAlignmentProcess(args):
     results = list(pool.map(func, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:
-        success.extend([r[1] for r in results if not r[1] is None])
-        success.extend([r[1] for r in retry_results if not r[1] is None])
+        success.extend([r for r in results if not r is None])
+        success.extend([r for r in retry_results if not r is None])
         
         failed_items = []
-        failed_items.extend([r[0] for r in results if r[1] is None])
-        failed_items.extend([r[0] for r in retry_results if r[1] is None])
-        #while not q.empty():
-        #    failed_items.append(q.get())
+        while not q.empty():
+            failed_items.append(q.get())
         if len(failed_items) > 0:
             Configs.log('Rerunning failed jobs: {}'.format(failed_items))
             failure.append(failed_items)

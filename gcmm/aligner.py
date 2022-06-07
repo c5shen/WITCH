@@ -231,7 +231,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
                         + ' do not have any matching HMMs, skipping...')
         finally:
             lock.release()
-        return (index, est_path)
+        return est_path
     else:
         lock.acquire()
         try:
@@ -240,4 +240,4 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
             alignSubQueries.q.put(index)
         finally:
             lock.release()
-        return (index, None)
+        return None
