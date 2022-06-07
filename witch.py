@@ -8,9 +8,9 @@ from gcmm.gcmm import mainAlignmentProcess
 version = "0.1.0"
 
 def main():
-    parser = _init_parser()
-    buildConfigs(parser, sys.argv[1:])
-    getConfigs()
+    #parser = _init_parser()
+    #buildConfigs(parser, sys.argv[1:])
+    #getConfigs()
 
     # run the codes
     s1 = time.time()

@@ -4,8 +4,8 @@ Created on 1.19.2022 by Chengze Shen
 Main pipeline of WITCH
 '''
 
-import os, math, psutil, shutil 
-from configs import Configs
+import os, sys, math, psutil, shutil 
+from configs import * 
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries 
 from gcmm.weighting import writeWeights, writeBitscores
@@ -15,7 +15,7 @@ from gcmm.merger import mergeAlignments
 
 from helpers.alignment_tools import Alignment
 
-import multiprocessing as mp
+#import multiprocessing as mp
 from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
 from functools import partial
@@ -53,9 +53,12 @@ def clearTempFiles():
         os.system('rmdir {}'.format(blank_dir))
 
 '''
-Init function for a queue
+Init function for a queue and get configurations for each worker
 '''
-def init_queue(q):
+def initiate_pool(q):
+    parser = _init_parser()
+    buildConfigs(parser, sys.argv[1:])
+    getConfigs()
     alignSubQueries.q = q
 
 '''
@@ -77,8 +80,8 @@ def mainAlignmentProcess():
     # intensive
     Configs.warning('Initializing ProcessorPoolExecutor instance...')
     pool = ProcessPoolExecutor(Configs.num_cpus,
-            mp_context=mp.get_context('fork'),
-            initializer=init_queue, initargs=(q,))
+            initializer=initiate_pool, initargs=(q,))
+            #mp_context=mp.get_context('fork'),
     _ = pool.submit(dummy)
 
     # 0) obtain the backbone alignment/tree and eHMMs
