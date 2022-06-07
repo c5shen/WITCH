@@ -9,4 +9,4 @@
 
 # 3) Scenario C - backbone alignment available; backbone tree missing;
 #                 query sequences available 
-python3 ../witch.py --num-cpus 6 -b data/backbone.aln.fasta -q data/unaligned_frag.txt -d scenarioC_output -o aligned.txt
+python3 ../witch.py --num-cpus 2 -b data/backbone.aln.fasta -q data/unaligned_frag.txt -d scenarioC_output -o aligned.txt

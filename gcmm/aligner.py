@@ -111,10 +111,9 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
 
             # add the weights of the bb to weights.txt
             if Configs.use_weight:
-                real_this_bb_path = os.popen('realpath -s {}'.format(
-                    this_bb_path)).read().split('\n')[0]
-                #weights_file.write('{},{}\n'.format(
-                #        real_this_bb_path, Weights.weights_map[taxon][i]))
+                #real_this_bb_path = os.popen('realpath -s {}'.format(
+                #    this_bb_path)).read().split('\n')[0]
+                real_this_bb_path = os.path.realpath(this_bb_path)
                 weights_file.write('{},{}\n'.format(
                         real_this_bb_path, weights_map[taxon][i]))
     weights_file.close()
@@ -232,7 +231,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
                         + ' do not have any matching HMMs, skipping...')
         finally:
             lock.release()
-        return est_path
+        return (index, est_path)
     else:
         lock.acquire()
         try:
@@ -241,4 +240,4 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
             alignSubQueries.q.put(index)
         finally:
             lock.release()
-        return None
+        return (index, None)

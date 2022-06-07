@@ -1,26 +1,44 @@
 import os, sys, time
-import argparse
+from argparse import ArgumentParser, Namespace
 import logging
 
+from configs import _read_config_file 
 from configs import *
 from gcmm.gcmm import mainAlignmentProcess
 
-version = "0.1.0"
+version = "0.1.1"
 
 def main():
-    #parser = _init_parser()
-    #buildConfigs(parser, sys.argv[1:])
-    #getConfigs()
+    parser = _init_parser()
+    cmdline_args = sys.argv[1:]
+    
+    global main_config_path 
+    opts = Namespace()
+    main_cmd_defaults = []
+
+    if os.path.exists(main_config_path):
+        with open(main_config_path, 'r') as cfile:
+            main_cmd_defaults = _read_config_file(cfile, opts)
+    input_args = main_cmd_defaults + cmdline_args
+    args = parser.parse_args(input_args, namespace=opts)
+
+    buildConfigs(args)
+    getConfigs()
+
+    Configs.log('WITCH is running with: {}'.format(' '.join(cmdline_args)))
+    if os.path.exists(main_config_path):
+        Configs.log('Main configuration loaded from {}'.format(
+            main_config_path))
 
     # run the codes
     s1 = time.time()
-    mainAlignmentProcess()
+    mainAlignmentProcess(args)
     s2 = time.time()
 
     Configs.log('WITCH finished in {} seconds...'.format(s2 - s1))
 
 def _init_parser():
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
             description=(
                 "This program runs WITCH, an alignment method "
                 "extended from UPP and MAGUS."),

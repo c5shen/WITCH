@@ -174,20 +174,21 @@ def _read_config_file(filename, opts, expand=None):
 '''
 Build configurations
 '''
-def buildConfigs(parser, cmdline_args):
-    # read in from config file first
-    global main_config_path
-    opts = Namespace()
-    main_cmd_defaults = []
+#def buildConfigs(parser, cmdline_args):
+def buildConfigs(args):
+    ## read in from config file first
+    #global main_config_path
+    #opts = Namespace()
+    #main_cmd_defaults = []
 
-    if os.path.exists(main_config_path):
-        #print('Found main configuration file at {}, '.format(
-        #    main_config_path) + 'loading in...')
-        with open(main_config_path, 'r') as cfile:
-            main_cmd_defaults = _read_config_file(cfile, opts)
-    input_args = main_cmd_defaults + cmdline_args
+    #if os.path.exists(main_config_path):
+    #    #print('Found main configuration file at {}, '.format(
+    #    #    main_config_path) + 'loading in...')
+    #    with open(main_config_path, 'r') as cfile:
+    #        main_cmd_defaults = _read_config_file(cfile, opts)
+    #input_args = main_cmd_defaults + cmdline_args
 
-    args = parser.parse_args(input_args, namespace=opts)
+    #args = parser.parse_args(input_args, namespace=opts)
 
     if args.input_path != None:
         Configs.input_path = os.path.abspath(args.input_path)
@@ -263,8 +264,8 @@ def buildConfigs(parser, cmdline_args):
     #if args.backbone_method != None:
     #    setattr(Configs.backbone, 'alignment_method', args.backbone_method)
 
-    # Bandaid way of logging main.config to log.txt
-    Configs.log('WITCH is running with: {}'.format(' '.join(cmdline_args)))
-    if os.path.exists(main_config_path):
-        Configs.log('Main configuration loaded from {}'.format(
-            main_config_path))
+    ## Bandaid way of logging main.config to log.txt
+    #Configs.log('WITCH is running with: {}'.format(' '.join(cmdline_args)))
+    #if os.path.exists(main_config_path):
+    #    Configs.log('Main configuration loaded from {}'.format(
+    #        main_config_path))
