@@ -182,10 +182,9 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
                 '--graphclustermethod', Configs.graphclustermethod,
                 '--graphtracemethod', Configs.graphtracemethod,
                 '--graphtraceoptimize', Configs.graphtraceoptimize]
-        # use custom mcl path if provided 
-        if getattr(Configs, 'MAGUS', None) != None:
-            if 'mclpath' in Configs.MAGUS.__dict__.items():
-                cmd += ['--mclpath', Configs.MAGUS.__dict__['mclpath']]
+        # use macOS version mcl (version 21.257) if system is macOS
+        if Configs.mcl_path is not None:
+            cmd += ['--mclpath', Configs.mcl_path]
         if Configs.use_weight:
             weights_path = hmmsearch_dir + '/weights.txt'
             cmd += ['-w', weights_path] 
