@@ -3,3 +3,4 @@ __pycache__/
 *.backup
 *witch_output
 *_output
+main.config
