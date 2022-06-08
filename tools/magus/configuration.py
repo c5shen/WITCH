@@ -164,3 +164,19 @@ def buildConfigs(args):
         new config for taking in the backbone weights
     '''
     Configs.backboneWeightsPath = args.backboneWeightsPath
+    '''
+        6.8.2022 - added by Chengze Shen
+        new config for customized MCL/MAFFT path
+    '''
+    if args.mclpath:
+        Configs.mclPath = os.path.abspath(args.mclpath)
+    if args.mafftpath:
+        Configs.mafftPath = os.path.abspath(args.mafftpath)
+    if args.hmmalignpath:
+        Configs.hmmalignPath = os.path.abspath(args.hmmalignpath)
+    if args.hmmbuildpath:
+        Configs.hmmbuildPath = os.path.abspath(args.hmmbuildpath)
+    if args.hmmsearchpath:
+        Configs.hmmsearchPath = os.path.abspath(args.hmmsearchpath)
+    if args.fasttreepath:
+        Configs.fasttreePath = os.path.abspath(args.fasttreepath)

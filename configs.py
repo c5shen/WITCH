@@ -44,7 +44,7 @@ class Configs:
     magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
     if 'macOS' in platform():
         hmmer_dir = os.path.join(_root_dir, 'tools/hmmer_macOS')
-        fasttree_path = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP_macOS')
+        fasttree_path = os.path.join(_root_dir, 'tools/fasttree_macOS/FastTreeMP')
     else:
         hmmer_dir = os.path.join(_root_dir, 'tools/hmmer')
         fasttree_path = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP')

@@ -139,8 +139,24 @@ def parseArgs():
         a new argument defining the weights of the backbone alignments
     '''
     parser.add_argument("-w", "--backboneWeightsPath", type=str,
-                        help="Weights of the backbone alignments (a file path)", required=False, default=None)
-
+            required=False, default=None,
+            help="Weights of the backbone alignments (a file path)")
+    '''
+        6.8.2022 - added by Chengze Shen
+        new arguments for different versions of mcl/mafft/HMMER (e.g., MacOS)
+    '''
+    parser.add_argument("--mclpath", type=str, default=None, required=False,
+            help="custom MCL path")
+    parser.add_argument("--mafftpath", type=str, default=None, required=False,
+            help="custom MAFFT path")
+    parser.add_argument("--hmmalignpath", type=str, default=None, required=False,
+            help="custom hmmalign path")
+    parser.add_argument("--hmmbuildpath", type=str, default=None, required=False,
+            help="custom hmmbuild path")
+    parser.add_argument("--hmmsearchpath", type=str, default=None, required=False,
+            help="custom hmmsearch path")
+    parser.add_argument("--fasttreepath", type=str, default=None, required=False,
+            help="custom FastTree path")
     return parser.parse_args()
 
 if __name__ == '__main__':
