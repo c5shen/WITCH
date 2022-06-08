@@ -16,7 +16,7 @@ WITCH is a new multiple sequence alignment (MSA) tool that combines techniques f
 For a more detailed explanation of the WITCH algorithm, please refer to the publication below:
 
 #### Publication
-Shen, Chengze, Minhyuk Park, and Tandy Warnow. “WITCH: Improved Multiple Sequence Alignment Through Weighted Consensus Hidden Markov Model Alignment.” Journal of Computational Biology, May 17, 2022. https://doi.org/10.1089/cmb.2021.0585.
+1. Shen, Chengze, Minhyuk Park, and Tandy Warnow. “WITCH: Improved Multiple Sequence Alignment Through Weighted Consensus Hidden Markov Model Alignment.” Journal of Computational Biology, May 17, 2022. https://doi.org/10.1089/cmb.2021.0585.
 
 ### Note and Acknowledgement
 - WITCH includes and uses:
@@ -33,7 +33,7 @@ This section lays out necessary steps to do to run WITCH. We tested WITCH on the
 * Red Hat Enterprise Linux Server release 7.9 (Maipo) with **Python 3.7.0**
 * Ubuntu 18.04.6 LTS with **Python 3.7.6**
 
-_Warning: currently implementing for multi-platform supports (e.g., macOS). Please run WITCH on Linux system for now._
+_**Warning: Current implementation does not support backbone alignment with MAGUS on macOS systems. Please support with your own backbone alignment file or use MAFFT in the settings.**_
 
 If you experience any difficulty running WITCH, please contact Chengze Shen (chengze5@illinois.edu).
 
