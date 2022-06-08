@@ -22,8 +22,10 @@ For a more detailed explanation of the WITCH algorithm, please refer to the publ
 - WITCH includes and uses:
     1. [MAGUS](https://github.com/vlasmirnov/MAGUS) (we use the Github version updated on April 5th 2021).
     2. [HMMER suites](http://hmmer.org/) (v3.3.2 - hmmbuild, hmmsearch, hmmalign).
-    3. Partial functionalities from [UPP](https://github.com/smirarab/sepp/blob/master/README.UPP.md) (v4.5.1).
+    3. [UPP](https://github.com/smirarab/sepp/blob/master/README.UPP.md) (v4.5.1; we use only partial functionalities).
     4. [FastTreeMP](http://www.microbesonline.org/fasttree/FastTreeMP) (v2.1).
+    5. [MAFFT](https://mafft.cbrc.jp/alignment/software/macportable.html) (macOS v7.490).
+    6. [MCL](https://github.com/micans/mcl) (linux version from MAGUS; macOS version 21-257).
 
 
 ---------------------------
@@ -34,7 +36,7 @@ This section lays out necessary steps to do to run WITCH. We tested WITCH on the
 * Ubuntu 18.04.6 LTS with **Python 3.7.6**
 * macOS Monterey 12.4 with **Python 3.9.13**
 
-Now the program fully supports Linux and macOS systems (for at least the ones mentioned above). We provide necessary binary executables for both types of systems, but you can supplement your own by changing the paths in the `main.config` file.
+Now the program fully supports Linux and macOS systems (for at least the ones mentioned above). We provide necessary binary executables for both types of systems, but you can supplement your own by changing the paths in the `main.config` file. In cases of conflicting installations (e.g., different versions of MAFFT), please supplement with the version on your system.
 If you experience any difficulty running WITCH, please contact Chengze Shen (chengze5@illinois.edu).
 
 ### Requirements
