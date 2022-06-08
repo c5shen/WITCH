@@ -32,9 +32,9 @@ Installation
 This section lays out necessary steps to do to run WITCH. We tested WITCH on the following system:
 * Red Hat Enterprise Linux Server release 7.9 (Maipo) with **Python 3.7.0**
 * Ubuntu 18.04.6 LTS with **Python 3.7.6**
+* macOS Monterey 12.4 with **Python 3.9.13**
 
-_**Warning: Current implementation does not support backbone alignment with MAGUS on macOS systems. Please support with your own backbone alignment file or use MAFFT in the settings.**_
-
+Now the program fully supports Linux and macOS systems (for at least the ones mentioned above). We provide necessary binary executables for both types of systems, but you can supplement your own by changing the paths in the `main.config` file.
 If you experience any difficulty running WITCH, please contact Chengze Shen (chengze5@illinois.edu).
 
 ### Requirements
@@ -54,7 +54,10 @@ git clone https://github.com/c5shen/WITCH.git
 cd WITCH
 pip3 install -r requirements.txt
 
-# 3. execute the WITCH python script with -h
+# 3. run setup.py to set up main.config
+python3 setup.py
+
+# 4. execute the WITCH python script with -h
 python3 witch.py -h
 ```
 
