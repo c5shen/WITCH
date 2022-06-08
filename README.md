@@ -33,7 +33,7 @@ This section lays out necessary steps to do to run WITCH. We tested WITCH on the
 * Red Hat Enterprise Linux Server release 7.9 (Maipo) with **Python 3.7.0**
 * Ubuntu 18.04.6 LTS with **Python 3.7.6**
 
-_Warning: currently implementing for multi-platform supports (e.g., macOS). Please run WITCH on Linux system for now._
+_**Warning: Current implementation does not support backbone alignment with MAGUS on macOS systems. Please support with your own backbone alignment file or use MAFFT in the settings.**_
 
 If you experience any difficulty running WITCH, please contact Chengze Shen (chengze5@illinois.edu).
 
