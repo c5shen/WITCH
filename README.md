@@ -31,7 +31,7 @@ For a more detailed explanation of the WITCH algorithm, please refer to the publ
 ---------------------------
 Installation
 ---------------------------
-This section lays out necessary steps to do to run WITCH. We tested WITCH on the following system:
+This section lays out necessary steps to do to run WITCH. We tested WITCH on the following systems:
 * Red Hat Enterprise Linux Server release 7.9 (Maipo) with **Python 3.7.0**
 * Ubuntu 18.04.6 LTS with **Python 3.7.6**, and Ubuntu 22.04 LTS with **Python 3.7.12**
 * macOS Monterey 12.4 with **Python 3.9.13**
