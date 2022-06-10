@@ -66,16 +66,16 @@ def calculateWeights(packed_data):
         denominator = np.sum(np.power(2, exponents))
         weights[indexes[i]] = 1. / denominator
     
-    # write weights to local (only top k ones)
+    num_to_retain = min(Configs.num_hmms, len(weights))
     sorted_weights = sorted([(ind, w) for ind, w in weights.items()],
-            key = lambda x: x[1], reverse=True)[:Configs.num_hmms]
-    #sorted_weights = sorted([(ind, w) for ind, w in weights.items()],
-    #        key = lambda x: x[1], reverse=True)
-    sorted_weights = [str(x) for x in sorted_weights]
-    with open(Configs.outdir + '/weights/w_{}.txt'.format(taxon), 'w') as f:
-        f.write(taxon + ':' + ';'.join(sorted_weights) + '\n')
-    #return taxon, weights
-    return None
+            key = lambda x: x[1], reverse=True)[:num_to_retain]
+    return {taxon: tuple(sorted_weights)}
+
+    ## write weights to local (only top k ones)
+    #sorted_weights = [str(x) for x in sorted_weights]
+    #with open(Configs.outdir + '/weights/w_{}.txt'.format(taxon), 'w') as f:
+    #    f.write(taxon + ':' + ';'.join(sorted_weights) + '\n')
+    #return None
 
 '''
 Function to write a single taxon with its ranked bitscore to local
@@ -93,19 +93,25 @@ Write bitscores to local (the same way as we write weights)
 '''
 def writeBitscores(ranked_bitscores, pool):
     s2 = time.time()
-    Configs.warning('Starting to write bitscores...')
-    if not os.path.isdir(Configs.outdir + '/bitscores'):
-        os.makedirs(Configs.outdir + '/bitscores')
+    Configs.warning('Starting to load bitscores...')
+    #if not os.path.isdir(Configs.outdir + '/bitscores'):
+    #    os.makedirs(Configs.outdir + '/bitscores')
 
-    args = []
+    taxon_to_bitscores = {}
     for taxon, sorted_scores in ranked_bitscores.items():
-        args.append((taxon, sorted_scores))
-    all_score_temps = list(pool.map(writeQueryBitscores, args))
+        num_to_retain = min(Configs.num_hmms, len(sorted_scores))
+        taxon_to_bitscores[taxon] = tuple(sorted_scores[:num_to_retain])
+
+    #args = []
+    #for taxon, sorted_scores in ranked_bitscores.items():
+    #    args.append((taxon, sorted_scores))
+    #all_score_temps = list(pool.map(writeQueryBitscores, args))
 
     time_write_scores = time.time() - s2
-    Configs.warning('Finished writing bitscores to local!')
+    Configs.warning('Finished loading bitscores in memory.')
     Configs.runtime('Time to write ranked bitscores to local (s): {}'.format(
         time_write_scores))
+    return taxon_to_bitscores
 
 '''
 Obtain and write weights to local based on bitscores
@@ -123,8 +129,8 @@ def writeWeights(index_to_hmm, ranked_bitscores, pool):
 
     # iterate through each query taxon
     # write to local for each taxon and its weights
-    if not os.path.isdir(Configs.outdir + '/weights'):
-        os.makedirs(Configs.outdir + '/weights')
+    #if not os.path.isdir(Configs.outdir + '/weights'):
+    #    os.makedirs(Configs.outdir + '/weights')
     weights, weights_map = {}, {}
     args = []
     for taxon, sorted_scores in ranked_bitscores.items():
@@ -138,9 +144,13 @@ def writeWeights(index_to_hmm, ranked_bitscores, pool):
         #weights[taxon] = sorted([(ind, w) for ind, w in this_weights_map.items()],
         #        key = lambda x: x[1], reverse=True)
         #weights_map[taxon] = this_weights_map
-    all_weights_and_temps = list(pool.map(calculateWeights, args))
+    all_taxon_to_weights = list(pool.map(calculateWeights, args))
+    taxon_to_weights = {}
+    for item in all_taxon_to_weights:
+        taxon_to_weights.update(item)
 
     time_obtain_weights = time.time() - s2
     Configs.warning('Finished calculating weights!')
     Configs.runtime('Time to obtain weights given bitscores (s): {}'.format(
         time_obtain_weights))
+    return taxon_to_weights

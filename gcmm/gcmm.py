@@ -43,7 +43,7 @@ def clearTempFiles():
                 Configs.outdir, _d))
             os.system('rmdir {}/{}'.format(Configs.outdir, _d))
 
-    if not Configs.keepgcmtemp \
+    if (not Configs.keepgcmtemp) \
             and os.path.isdir('{}/magus_outputs'.format(Configs.outdir)):
         os.system('rsync -a --delete {}/ {}/magus_outputs/'.format(blank_dir,
             Configs.outdir))
@@ -138,9 +138,10 @@ def mainAlignmentProcess(args):
     # 2) calculate weights, if needed
     if Configs.use_weight:
         print('\nCalculating weights...')
-        writeWeights(index_to_hmm, ranked_bitscores, pool)
+        taxon_to_weights = writeWeights(index_to_hmm, ranked_bitscores, pool)
     else:
-        writeBitscores(ranked_bitscores, pool)
+        print('\nLoading bit-scores...')
+        taxon_to_weights = writeBitscores(ranked_bitscores, pool)
 
     # 3) solve each subset
     sub_alignment_paths = []
@@ -160,8 +161,11 @@ def mainAlignmentProcess(args):
     print('\nPerforming GCM alignments on query subsets...')
     index_list = [i for i in range(num_subset)]
     subset_queries = [subset_id_to_query[i] for i in range(num_subset)]
+    subset_weights = [taxon_to_weights[next(iter(_q))] for _q in subset_queries]
+
     func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
-    results = list(pool.map(func, subset_queries, index_list))
+
+    results = list(pool.map(func, subset_queries, subset_weights, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:
         success.extend([r for r in results if not r is None])

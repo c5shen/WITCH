@@ -36,7 +36,7 @@ class Configs:
     num_hmms = 10
     use_weight = True 
     weight_adjust = 'none'
-    subset_size = 1
+    #subset_size = 1
     num_cpus = -1
     molecule = 'dna'
     collapse_singletons = True
@@ -223,13 +223,13 @@ def buildConfigs(args):
     Configs.use_weight = args.use_weight == 1
     Configs.weight_adjust = args.weight_adjust 
 
-    if args.subset_size > 0:
-        if args.subset_size >= 25:
-            Configs.warning('Subset size is recommended to be <= 25! Current: {}'.format(
-                args.subset_size))
-        Configs.subset_size = args.subset_size
-    else:
-        Configs.warning('Subset size given was < 0! Using default value: 1')
+    #if args.subset_size > 0:
+    #    if args.subset_size >= 25:
+    #        Configs.warning('Subset size is recommended to be <= 25! Current: {}'.format(
+    #            args.subset_size))
+    #    Configs.subset_size = args.subset_size
+    #else:
+    #    Configs.warning('Subset size given was < 0! Using default value: 1')
 
     if args.num_cpus > 0:
         Configs.num_cpus = args.num_cpus

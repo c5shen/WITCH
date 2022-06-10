@@ -62,7 +62,7 @@ def writeOneQuerySet(frag_names, unaligned, outdir, args):
 '''
 Split and write sub-queries to local
 '''
-def writeSubQueries(unaligned, outdir, num_seq, num_subset, pool):
+def writeSubQueries(unaligned, outdir, pool):
     #if not os.path.isdir(outdir):
     #    os.system('mkdir -p {}'.format(outdir))
     frag_names = unaligned.get_sequence_names()
@@ -76,13 +76,12 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset, pool):
             unaligned[taxon_name] = unaligned[taxon]
             unaligned.pop(taxon)
     frag_names = unaligned.get_sequence_names()
+    num_seq = len(frag_names)
 
-    Configs.log('Started splitting queries to subsets...')
+    Configs.log('Started splitting queries to subsets of size 1...')
     subset_id_to_query = {}
-    for i in range(0, num_subset):
-        start_ind, end_ind = i * Configs.subset_size, \
-                min(num_seq, (i + 1) * Configs.subset_size)
-        subaln = unaligned.sub_alignment(frag_names[start_ind:end_ind])
+    for i in range(0, num_seq):
+        subaln = unaligned.sub_alignment([frag_names[i]])
         subset_id_to_query[i] = subaln
     Configs.log('Finished splitting queries in memory.')
     #args = []
@@ -98,7 +97,7 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset, pool):
         Configs.log('The following taxa are renamed '
                 '(names will be reverted in the output): '
                 '{}'.format(renamed_taxa))
-    return subset_id_to_query, renamed_taxa
+    return num_seq, subset_id_to_query, renamed_taxa
 
 '''
 Helper function to load one alignment subset
@@ -225,12 +224,12 @@ def loadSubQueries(lock, pool):
     s1 = time.time()
     unaligned = Alignment()
     unaligned.read_file_object(Configs.query_path)
-    num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
+    #num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
 
     # 1) get all sub-queries, write to [outdir]/data
     data_dir = Configs.outdir + '/data'
-    subset_id_to_query, renamed_taxa = writeSubQueries(unaligned, data_dir,
-                                    len(unaligned), num_subset, pool)
+    num_seq, subset_id_to_query, renamed_taxa = writeSubQueries(unaligned,
+            data_dir, pool)
  
     # 1.2) read in all HMMSearch results (from UPP)
     index_to_hmm = getAlignmentSubsets(Configs.hmmdir, lock, pool)
@@ -242,5 +241,5 @@ def loadSubQueries(lock, pool):
     time_load_files = time.time() - s1
     Configs.runtime('Time to load files and split queries (s): {}'.format(
         time_load_files))
-    return num_subset, index_to_hmm, ranked_bitscore, subset_id_to_query, \
+    return num_seq, index_to_hmm, ranked_bitscore, subset_id_to_query, \
             renamed_taxa

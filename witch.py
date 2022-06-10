@@ -114,9 +114,9 @@ def _init_parser():
             type=int, required=False,
             help='Whether to use adjusted bitscore (weights), default: 1',
             default=1)
-    witch_group.add_argument('-s', '--subset-size', type=int,
-            help='Number of queries in a single GCM run, default: 1',
-            required=False, default=1)
+    #witch_group.add_argument('-s', '--subset-size', type=int,
+    #        help='Number of queries in a single GCM run, default: 1',
+    #        required=False, default=1)
     witch_group.add_argument('--weight-adjust', type=str, required=False,
             default='none', choices=['none', 'normalize', 'maxto1'],
             help='Optional adjustment of weights, default: none')
