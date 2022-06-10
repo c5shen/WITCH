@@ -100,7 +100,7 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
         
             # Extended alignment
             ap_aln = ExtendedAlignment(frag.get_sequence_names())
-            ap_aln.build_extended_alignment(index_to_hmm[i].alignment,
+            ap_aln.build_extended_alignment(index_to_hmm[i].alignment_path,
                     [hmmalign_result_path], True)
             #ap_aln.relabel_original_columns(remaining_cols)
             for key in ap_aln.keys():
@@ -148,6 +148,8 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
     c_index = 1
     for name in unaligned.keys():
         single_frag = unaligned.sub_alignment([name])
+        # enforce upper case letters for all bases
+        single_frag[name] = single_frag[name].upper()
         single_frag.write('{}/c{}.fasta'.format(constraints_dir, c_index),
                 'FASTA')
         c_index += 1
