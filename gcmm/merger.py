@@ -9,7 +9,8 @@ import os, sys, re
 import time
 from configs import Configs
 from helpers.alignment_tools import Alignment, read_fasta, \
-        CompactAlignment, compact 
+        CompactAlignment, compact, ExtendedAlignment 
+from functools import partial
 #from concurrent.futures.process import ProcessPoolExecutor
 from math import ceil
 
@@ -37,7 +38,7 @@ function to take in a set of result paths for merging, and write
 the merged alignment to an output path
 '''
 def mergeAlignments(inpaths, renamed_taxa, pool):
-    Configs.log('Merging all GCM subproblems with transitivity...')
+    Configs.log('(Naive merging) Merging all GCM subproblems with transitivity...')
     start = time.time()
     outpath = Configs.output_path
     assert len(inpaths) > 0
@@ -69,4 +70,58 @@ def mergeAlignments(inpaths, renamed_taxa, pool):
 
     Configs.log('Finished merging all GCM subproblems, output file: {}'.format(
         outpath))
+    Configs.runtime('Time to merge all outputs (s): {}'.format(end - start))
+
+'''
+helper function for collapsed merging (multiprocessing)
+'''
+def getQueryAlignment(backbone_keys, path):
+    query = ExtendedAlignment([])
+    query_name, insertions = query.read_query_alignment(backbone_keys, path)
+    
+    only_query = ExtendedAlignment([])
+    only_query._col_labels = query._get_col_labels()
+    only_query[query_name] = query[query_name]
+    return only_query
+
+'''
+function to merge all subalignments to one alignment and with all singletons
+in queries collapsed (in lower cases). This is the same behavior as UPP.
+An additional "masked" version of the final alignment with all lower cases
+removed will also be written to disk.
+'''
+def mergeAlignmentsCollapsed(backbone_alignment_path, inpaths,
+        renamed_taxa, pool):
+    Configs.log('(UPP-style merging) Merging all GCM subproblems ' \
+            'with transitivity and singletons from queries collapsed...')
+    start = time.time()
+    outpath = Configs.output_path
+    masked_outpath = Configs.output_path + '.masked'
+    assert len(inpaths) > 0
+
+    # read in all backbone sequences/alignment
+    full_aln = ExtendedAlignment([])
+    full_aln.read_file_object(backbone_alignment_path)
+    full_aln.from_string_to_bytearray()
+    backbone_keys = {x: 1 for x in full_aln.keys()}
+    
+    # read in queries so that insertions are marked
+    func = partial(getQueryAlignment, backbone_keys)
+    queries = list(pool.map(func, inpaths))
+
+    # merge all queries to the backbone
+    for query in queries:
+        full_aln.merge_in(query, False)
+        del query
+    full_aln.from_bytearray_to_string()
+    full_aln.write(outpath, 'FASTA')
+    Configs.log('Finished merging all GCM subproblems, output file: {}'.format(
+        outpath))
+    
+    # write a masked version of full alignment
+    full_aln.remove_insertion_columns()
+    full_aln.write(masked_outpath, 'FASTA')
+    Configs.log('Masked final alignment written to : {}'.format(masked_outpath))
+
+    end = time.time()
     Configs.runtime('Time to merge all outputs (s): {}'.format(end - start))

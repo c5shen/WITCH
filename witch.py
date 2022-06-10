@@ -71,6 +71,9 @@ def _init_parser():
     basic_group.add_argument('-o', '--output-path', type=str,
             help='Output file name, default: merged.fasta', required=False,
             default='merged.fasta')
+    basic_group.add_argument('--collapse-singletons', type=int,
+            default=1, required=False,
+            help='Collapse singleton columns and make them lower cases. default: 1')
 
     ## backbone alignment/tree options
     #backbone_group = parser.add_argument_group(

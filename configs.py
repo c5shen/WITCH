@@ -39,6 +39,7 @@ class Configs:
     subset_size = 1
     num_cpus = -1
     molecule = 'dna'
+    collapse_singletons = True
 
     # hmmalign/hmmsearch/magus paths
     magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
@@ -236,6 +237,8 @@ def buildConfigs(args):
         Configs.num_cpus = os.cpu_count()
 
     Configs.molecule = args.molecule
+
+    Configs.collapse_singletons = args.collapse_singletons == 1
 
     # MAGUS/GCM options
     Configs.keepgcmtemp = args.keepgcmtemp

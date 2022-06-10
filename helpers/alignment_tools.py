@@ -9,6 +9,7 @@ from dendropy.datamodel.taxonmodel import Taxon
 import time
 import io
 from collections import defaultdict, Mapping
+from operator import add
 
 try:
     filetypes = (io.IOBase, file)
@@ -948,6 +949,46 @@ class ExtendedAlignment(MutableAlignment):
 #            self[k] = "".join(v)
         self._reset_col_names()
         return set(insertions)
+
+    '''
+    6.9.2022 - added by Chengze Shen
+    a new function specifically dealing with sub-alignments of WITCH
+    '''
+    def read_query_alignment(self, backbone_keys, path, aformat='fasta'):
+        insertions = []
+        entries = [(n, s) for n, s in read_fasta(path)]
+        num_elem_per_col = [0 for _i in range(len(entries[0][1]))]
+
+        # count how many non-gaps in each col
+        for i in range(0, len(entries), 1):
+            name, entry = entries[i]
+            if name in backbone_keys:
+                entry_count = tuple(1 if c != '-' else 0 for c in entry)
+                num_elem_per_col = list(map(add, num_elem_per_col, entry_count))
+            else:
+                query_name, query_entry = name, entry
+
+        # go over the query entry and see which column it has non-gap char
+        # but backbone is gap (i.e., insertion)
+        query_entry = [c for c in query_entry]
+        for j in range(0, len(query_entry), 1):
+            if num_elem_per_col[j] == 0 and query_entry[j] != '-':
+                query_entry[j] = query_entry[j].lower()
+                insertions.append(j)
+        self.fragments.add(query_name); self[query_name] = ''.join(query_entry)
+        self._reset_col_names()
+
+        # rename all columns to sequential numbers
+        insertion = -1
+        for c in insertions:
+            self._col_labels[c] = insertion
+            insertion -= 1
+        regular = 0
+        for c in range(0, self.get_length()):
+            if self._col_labels[c] >= 0:
+                self._col_labels[c] = regular
+                regular += 1
+        return query_name, set(insertions)
 
     def build_extended_alignment(self, base_alignment, path_to_sto_extension,
                                  convert_to_string=True):

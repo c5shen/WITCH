@@ -148,6 +148,8 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, index):
     c_index = 1
     for name in unaligned.keys():
         single_frag = unaligned.sub_alignment([name])
+        # enforce upper case letters for all bases
+        single_frag[name] = single_frag[name].upper()
         single_frag.write('{}/c{}.fasta'.format(constraints_dir, c_index),
                 'FASTA')
         c_index += 1

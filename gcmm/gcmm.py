@@ -11,7 +11,7 @@ from gcmm.loader import loadSubQueries
 from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
 from gcmm.backbone import BackboneJob
-from gcmm.merger import mergeAlignments
+from gcmm.merger import mergeAlignments, mergeAlignmentsCollapsed
 
 from helpers.alignment_tools import Alignment
 
@@ -112,6 +112,8 @@ def mainAlignmentProcess(args):
         decomp = DecompositionAlgorithm(Configs.backbone_path,
                 Configs.backbone_tree_path)
         hmmbuild_paths = decomp.decomposition(lock, pool)
+        print('\nPerforming all-against-all HMMSearches ' \
+                'between the backbone and queries...')
         search = SearchAlgorithm(hmmbuild_paths)
         hmmsearch_paths = search.search(lock, pool)
         
@@ -188,7 +190,11 @@ def mainAlignmentProcess(args):
 
     # 4) merge all results 
     print('\nAll GCM subproblems finished! Doing merging with transitivity...')
-    mergeAlignments(sub_alignment_paths, renamed_taxa, pool)
+    if Configs.collapse_singletons:
+        mergeAlignmentsCollapsed(Configs.backbone_path, sub_alignment_paths,
+                renamed_taxa, pool)
+    else:
+        mergeAlignments(sub_alignment_paths, renamed_taxa, pool)
 
     Configs.warning('Closing ProcessPoolExecutor instance...')
     pool.shutdown()
