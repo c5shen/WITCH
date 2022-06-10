@@ -66,9 +66,11 @@ def calculateWeights(packed_data):
         denominator = np.sum(np.power(2, exponents))
         weights[indexes[i]] = 1. / denominator
     
-    # write weights to local
+    # write weights to local (only top k ones)
     sorted_weights = sorted([(ind, w) for ind, w in weights.items()],
-            key = lambda x: x[1], reverse=True)
+            key = lambda x: x[1], reverse=True)[:Configs.num_hmms]
+    #sorted_weights = sorted([(ind, w) for ind, w in weights.items()],
+    #        key = lambda x: x[1], reverse=True)
     sorted_weights = [str(x) for x in sorted_weights]
     with open(Configs.outdir + '/weights/w_{}.txt'.format(taxon), 'w') as f:
         f.write(taxon + ':' + ';'.join(sorted_weights) + '\n')

@@ -113,7 +113,7 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
             if Configs.use_weight:
                 #real_this_bb_path = os.popen('realpath -s {}'.format(
                 #    this_bb_path)).read().split('\n')[0]
-                real_this_bb_path = os.path.abspath(this_bb_path)
+                real_this_bb_path = os.path.realpath(this_bb_path)
                 weights_file.write('{},{}\n'.format(
                         real_this_bb_path, weights_map[taxon][i]))
     weights_file.close()

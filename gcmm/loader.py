@@ -21,7 +21,7 @@ class HMMSubset(object):
         # get hmm build results from target directory
         cmd = "find {} -maxdepth 1 -name hmmbuild.input* -type f".format(path)
         #Configs.debug("Command used: {}".format(cmd))
-        self.alignment_path = os.path.abspath(
+        self.alignment_path = os.path.realpath(
                 os.popen(cmd).read().split('\n')[0])
         #self.alignment = Alignment()
         #self.alignment.read_file_object(self.alignment_path)
@@ -29,7 +29,7 @@ class HMMSubset(object):
         # also get the hmm model path
         cmd = "find {} -maxdepth 1 -name hmmbuild.model.* -type f".format(path)
         #Configs.debug("Command used: {}".format(cmd))
-        self.hmm_model_path = os.path.abspath(
+        self.hmm_model_path = os.path.realpath(
                 os.popen(cmd).read().split('\n')[0])
 
         self.num_taxa = 0

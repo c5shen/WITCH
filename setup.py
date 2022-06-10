@@ -6,7 +6,7 @@ except ImportError:
 from argparse import ArgumentParser, Namespace
 from platform import platform
 
-_root_dir = os.path.dirname(os.path.abspath(__file__))
+_root_dir = os.path.dirname(os.path.realpath(__file__))
 _config_path = os.path.join(_root_dir, 'default.config')
 
 def setup(platform=platform()): 

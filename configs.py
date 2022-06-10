@@ -13,7 +13,7 @@ except ImportError:
 from argparse import ArgumentParser, Namespace
 from platform import platform
 
-_root_dir = os.path.dirname(os.path.abspath(__file__))
+_root_dir = os.path.dirname(os.path.realpath(__file__))
 main_config_path = os.path.join(_root_dir, 'main.config')
 
 '''
@@ -33,7 +33,7 @@ class Configs:
     keeptemp = False
     keepsubalignment = False
     
-    num_hmms = 4
+    num_hmms = 10
     use_weight = True 
     weight_adjust = 'none'
     subset_size = 1
@@ -122,8 +122,8 @@ def valid_configuration(name, conf):
                 assert str(attr).lower() in ['median_length', 'random'], \
                     'Selection strategy {} not implemented'.format(attr)
             elif k == 'path':
-                assert os.path.exists(os.path.abspath(str(attr))), \
-                    '{} does not exist'.format(os.path.abspath(str(attr)))
+                assert os.path.exists(os.path.realpath(str(attr))), \
+                    '{} does not exist'.format(os.path.realpath(str(attr)))
     
 
 # valid attribute check
@@ -194,17 +194,17 @@ def buildConfigs(args):
     #args = parser.parse_args(input_args, namespace=opts)
 
     if args.input_path != None:
-        Configs.input_path = os.path.abspath(args.input_path)
+        Configs.input_path = os.path.realpath(args.input_path)
     if args.hmmdir != None:
-        Configs.hmmdir = os.path.abspath(args.hmmdir)
+        Configs.hmmdir = os.path.realpath(args.hmmdir)
     if args.backbone_path != None:
-        Configs.backbone_path = os.path.abspath(args.backbone_path)
+        Configs.backbone_path = os.path.realpath(args.backbone_path)
     if args.backbone_tree_path != None:
-        Configs.backbone_tree_path = os.path.abspath(args.backbone_tree_path)
+        Configs.backbone_tree_path = os.path.realpath(args.backbone_tree_path)
     if args.query_path != None:
-        Configs.query_path = os.path.abspath(args.query_path)
+        Configs.query_path = os.path.realpath(args.query_path)
     
-    Configs.outdir = os.path.abspath(args.outdir)
+    Configs.outdir = os.path.realpath(args.outdir)
     if not os.path.exists(Configs.outdir):
         os.makedirs(Configs.outdir)
     Configs.output_path = os.path.join(Configs.outdir, args.output_path)
