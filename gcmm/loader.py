@@ -87,9 +87,19 @@ def writeSubQueries(unaligned, outdir, num_seq, num_subset, pool):
     return renamed_taxa
 
 '''
+Helper function to load one alignment subset
+'''
+def getOneAlignmentSubset(align_dir):
+    this_dict = {}
+    index = int(align_dir.split('/')[-1].split('_')[2])
+    this_dict[index] = HMMSubset(align_dir, index) 
+    print('getting index {}'.format(index))
+    return this_dict
+
+'''
 Load in UPP decomposition output subsets
 '''
-def getAlignmentSubsets(path):
+def getAlignmentSubsets(path, pool):
     cmd = "find {} -name A_0_* -type d".format(path)
     #Configs.debug("Command used: {}".format(cmd))
     align_dirs = os.popen(cmd).read().split('\n')[:-1]
@@ -97,9 +107,12 @@ def getAlignmentSubsets(path):
 
     # create an AlignmentSubset object for each align_dir
     index_to_hmm = {}
-    for align_dir in align_dirs:
-        index = int(align_dir.split('/')[-1].split('_')[2])
-        index_to_hmm[index] = HMMSubset(align_dir, index) 
+    all_dicts = list(pool.map(getOneAlignmentSubset, align_dirs))
+    for d in all_dicts:
+        index_to_hmm.update(d)
+    #for align_dir in align_dirs:
+    #    index = int(align_dir.split('/')[-1].split('_')[2])
+    #    index_to_hmm[index] = HMMSubset(align_dir, index) 
     return index_to_hmm
 
 '''
@@ -202,7 +215,7 @@ def loadSubQueries(lock, pool):
                                     len(unaligned), num_subset, pool)
  
     # 1.2) read in all HMMSearch results (from UPP)
-    index_to_hmm = getAlignmentSubsets(Configs.hmmdir)
+    index_to_hmm = getAlignmentSubsets(Configs.hmmdir, pool)
 
     # 1.3) read and rank bitscores
     #ranked_bitscore = readAndRankBitscore(index_to_hmm)
