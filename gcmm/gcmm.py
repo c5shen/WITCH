@@ -132,8 +132,8 @@ def mainAlignmentProcess(args):
 
 
     # 1) get all sub-queries, write to [outdir]/data
-    num_subset, index_to_hmm, ranked_bitscores, renamed_taxa \
-            = loadSubQueries(lock, pool)
+    num_subset, index_to_hmm, ranked_bitscores, subset_id_to_query, \
+            renamed_taxa = loadSubQueries(lock, pool)
 
     # 2) calculate weights, if needed
     if Configs.use_weight:
@@ -159,8 +159,9 @@ def mainAlignmentProcess(args):
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
     index_list = [i for i in range(num_subset)]
+    subset_queries = [subset_id_to_query[i] for i in range(num_subset)]
     func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
-    results = list(pool.map(func, index_list))
+    results = list(pool.map(func, subset_queries, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:
         success.extend([r for r in results if not r is None])
