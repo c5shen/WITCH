@@ -170,6 +170,7 @@ def readAndRankBitscoreMP(index_to_hmm, renamed_taxa, lock, pool):
     all_subset_ranks = list(pool.map(func, index_to_hmm.values()))
 
     # merge all MP results
+    Configs.log('Ranking bit-scores')
     for subset_ranks in all_subset_ranks:
         for taxon, ind_score_pairs in subset_ranks.items():
             for pair in ind_score_pairs:
@@ -183,6 +184,7 @@ def readAndRankBitscoreMP(index_to_hmm, renamed_taxa, lock, pool):
         if taxon in renamed_taxa:
             taxon_name = renamed_taxa[taxon]
         ranked_bitscores[taxon_name] = sorted_scores
+    Configs.log('Finished ranking bit-scores')
     return ranked_bitscores
 
 '''
@@ -239,7 +241,7 @@ def loadSubQueries(lock, pool):
     ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, renamed_taxa,
                                             lock, pool)
     time_load_files = time.time() - s1
-    Configs.runtime('Time to load files and split queries (s): {}'.format(
+    Configs.runtime('Time to split queries and rank bit-scores (s): {}'.format(
         time_load_files))
     return num_seq, index_to_hmm, ranked_bitscore, subset_id_to_query, \
             renamed_taxa
