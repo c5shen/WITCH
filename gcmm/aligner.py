@@ -100,7 +100,7 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
         
             # Extended alignment
             ap_aln = ExtendedAlignment(frag.get_sequence_names())
-            ap_aln.build_extended_alignment(index_to_hmm[i].alignment,
+            ap_aln.build_extended_alignment(index_to_hmm[i].alignment_path,
                     [hmmalign_result_path], True)
             #ap_aln.relabel_original_columns(remaining_cols)
             for key in ap_aln.keys():
@@ -113,7 +113,7 @@ def getBackbones(index_to_hmm, unaligned, workdir, backbone_dir):
             if Configs.use_weight:
                 #real_this_bb_path = os.popen('realpath -s {}'.format(
                 #    this_bb_path)).read().split('\n')[0]
-                real_this_bb_path = os.path.realpath(this_bb_path)
+                real_this_bb_path = os.path.abspath(this_bb_path)
                 weights_file.write('{},{}\n'.format(
                         real_this_bb_path, weights_map[taxon][i]))
     weights_file.close()

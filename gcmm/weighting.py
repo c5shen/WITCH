@@ -116,7 +116,8 @@ def writeWeights(index_to_hmm, ranked_bitscores, pool):
     # - get sizes of each HMM
     all_sizes = {}
     for index, subset in index_to_hmm.items():
-        all_sizes[index] = subset.alignment.get_num_taxa()
+        all_sizes[index] = subset.num_taxa
+        #all_sizes[index] = subset.alignment.get_num_taxa()
 
     # iterate through each query taxon
     # write to local for each taxon and its weights
