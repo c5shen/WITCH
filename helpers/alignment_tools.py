@@ -954,7 +954,7 @@ class ExtendedAlignment(MutableAlignment):
     6.9.2022 - added by Chengze Shen
     a new function specifically dealing with sub-alignments of WITCH
     '''
-    def read_query_alignment(self, backbone_keys, path, aformat='fasta'):
+    def read_query_alignment(self, query_name, path, aformat='fasta'):
         insertions = []
         entries = [(n, s) for n, s in read_fasta(path)]
         num_elem_per_col = [0 for _i in range(len(entries[0][1]))]
@@ -962,11 +962,11 @@ class ExtendedAlignment(MutableAlignment):
         # count how many non-gaps in each col
         for i in range(0, len(entries), 1):
             name, entry = entries[i]
-            if name in backbone_keys:
+            if name != query_name:
                 entry_count = tuple(1 if c != '-' else 0 for c in entry)
                 num_elem_per_col = list(map(add, num_elem_per_col, entry_count))
             else:
-                query_name, query_entry = name, entry
+                query_entry = entry
 
         # go over the query entry and see which column it has non-gap char
         # but backbone is gap (i.e., insertion)

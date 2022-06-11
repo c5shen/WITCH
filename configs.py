@@ -31,7 +31,7 @@ class Configs:
     output_path = None
 
     keeptemp = False
-    keepsubalignment = False
+    #keepsubalignment = False
     
     num_hmms = 10
     use_weight = True 
@@ -39,7 +39,7 @@ class Configs:
     #subset_size = 1
     num_cpus = -1
     molecule = 'dna'
-    collapse_singletons = True
+    #collapse_singletons = True
 
     # hmmalign/hmmsearch/magus paths
     magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
@@ -210,7 +210,7 @@ def buildConfigs(args):
     Configs.output_path = os.path.join(Configs.outdir, args.output_path)
 
     Configs.keeptemp = args.keeptemp
-    Configs.keepsubalignment = args.keepsubalignment
+    #Configs.keepsubalignment = args.keepsubalignment
 
     Configs.log_path = os.path.join(Configs.outdir, 'log.txt')
     Configs.error_path = os.path.join(Configs.outdir, 'error.txt')
@@ -238,7 +238,7 @@ def buildConfigs(args):
 
     Configs.molecule = args.molecule
 
-    Configs.collapse_singletons = args.collapse_singletons == 1
+    #Configs.collapse_singletons = args.collapse_singletons == 1
 
     # MAGUS/GCM options
     Configs.keepgcmtemp = args.keepgcmtemp

@@ -111,6 +111,20 @@ def getBackbones(index_to_hmm, unaligned, sorted_weights,
     return ret_str
 
 '''
+helper function to obtain merged query alignment with insertions marked
+'''
+def getQueryAlignment(query_name, path):
+    query = ExtendedAlignment([])
+    query_name, insertions = query.read_query_alignment(query_name, path)
+
+    only_query = ExtendedAlignment([])
+    only_query._col_labels = query._get_col_labels()
+    only_query[query_name] = query[query_name]
+    del query
+    os.system('rm {}'.format(path))
+    return only_query
+
+'''
 The core function of GCM+eHMMs. Merge the HMMAlign results of the set of
 queries to the input alignment.
 
@@ -120,8 +134,8 @@ GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
 def alignSubQueries(backbone_path, index_to_hmm, lock,
-        query_unaln, query_weights, index):
-    # index maps to query in query_unaln
+        unaligned, query_weights, index):
+    # index maps to query in unaligned 
     # query_weights in the form ((hmmX, scoreX), (hmmY, scoreY), ...)
 
     s11 = time.time()
@@ -133,10 +147,9 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     shutil.copyfile(backbone_path, '{}/c0.fasta'.format(
         constraints_dir))
 
-    # only one query sequence in query_unaln -> our second constraint
-    unaligned = query_unaln
-    for key in unaligned.keys():
-        unaligned[key] = unaligned[key].upper()
+    # only one query sequence in unaligned -> our second constraint
+    taxon = next(iter(unaligned))
+    unaligned[taxon] = unaligned[taxon].upper()
     unaligned.write('{}/c1.fasta'.format(constraints_dir), 'FASTA')
 
     #c_index = 1
@@ -206,11 +219,17 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         for _dir in dirs_to_delete:
             if os.path.isdir(_dir):
                 os.system('rm -rf {}'.format(_dir))
-        if (not Configs.keepgcmtemp) and os.path.isdir(gcm_outdir):
-            os.system('rm -rf {}'.format(gcm_outdir))
+    if not Configs.keepgcmtemp and os.path.isdir(gcm_outdir):
+        os.system('rm -rf {}'.format(gcm_outdir))
     time_gcm = time.time() - s13
     
     if not task_timed_out:
+        # read in the extended alignment of the query taxon
+        s14 = time.time()
+        if est_path != 'skipped':
+            query = getQueryAlignment(taxon, est_path)
+        time_merged_query = time.time() - s14
+
         lock.acquire()
         try:
             Configs.runtime(' '.join(['(alignSubQueries,',
@@ -222,16 +241,19 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             Configs.runtime(' '.join(['(alignSubQueries,',
                     'i={}) Time to run GCM and'.format(index),
                     'clean temporary files (s):', str(time_gcm)]))
+            Configs.runtime(' '.join(['(alignSubQueries,',
+                    'i={}) Time to obtain the merged alignment'.format(index),
+                    ' (s):', str(time_merged_query)]))
             if weights_str != 'N/A':
                 Configs.debug("[MAGUS] Command used: {}".format(' '.join(cmd)))
                 Configs.log(weights_str)
-                Configs.log('{} passed to main pipeline...'.format(est_path))
+                Configs.log('{} passed to main pipeline...'.format(taxon))
             else:
-                Configs.warning('Some taxa in task #{}'.format(index) \
+                Configs.warning('{} in task #{}'.format(taxon, index) \
                         + ' do not have any matching HMMs, skipping...')
         finally:
             lock.release()
-        return est_path
+        return query
     else:
         lock.acquire()
         try:

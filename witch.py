@@ -71,9 +71,9 @@ def _init_parser():
     basic_group.add_argument('-o', '--output-path', type=str,
             help='Output file name, default: merged.fasta', required=False,
             default='merged.fasta')
-    basic_group.add_argument('--collapse-singletons', type=int,
-            default=1, required=False,
-            help='Collapse singleton columns and make them lower cases. default: 1')
+    #basic_group.add_argument('--collapse-singletons', type=int,
+    #        default=1, required=False,
+    #        help='Collapse singleton columns and make them lower cases. default: 1')
 
     ## backbone alignment/tree options
     #backbone_group = parser.add_argument_group(
@@ -104,9 +104,9 @@ def _init_parser():
             help='Keep ALL temporary files in the process (constraints' \
                     + ', backbones, HMMSearch results, GCM results, etc.)',
             default=False)
-    witch_group.add_argument('--keepsubalignment',
-            action='store_const', const=True,
-            help='Keep all subalignments by MAGUS/GCM', default=False)
+    #witch_group.add_argument('--keepsubalignment',
+    #        action='store_const', const=True,
+    #        help='Keep all subalignments by MAGUS/GCM', default=False)
     witch_group.add_argument('-k', '--num-hmms', type=int,
             help='The number of top-scored HMMs used for aligning a query, default: 10',
             required=False, default=10)

@@ -11,7 +11,7 @@ from gcmm.loader import loadSubQueries
 from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
 from gcmm.backbone import BackboneJob
-from gcmm.merger import mergeAlignments, mergeAlignmentsCollapsed
+from gcmm.merger import mergeAlignmentsCollapsed
 
 from helpers.alignment_tools import Alignment
 
@@ -28,11 +28,11 @@ def clearTempFiles():
     blank_dir = os.path.join(Configs.outdir, 'blank')
     if not os.path.isdir(blank_dir):
         os.makedirs(blank_dir)
-    if not Configs.keepsubalignment:
-        if os.path.isdir('{}/temp'.format(Configs.outdir)):
-            os.system('rsync -a --delete {}/ {}/temp/'.format(blank_dir,
-                Configs.outdir))
-            os.system('rmdir {}/temp'.format(Configs.outdir))
+    #if not Configs.keepsubalignment:
+    if os.path.isdir('{}/temp'.format(Configs.outdir)):
+        #os.system('rsync -a --delete {}/ {}/temp/'.format(blank_dir,
+        #    Configs.outdir))
+        os.system('rm -rf {}/temp'.format(Configs.outdir))
 
     dirs_to_remove = ['tree_decomp/fragment_chunks', 'tree_decomp/root',
             'backbone_alignments', 'constraints',
@@ -168,8 +168,8 @@ def mainAlignmentProcess(args):
     results = list(pool.map(func, subset_queries, subset_weights, index_list))
     retry_results, success, failure = [], [], []
     while len(success) < num_subset:
-        success.extend([r for r in results if not r is None])
-        success.extend([r for r in retry_results if not r is None])
+        success.extend([r for r in results if r is not None])
+        success.extend([r for r in retry_results if r is not None])
         
         failed_items = []
         while not q.empty():
@@ -178,7 +178,8 @@ def mainAlignmentProcess(args):
             Configs.log('Rerunning failed jobs: {}'.format(failed_items))
             failure.append(failed_items)
             retry_results = list(pool.map(func, failed_items))
-    sub_alignment_paths = success
+    #sub_alignment_paths = success
+    queries = success
 
     # global lock version
     #pool = Pool(Configs.num_cpus, initializer=init_lock, initargs=(l))
@@ -195,11 +196,8 @@ def mainAlignmentProcess(args):
 
     # 4) merge all results 
     print('\nAll GCM subproblems finished! Doing merging with transitivity...')
-    if Configs.collapse_singletons:
-        mergeAlignmentsCollapsed(Configs.backbone_path, sub_alignment_paths,
-                renamed_taxa, pool)
-    else:
-        mergeAlignments(sub_alignment_paths, renamed_taxa, pool)
+    mergeAlignmentsCollapsed(Configs.backbone_path, queries,
+            renamed_taxa, pool)
 
     Configs.warning('Closing ProcessPoolExecutor instance...')
     pool.shutdown()
