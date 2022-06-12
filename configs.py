@@ -135,6 +135,8 @@ def set_valid_configuration(name, conf):
             # set variable [k] to [attr] if provided
             if getattr(Configs, k, None) != None: 
                 setattr(Configs, k, attr)
+    elif name.lower() == 'magus':
+        setattr(Configs, name, conf)
 
 # valid attribute check
 def valid_attribute(k, v):

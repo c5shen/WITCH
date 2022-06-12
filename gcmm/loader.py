@@ -78,7 +78,8 @@ def writeSubQueries(unaligned, outdir, pool):
     frag_names = unaligned.get_sequence_names()
     num_seq = len(frag_names)
 
-    Configs.log('Started splitting queries to subsets of size 1...')
+    Configs.log('Started splitting queries (N={}) to subsets...'.format(
+        num_seq))
     subset_id_to_query = {}
     for i in range(0, num_seq):
         subaln = unaligned.sub_alignment([frag_names[i]])
