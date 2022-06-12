@@ -82,7 +82,7 @@ def getBackbones(index_to_hmm, unaligned, sorted_weights,
         # hmmalign
         hmmalign_result_path = '{}/hmmalign.results.{}.{}.out'.format(
                 workdir, taxon, i)
-        cmd = '{} -o {} {} {}'.format(Configs.hmmalign_path,
+        cmd = '{} -o {} {} {}'.format(Configs.hmmalignpath,
                 hmmalign_result_path, this_hmm, query_path)
         #if not (os.path.exists(hmmalign_result_path) and os.path.getsize(
         #    hmmalign_result_path) > 0):
@@ -193,8 +193,8 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
                 '--graphtracemethod', Configs.graphtracemethod,
                 '--graphtraceoptimize', Configs.graphtraceoptimize]
         # use macOS version mcl (version 21.257) if system is macOS
-        if Configs.mcl_path is not None:
-            cmd += ['--mclpath', Configs.mcl_path]
+        if Configs.mclpath is not None:
+            cmd += ['--mclpath', Configs.mclpath]
         if Configs.use_weight:
             weights_path = search_dir + '/weights.txt'
             cmd += ['-w', weights_path] 
@@ -257,8 +257,8 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     else:
         lock.acquire()
         try:
-            Configs.warning('Task #{} failed, queuing for retry...'.format(
-                index))
+            Configs.warning('Task #{}->{} failed, queuing for retry...'.format(
+                index, taxon))
             alignSubQueries.q.put(index)
         finally:
             lock.release()

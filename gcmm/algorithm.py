@@ -27,7 +27,7 @@ class DecompositionAlgorithm(object):
         self.ere = 0.59
         self.informat = 'afa'
         self.molecule = Configs.molecule
-        self.path = Configs.hmmbuild_path
+        self.path = Configs.hmmbuildpath
 
         self.strategy = 'centroid'              # default in SEPP/UPP
         self.decomp_strategy = 'hierarchical'   # ensemble of HMMs
@@ -134,7 +134,7 @@ class SearchAlgorithm(object):
     def __init__(self, hmmbuild_paths):
         self.hmmbuild_paths = hmmbuild_paths
         self.unaligned = None
-        self.path = Configs.hmmsearch_path
+        self.path = Configs.hmmsearchpath
 
         self.max_chunk_size = 20000             # default in SEPP/UPP
 

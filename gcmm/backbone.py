@@ -24,7 +24,7 @@ class BackboneJob(object):
         self.alignment_path = Configs.magus_path
 
         self.tree_method = 'FastTree2'
-        self.tree_path = Configs.fasttree_path
+        self.tree_path = Configs.fasttreepath
 
         self.unaligned_backbone_path = None
         self.backbone_path = None

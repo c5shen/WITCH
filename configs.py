@@ -45,15 +45,15 @@ class Configs:
     magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
     if 'macOS' in platform():
         hmmer_dir = os.path.join(_root_dir, 'tools/macOS')
-        fasttree_path = os.path.join(_root_dir, 'tools/macOS/FastTreeMP')
-        mcl_path = os.path.join(_root_dir, 'tools/macOS/mcl')
+        fasttreepath = os.path.join(_root_dir, 'tools/macOS/FastTreeMP')
+        mclpath = os.path.join(_root_dir, 'tools/macOS/mcl')
     else:
         hmmer_dir = os.path.join(_root_dir, 'tools/hmmer')
-        fasttree_path = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP')
-        mcl_path = None
-    hmmalign_path = os.path.join(hmmer_dir, 'hmmalign')
-    hmmsearch_path = os.path.join(hmmer_dir, 'hmmsearch')
-    hmmbuild_path = os.path.join(hmmer_dir, 'hmmbuild')
+        fasttreepath = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP')
+        mclpath = None
+    hmmalignpath = os.path.join(hmmer_dir, 'hmmalign')
+    hmmsearchpath = os.path.join(hmmer_dir, 'hmmsearch')
+    hmmbuildpath = os.path.join(hmmer_dir, 'hmmbuild')
 
     log_path = None
     error_path = None
@@ -101,8 +101,8 @@ class Configs:
                 f.write('{}\t[{}] {}\n'.format(time.strftime('%Y-%m-%d %H:%M:%S'),
                     level, msg))
 
-# valid configuration check
-def valid_configuration(name, conf):
+# check for valid configurations and set them
+def set_valid_configuration(name, conf):
     assert isinstance(conf, Namespace), \
             'Looking for Namespace object but find {}'.format(type(conf))
 
@@ -124,7 +124,17 @@ def valid_configuration(name, conf):
             elif k == 'path':
                 assert os.path.exists(os.path.realpath(str(attr))), \
                     '{} does not exist'.format(os.path.realpath(str(attr)))
-    
+        setattr(Configs, name, conf)
+    # settings that change basic Configs class variables such as:
+    # fasttreepath, hmmalignpath, etc.
+    elif name.lower() == 'basic':
+        for k in conf.__dict__.keys():
+            attr = getattr(conf, k)
+            if not attr:
+                continue
+            # set variable [k] to [attr] if provided
+            if getattr(Configs, k, None) != None: 
+                setattr(Configs, k, attr)
 
 # valid attribute check
 def valid_attribute(k, v):
@@ -257,9 +267,8 @@ def buildConfigs(args):
             k_attr = getattr(args, k)
 
             # check whether the configuration is valid
-            valid_configuration(k, k_attr)
-
-            setattr(Configs, k, k_attr)
+            set_valid_configuration(k, k_attr)
+            #setattr(Configs, k, k_attr)
 
     ## backbone options
     #if args.backbone_size != None:

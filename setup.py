@@ -30,6 +30,11 @@ def setup(platform=platform()):
             platform))
         os.system('cp {} {}'.format(_config_path, main_config_path))
     else:
+        if 'x86' not in platform:
+            print('Warning: system is not using x86 architecture.',
+                    'Some softwares such as FastTreeMP need to be',
+                    'self-provided. See {} [Basic] '.format(_config_path),
+                    'section for more information.')
         print("System is {}, reconfiguring main.config...".format(platform))
         # set Backbone to the same as default
         default_config = configparser.ConfigParser()
@@ -63,7 +68,7 @@ def main():
             help='Specify which system the configuration file should resolve ' \
                  'to. This is an optional field and by default, the software ' \
                  'will resolve this automatically. Regardless, users can ' \
-                 'specify either macOS or linux.')
+                 'specify either macOS (x86) or linux.')
     args = parser.parse_args()
     
     if args.configure:

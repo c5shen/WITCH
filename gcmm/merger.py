@@ -70,7 +70,7 @@ def mergeAlignmentsCollapsed(backbone_alignment_path, queries,
     # write a masked version of full alignment
     full_aln.remove_insertion_columns()
     full_aln.write(masked_outpath, 'FASTA')
-    Configs.log('Masked final alignment written to : {}'.format(masked_outpath))
+    Configs.log('Masked final alignment written to: {}'.format(masked_outpath))
 
     end = time.time()
     Configs.runtime('Time to merge all outputs (s): {}'.format(end - start))

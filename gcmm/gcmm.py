@@ -160,7 +160,7 @@ def mainAlignmentProcess(args):
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
     index_list = [i for i in range(num_subset)]
-    subset_queries = [subset_id_to_query[i] for i in range(num_subset)]
+    subset_queries = [subset_id_to_query[_i] for _i in range(num_subset)]
     subset_weights = [taxon_to_weights[next(iter(_q))] for _q in subset_queries]
 
     func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
@@ -176,8 +176,13 @@ def mainAlignmentProcess(args):
             failed_items.append(q.get())
         if len(failed_items) > 0:
             Configs.log('Rerunning failed jobs: {}'.format(failed_items))
+            failed_item_queries = [subset_id_to_query[_i] 
+                                    for _i in range(num_subset)]
+            failed_item_weights = [taxon_to_weights[next(iter(_q))]
+                                    for _q in failed_subset_queries]
             failure.append(failed_items)
-            retry_results = list(pool.map(func, failed_items))
+            retry_results = list(pool.map(func, failed_item_queries,
+                failed_item_weights, failed_items))
     #sub_alignment_paths = success
     queries = success
 
