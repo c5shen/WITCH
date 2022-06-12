@@ -34,7 +34,7 @@ Installation
 This section lays out necessary steps to do to run WITCH. We tested WITCH on the following systems:
 * Red Hat Enterprise Linux Server release 7.9 (Maipo) with **Python 3.7.0**
 * Ubuntu 18.04.6 LTS with **Python 3.7.6**, and Ubuntu 22.04 LTS with **Python 3.7.12**
-* macOS _(Intel chip)_ Monterey 12.4 with **Python 3.9.13**
+* macOS _(x86 chip)_ Monterey 12.4 with **Python 3.9.13**
 
 Now the program fully supports Linux and macOS systems (for at least the ones mentioned above). We provide necessary binary executables for both types of systems, but you can supplement your own by changing the paths in the `main.config` file. In cases of conflicting installations (e.g., different versions of MAFFT), please supplement with the version on your system.
 If you experience any difficulty running WITCH, please contact Chengze Shen (chengze5@illinois.edu).
@@ -70,7 +70,7 @@ General command to run WITCH:
 ```
 python3 witch.py -i <unaligned sequence file> -d <output directory> -o <output filename>
 ```
-**Default behavior**: WITCH will pick at most 1,000 sequences from the input around the median length as the backbone sequences. Then, it uses MAGUS to align the backbone sequences and FastTree2 to estimate a tree. It uses UPP decomposition strategy to generate an eHMM, and uses HMMSearch to calculate bit scores between HMMs and unaligned sequences. Bit scores are used to calculate weights, and each unaligned sequence is aligned to top `k=4` HMMs ranked by weights.
+**Default behavior**: WITCH will pick at most 1,000 sequences from the input around the median length as the backbone sequences. Then, it uses MAGUS to align the backbone sequences and FastTree2 to estimate a tree. It uses UPP decomposition strategy to generate an eHMM, and uses HMMSearch to calculate bit scores between HMMs and unaligned sequences. Bit scores are used to calculate weights, and each unaligned sequence is aligned to top `k=10` HMMs ranked by weights.
 
 #### Use regular bit scores
 By default, WITCH uses HMMSearch to obtain bit scores, and then uses bit scores to calculate weights between unaligned sequences and HMMs. To use bit scores instead of weights, run WITCH by the following command:
