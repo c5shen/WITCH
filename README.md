@@ -110,4 +110,4 @@ To-do
 -------------------------
 1. (DONE) ~~Optimize how merging is done to reduce the output file size (need to do a similar task as UPP where insertion columns are marked as lower cases and squeezed together.~~
 2. (DONE) ~~Optimize I/O so that there are fewer intermediate file writeouts and readins.~~
-3. Support for arm64 systems (mainly an issue for FastTreeMP).
+3. (Need manual fix from users) ~~Support for arm64 systems (mainly an issue for FastTreeMP).~~
