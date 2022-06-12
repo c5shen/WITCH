@@ -56,10 +56,10 @@ git clone https://github.com/c5shen/WITCH.git
 cd WITCH
 pip3 install -r requirements.txt
 
-# 3. run setup.py to set up main.config
+# 3. run setup.py to set up main.config. Please refer to default.config for additional information
 python3 setup.py
 
-# 4. execute the WITCH python script with -h
+# 4. execute the WITCH python script with -h to see allowed commandline parameter settings
 python3 witch.py -h
 ```
 
