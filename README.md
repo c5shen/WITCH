@@ -41,10 +41,10 @@ If you experience any difficulty running WITCH, please contact Chengze Shen (che
 
 ### Requirements
 ```
-configparser==5.0.0
-DendroPy==4.4.0
-numpy==1.21.0
-psutil==5.6.7
+configparser>=5.0.0
+DendroPy>=4.4.0
+numpy>=1.21.0
+psutil>=5.6.7
 ```
 
 ### Installation Steps
