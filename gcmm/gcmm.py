@@ -171,7 +171,7 @@ def mainAlignmentProcess(args):
         success.extend([r for r in results if r is not None])
         success.extend([r for r in retry_results if r is not None])
         
-        failed_items = []
+        failed_items = []; failed_item_queries = []; failed_item_weights = []
         while not q.empty():
             failed_items.append(q.get())
         if len(failed_items) > 0:
@@ -179,7 +179,7 @@ def mainAlignmentProcess(args):
             failed_item_queries = [subset_id_to_query[_i] 
                                     for _i in range(num_subset)]
             failed_item_weights = [taxon_to_weights[next(iter(_q))]
-                                    for _q in failed_subset_queries]
+                                    for _q in failed_item_queries]
             failure.append(failed_items)
             retry_results = list(pool.map(func, failed_item_queries,
                 failed_item_weights, failed_items))
