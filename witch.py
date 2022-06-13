@@ -6,7 +6,7 @@ from configs import _read_config_file
 from configs import *
 from gcmm.gcmm import mainAlignmentProcess
 
-version = "0.2.0"
+version = "0.2.1"
 
 def main():
     parser = _init_parser()
