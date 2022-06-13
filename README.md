@@ -41,10 +41,10 @@ If you experience any difficulty running WITCH, please contact Chengze Shen (che
 
 ### Requirements
 ```
-configparser~=5.0.0
-DendroPy~=4.4.0
-numpy~=1.21.0
-psutil~=5.0
+configparser>=5.0.0
+DendroPy>=4.4.0
+numpy>=1.15
+psutil>=5.0
 ```
 
 ### Installation Steps
@@ -55,6 +55,7 @@ git clone https://github.com/c5shen/WITCH.git
 # 2. install all requirements
 cd WITCH
 pip3 install -r requirements.txt
+# if not having root access, use "pip3 install -r requirements.txt --user"
 
 # 3. run setup.py to set up main.config. Please refer to default.config for additional information
 python3 setup.py
