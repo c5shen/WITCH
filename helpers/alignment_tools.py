@@ -960,6 +960,7 @@ class ExtendedAlignment(MutableAlignment):
         num_elem_per_col = [0 for _i in range(len(entries[0][1]))]
 
         # count how many non-gaps in each col
+        query_entry = None
         for i in range(0, len(entries), 1):
             name, entry = entries[i]
             if name != query_name:
@@ -967,6 +968,8 @@ class ExtendedAlignment(MutableAlignment):
                 num_elem_per_col = list(map(add, num_elem_per_col, entry_count))
             else:
                 query_entry = entry
+        if not query_entry:
+            print('query entry {} missing in {}???'.format(query_name, path))
 
         # go over the query entry and see which column it has non-gap char
         # but backbone is gap (i.e., insertion)

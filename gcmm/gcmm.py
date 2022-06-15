@@ -132,8 +132,8 @@ def mainAlignmentProcess(args):
 
 
     # 1) get all sub-queries, write to [outdir]/data
-    num_subset, index_to_hmm, ranked_bitscores, subset_id_to_query, \
-            renamed_taxa = loadSubQueries(lock, pool)
+    num_seq, index_to_hmm, ranked_bitscores, sid_to_query_names, \
+            sid_to_query_seqs, renamed_taxa = loadSubQueries(lock, pool)
 
     # 2) calculate weights, if needed
     if Configs.use_weight:
@@ -151,7 +151,7 @@ def mainAlignmentProcess(args):
     ############ multiprocessing with Pool ##########
     # manager version
     #pool = Pool(Configs.num_cpus, initializer=init_queue, initargs=(q,))
-    #index_list = [i for i in range(num_subset)]
+    #index_list = [i for i in range(num_seq)]
     #func = partial(alignSubQueries, index_to_hmm, lock)
     #sub_alignment_paths = pool.map(func, index_list)
     #pool.close()
@@ -159,15 +159,20 @@ def mainAlignmentProcess(args):
 
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
-    index_list = [i for i in range(num_subset)]
-    subset_queries = [subset_id_to_query[_i] for _i in range(num_subset)]
-    subset_weights = [taxon_to_weights[next(iter(_q))] for _q in subset_queries]
+    index_list = [i for i in range(num_seq)]
+    subset_query_names = [sid_to_query_names[_i] for _i in range(num_seq)]
+    subset_query_seqs = [sid_to_query_seqs[_i] for _i in range(num_seq)]
+    subset_weights = [taxon_to_weights[_q] for _q in subset_query_names]
+    #subset_weights = [taxon_to_weights[next(iter(_q))] for _q in subset_queries]
+    print(len(subset_query_names), len(subset_query_seqs), len(subset_weights))
 
     func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
 
-    results = list(pool.map(func, subset_queries, subset_weights, index_list))
+    #results = list(pool.map(func, subset_queries, subset_weights, index_list))
+    results = list(pool.map(func, subset_query_names, subset_query_seqs,
+        subset_weights, index_list))
     retry_results, success, failure = [], [], []
-    while len(success) < num_subset:
+    while len(success) < num_seq:
         success.extend([r for r in results if r is not None])
         success.extend([r for r in retry_results if r is not None])
         
@@ -176,10 +181,12 @@ def mainAlignmentProcess(args):
             failed_items.append(q.get())
         if len(failed_items) > 0:
             Configs.log('Rerunning failed jobs: {}'.format(failed_items))
-            failed_item_queries = [subset_id_to_query[_i] 
-                                    for _i in range(num_subset)]
-            failed_item_weights = [taxon_to_weights[next(iter(_q))]
-                                    for _q in failed_item_queries]
+            failed_item_query_names = [sid_to_query_names[_i]
+                                    for _i in failed_items]
+            failed_item_query_seqs = [sid_to_query_seqs[_i]
+                                    for _i in failed_items]
+            failed_item_weights = [taxon_to_weights[_q]
+                                    for _q in failed_item_query_names]
             failure.append(failed_items)
             retry_results = list(pool.map(func, failed_item_queries,
                 failed_item_weights, failed_items))
@@ -188,14 +195,14 @@ def mainAlignmentProcess(args):
 
     # global lock version
     #pool = Pool(Configs.num_cpus, initializer=init_lock, initargs=(l))
-    #index_list = [i for i in range(num_subset)]
+    #index_list = [i for i in range(num_seq)]
     #func = partial(alignSubQueries, index_to_hmm)
     #sub_alignment_paths = pool.map(func, index_list)
     #pool.close()
     #pool.join()
 
     ############ sequential version #################
-    #for i in range(num_subset):
+    #for i in range(num_seq):
     #    output_path = alignSubQueries(i, index_to_hmm)
     #    sub_alignment_paths.append(os.path.abspath(output_path))
 

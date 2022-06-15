@@ -15,13 +15,13 @@ from multiprocessing import Queue#, Lock
 '''
 Helper function to generate backbone alignments for the constraint sets
 '''
-def getBackbones(index_to_hmm, unaligned, sorted_weights, 
+def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights, 
         workdir, backbone_dir):
     ret = {} 
 
     # for each taxon and its scores on HMMs, sort it in decreasing order
     #for taxon, sorted_weights in weights.items():
-    taxon = next(iter(unaligned)); seq = unaligned[taxon]
+    #taxon = next(iter(unaligned)); seq = unaligned[taxon]
     weights_map = {ind: w for (ind, w) in sorted_weights}
 
     ret_str = ''
@@ -75,9 +75,8 @@ def getBackbones(index_to_hmm, unaligned, sorted_weights,
         # [NEW] save each single sequence to a fasta
         this_hmm = index_to_hmm[i].hmm_model_path
 
-        query_path = '{}/{}.fasta'.format(workdir, taxon)
-        #frag = unaligned.sub_alignment([taxon])
-        unaligned.write(query_path, 'FASTA')
+        #query_path = '{}/{}.fasta'.format(workdir, taxon)
+        #unaligned.write(query_path, 'FASTA')
     
         # hmmalign
         hmmalign_result_path = '{}/hmmalign.results.{}.{}.out'.format(
@@ -134,7 +133,7 @@ GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
 def alignSubQueries(backbone_path, index_to_hmm, lock,
-        unaligned, query_weights, index):
+        taxon, seq, query_weights, index):
     # index maps to query in unaligned 
     # query_weights in the form ((hmmX, scoreX), (hmmY, scoreY), ...)
 
@@ -148,9 +147,12 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         constraints_dir))
 
     # only one query sequence in unaligned -> our second constraint
-    taxon = next(iter(unaligned))
-    unaligned[taxon] = unaligned[taxon].upper()
-    unaligned.write('{}/c1.fasta'.format(constraints_dir), 'FASTA')
+    unaligned = Alignment()
+    unaligned[taxon] = seq
+    query_path = constraints_dir + '/c1.fasta'
+    #taxon = next(iter(unaligned))
+    #unaligned[taxon] = unaligned[taxon].upper()
+    unaligned.write(query_path, 'FASTA')
 
     #c_index = 1
     #for name in unaligned.keys():
@@ -173,8 +175,8 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         os.makedirs(search_dir)
 
     # get backbones with the information we have
-    weights_str = getBackbones(index_to_hmm, unaligned, query_weights,
-            search_dir, bb_dir)
+    weights_str = getBackbones(index_to_hmm, taxon, seq, query_path,
+            query_weights, search_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
 
     s13 = time.time()
@@ -227,7 +229,21 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         # read in the extended alignment of the query taxon
         s14 = time.time()
         if est_path != 'skipped':
-            query = getQueryAlignment(taxon, est_path)
+            if os.path.exists(est_path):
+                query = getQueryAlignment(taxon, est_path)
+            else:
+                # put the task back to queue
+                lock.acquire()
+                try:
+                    Configs.warning(
+                            'Task #{}->{} finished within time but ' \
+                            'has no output, queuing for retry...'.format(
+                                index, taxon))
+                    alignSubQueries.q.put(index)
+                finally:
+                    lock.release()
+                return None
+
         time_merged_query = time.time() - s14
 
         lock.acquire()

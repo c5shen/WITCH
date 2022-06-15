@@ -75,16 +75,18 @@ def writeSubQueries(unaligned, outdir, pool):
             renamed_taxa[taxon] = taxon_name
             unaligned[taxon_name] = unaligned[taxon]
             unaligned.pop(taxon)
-    frag_names = unaligned.get_sequence_names()
+    frag_names = list(unaligned.keys())
     num_seq = len(frag_names)
 
     Configs.log('Started splitting queries (N={}) to subsets...'.format(
         num_seq))
-    subset_id_to_query = {}
+    sid_to_query_names = {}; sid_to_query_seqs = {}
     for i in range(0, num_seq):
-        subaln = unaligned.sub_alignment([frag_names[i]])
-        subset_id_to_query[i] = subaln
+        taxon = frag_names[i]; seq = unaligned[taxon]
+        #subaln = unaligned.sub_alignment([frag_names[i]])
+        sid_to_query_names[i] = taxon; sid_to_query_seqs[i] = seq
     Configs.log('Finished splitting queries in memory.')
+    #Configs.log('Index to query map: {}'.format(str(sid_to_query_names)))
     #args = []
     #for i in range(0, num_subset):
     #    start_ind, end_ind = i * Configs.subset_size, \
@@ -98,7 +100,7 @@ def writeSubQueries(unaligned, outdir, pool):
         Configs.log('The following taxa are renamed '
                 '(names will be reverted in the output): '
                 '{}'.format(renamed_taxa))
-    return num_seq, subset_id_to_query, renamed_taxa
+    return num_seq, sid_to_query_names, sid_to_query_seqs, renamed_taxa
 
 '''
 Helper function to load one alignment subset
@@ -231,8 +233,8 @@ def loadSubQueries(lock, pool):
 
     # 1) get all sub-queries, write to [outdir]/data
     data_dir = Configs.outdir + '/data'
-    num_seq, subset_id_to_query, renamed_taxa = writeSubQueries(unaligned,
-            data_dir, pool)
+    num_seq, sid_to_query_names, sid_to_query_seqs, \
+            renamed_taxa = writeSubQueries(unaligned, data_dir, pool)
  
     # 1.2) read in all HMMSearch results (from UPP)
     index_to_hmm = getAlignmentSubsets(Configs.hmmdir, lock, pool)
@@ -244,5 +246,5 @@ def loadSubQueries(lock, pool):
     time_load_files = time.time() - s1
     Configs.runtime('Time to split queries and rank bit-scores (s): {}'.format(
         time_load_files))
-    return num_seq, index_to_hmm, ranked_bitscore, subset_id_to_query, \
-            renamed_taxa
+    return num_seq, index_to_hmm, ranked_bitscore, sid_to_query_names, \
+            sid_to_query_seqs, renamed_taxa
