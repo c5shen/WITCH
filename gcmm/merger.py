@@ -63,9 +63,21 @@ def mergeAlignmentsCollapsed(backbone_alignment_path, queries,
         full_aln.merge_in(query, False)
         del query
     full_aln.from_bytearray_to_string()
-    full_aln.write(outpath, 'FASTA')
+    
+    # rename back taxa
+    name_map = {v: k for k, v in renamed_taxa.items()}
+    count = 0
+    for name in list(name_map.keys()):
+        ori_name = name_map[name]
+        if name in full_aln:
+            full_aln[ori_name] = full_aln[name]
+            full_aln.pop(name)
+            count += 1
+    if count > 0:
+        Configs.log('Converted {} names back to their originals'.format(count))
     Configs.log('Finished merging all GCM subproblems, output file: {}'.format(
         outpath))
+    full_aln.write(outpath, 'FASTA')
     
     # write a masked version of full alignment
     full_aln.remove_insertion_columns()

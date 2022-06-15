@@ -164,7 +164,6 @@ def mainAlignmentProcess(args):
     subset_query_seqs = [sid_to_query_seqs[_i] for _i in range(num_seq)]
     subset_weights = [taxon_to_weights[_q] for _q in subset_query_names]
     #subset_weights = [taxon_to_weights[next(iter(_q))] for _q in subset_queries]
-    print(len(subset_query_names), len(subset_query_seqs), len(subset_weights))
 
     func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
 
@@ -190,7 +189,6 @@ def mainAlignmentProcess(args):
             failure.append(failed_items)
             retry_results = list(pool.map(func, failed_item_queries,
                 failed_item_weights, failed_items))
-    #sub_alignment_paths = success
     queries = success
 
     # global lock version
