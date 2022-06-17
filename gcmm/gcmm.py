@@ -169,7 +169,7 @@ def mainAlignmentProcess(args):
 
     #results = list(pool.map(func, subset_queries, subset_weights, index_list))
     results = list(pool.map(func, subset_query_names, subset_query_seqs,
-        subset_weights, index_list))
+        subset_weights, index_list, chunksize=Configs.chunksize))
     retry_results, success, failure = [], [], []
     while len(success) < num_seq:
         success.extend([r for r in results if r is not None])
@@ -188,7 +188,8 @@ def mainAlignmentProcess(args):
                                     for _q in failed_item_query_names]
             failure.append(failed_items)
             retry_results = list(pool.map(func, failed_item_query_names,
-                failed_item_query_seqs, failed_item_weights, failed_items))
+                failed_item_query_seqs, failed_item_weights, failed_items,
+                chunksize=Configs.chunksize))
     queries = success
 
     # global lock version

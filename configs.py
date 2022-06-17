@@ -30,6 +30,8 @@ class Configs:
     outdir = None
     output_path = None
 
+    chunksize = 1
+
     keeptemp = False
     #keepsubalignment = False
     
@@ -234,6 +236,8 @@ def buildConfigs(args):
 
     Configs.use_weight = args.use_weight == 1
     Configs.weight_adjust = args.weight_adjust 
+
+    Configs.chunksize = args.chunksize
 
     #if args.subset_size > 0:
     #    if args.subset_size >= 25:

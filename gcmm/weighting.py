@@ -144,7 +144,8 @@ def writeWeights(index_to_hmm, ranked_bitscores, pool):
         #weights[taxon] = sorted([(ind, w) for ind, w in this_weights_map.items()],
         #        key = lambda x: x[1], reverse=True)
         #weights_map[taxon] = this_weights_map
-    all_taxon_to_weights = list(pool.map(calculateWeights, args))
+    all_taxon_to_weights = list(pool.map(calculateWeights, args,
+        chunksize=Configs.chunksize))
     taxon_to_weights = {}
     for item in all_taxon_to_weights:
         taxon_to_weights.update(item)
