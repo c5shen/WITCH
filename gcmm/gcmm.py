@@ -187,8 +187,8 @@ def mainAlignmentProcess(args):
             failed_item_weights = [taxon_to_weights[_q]
                                     for _q in failed_item_query_names]
             failure.append(failed_items)
-            retry_results = list(pool.map(func, failed_item_queries,
-                failed_item_weights, failed_items))
+            retry_results = list(pool.map(func, failed_item_query_names,
+                failed_item_query_seqs, failed_item_weights, failed_items))
     queries = success
 
     # global lock version
