@@ -63,6 +63,8 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
     # alignment
     weights_path = workdir + '/weights.txt'
     weights_file = open(weights_path, 'w')
+
+    fn_to_weight = {}
     
     # initialize the backbone index at backbone_start_index
     bb_index = 0
@@ -105,9 +107,10 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
             real_this_bb_path = os.path.realpath(this_bb_path)
             weights_file.write('{},{}\n'.format(
                     real_this_bb_path, weights_map[i]))
+            fn_to_weight[real_this_bb_path] = weights_map[i]
     weights_file.close()
     
-    return ret_str
+    return ret_str, fn_to_weight
 
 '''
 helper function to obtain merged query alignment with insertions marked
@@ -175,31 +178,34 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         os.makedirs(search_dir)
 
     # get backbones with the information we have
-    weights_str = getBackbones(index_to_hmm, taxon, seq, query_path,
+    weights_str, weights_map = getBackbones(index_to_hmm, taxon, seq, query_path,
             query_weights, search_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
+
+    list_of_bb = list(weights_map.keys())
+    list_of_weights = list(weights_map.values())
 
     s13 = time.time()
 
     # time out the process if exceeding [timeout] seconds
     task_timed_out = False
     gcm_outdir = Configs.outdir + '/magus_outputs/{}'.format(index)
+    gcmpath = 'gcm137'
+    if os.path.isfile('../gcm137/target/release/gcm137'):
+        gcmpath = '../gcm137/target/release/gcm137'
 
     if weights_str != 'N/A':
         # run GCM (modified MAGUS which takes in weights) on the subset
         est_path = Configs.outdir + '/temp/magus_result_{}.txt'.format(index)
-        cmd = ['python3', Configs.magus_path, '-np', '1',
-                '-d', gcm_outdir, '-s', constraints_dir, '-b', bb_dir,
-                '-o', est_path, '-f', str(Configs.inflation_factor),
-                '--graphclustermethod', Configs.graphclustermethod,
-                '--graphtracemethod', Configs.graphtracemethod,
-                '--graphtraceoptimize', Configs.graphtraceoptimize]
+        cmd = [gcmpath,
+                '-i', f'constraints_dir/*', '-g', *list_of_bb,
+                '-o', est_path, '-w', *list_of_weights]
         # use macOS version mcl (version 21.257) if system is macOS
-        if Configs.mclpath is not None:
-            cmd += ['--mclpath', Configs.mclpath]
-        if Configs.use_weight:
-            weights_path = search_dir + '/weights.txt'
-            cmd += ['-w', weights_path] 
+        # if Configs.mclpath is not None:
+        #     cmd += ['--mclpath', Configs.mclpath]
+        # if Configs.use_weight:
+        #     weights_path = search_dir + '/weights.txt'
+        #     cmd += ['-w', weights_path] 
         #os.system(cmd)
         p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL)
