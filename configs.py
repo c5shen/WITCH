@@ -45,10 +45,12 @@ class Configs:
 
     # hmmalign/hmmsearch/magus paths
     magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
+    gcm_path = os.path.join(_root_dir, 'tools/gcm137/gcm137')
     if 'macOS' in platform():
         hmmer_dir = os.path.join(_root_dir, 'tools/macOS')
         fasttreepath = os.path.join(_root_dir, 'tools/macOS/FastTreeMP')
         mclpath = os.path.join(_root_dir, 'tools/macOS/mcl')
+        gcm_path = os.path.join(_root_dir, 'tools/macOS/gcm137')
     else:
         hmmer_dir = os.path.join(_root_dir, 'tools/hmmer')
         fasttreepath = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP')

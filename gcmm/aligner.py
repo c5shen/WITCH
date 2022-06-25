@@ -190,9 +190,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     # time out the process if exceeding [timeout] seconds
     task_timed_out = False
     gcm_outdir = Configs.outdir + '/magus_outputs/{}'.format(index)
-    gcmpath = 'gcm137'
-    if os.path.isfile('../gcm137/target/release/gcm137'):
-        gcmpath = '../gcm137/target/release/gcm137'
+    gcmpath = Configs.gcm_path
 
     if weights_str != 'N/A':
         # run GCM (modified MAGUS which takes in weights) on the subset
