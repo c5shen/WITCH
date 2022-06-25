@@ -197,9 +197,12 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     if weights_str != 'N/A':
         # run GCM (modified MAGUS which takes in weights) on the subset
         est_path = Configs.outdir + '/temp/magus_result_{}.txt'.format(index)
-        cmd = [gcmpath,
-                '-i', f'constraints_dir/*', '-g', *list_of_bb,
-                '-o', est_path, '-w', *list_of_weights]
+        import glob
+        files = glob.glob(f'{constraints_dir}/*')
+        cmd = [gcmpath, 'merge',
+                '-i', *files, '-g', *list_of_bb,
+                '-o', est_path, '-w', *[str(w) for w in list_of_weights]]
+        #print(' '.join(cmd))
         # use macOS version mcl (version 21.257) if system is macOS
         # if Configs.mclpath is not None:
         #     cmd += ['--mclpath', Configs.mclpath]
