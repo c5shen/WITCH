@@ -1,7 +1,9 @@
 # WITCH - WeIghTed Consensus Hmm alignment
 ![visitors](https://visitor-badge.glitch.me/badge?page_id=c5shen.visitor-badge&left_color=blue&right_color=black)
 
-(C) Chengze Shen
+(C) Chengze Shen, Baqiao Liu
+
+_Special thanks to Baqiao for writing the experimental GCM code that substantially speeds up query alignments!_
 
 -----------------------------
 Method Overview
