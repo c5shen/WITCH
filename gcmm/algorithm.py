@@ -22,7 +22,7 @@ from helpers.math_utils import lcm
 Class to perform backbone tree decomposition as does in UPP
 '''
 class DecompositionAlgorithm(object):
-    def __init__(self, backbone_path, backbone_tree_path):
+    def __init__(self, backbone_path, backbone_tree_path, alignment_size=10):
         self.symfrac = 0.0
         self.ere = 0.59
         self.informat = 'afa'
@@ -31,7 +31,7 @@ class DecompositionAlgorithm(object):
 
         self.strategy = 'centroid'              # default in SEPP/UPP
         self.decomp_strategy = 'hierarchical'   # ensemble of HMMs
-        self.alignment_size = 10                # default in UPP
+        self.alignment_size = alignment_size    # default: 10 as UPP
         self.minsubsetsize = 2
         self.pdistance = 1                      # default in SEPP/UPP
         self.distances = {}
