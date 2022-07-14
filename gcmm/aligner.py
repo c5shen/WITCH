@@ -36,8 +36,8 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
     #else:
     #    sorted_weights = readBitscores(taxon)
 
-    if sorted_weights == None:
-        return 'N/A'
+    if len(sorted_weights) == 0:
+        return 'N/A', None
 
     # during loading bit-scores/weights, we already trimmed weights/scores
     # so here we just use them
@@ -182,8 +182,11 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             query_weights, search_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
 
-    list_of_bb = list(weights_map.keys())
-    list_of_weights = list(weights_map.values())
+    if weights_map:
+        list_of_bb = list(weights_map.keys())
+        list_of_weights = list(weights_map.values())
+    else:
+        list_of_bb, list_of_weights = [], []
 
     s13 = time.time()
 
@@ -192,6 +195,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     gcm_outdir = Configs.outdir + '/magus_outputs/{}'.format(index)
     gcmpath = Configs.gcm_path
 
+    est_path = None
     if weights_str != 'N/A':
         # run GCM (modified MAGUS which takes in weights) on the subset
         est_path = Configs.outdir + '/temp/magus_result_{}.txt'.format(index)
@@ -220,7 +224,11 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
                 c.kill()
             parent.kill()
     else:
-        est_path = 'skipped'
+        # no matching HMMs to align the given query sequence, directly
+        # return
+        Configs.warning('{} in task #{}'.format(taxon, index) \
+                + ' does not have any matching HMMs, skipping...')
+        return 'skipped'
 
     # remove temp folders
     if not Configs.keeptemp:
@@ -235,21 +243,20 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     if not task_timed_out:
         # read in the extended alignment of the query taxon
         s14 = time.time()
-        if est_path != 'skipped':
-            if os.path.exists(est_path):
-                query = getQueryAlignment(taxon, est_path)
-            else:
-                # put the task back to queue
-                lock.acquire()
-                try:
-                    Configs.warning(
-                            'Task #{}->{} finished within time but ' \
-                            'has no output, queuing for retry...'.format(
-                                index, taxon))
-                    alignSubQueries.q.put(index)
-                finally:
-                    lock.release()
-                return None
+        if os.path.exists(est_path):
+            query = getQueryAlignment(taxon, est_path)
+        else:
+            # put the task back to queue
+            lock.acquire()
+            try:
+                Configs.warning(
+                        'Task #{}->{} finished within time but ' \
+                        'has no output, queuing for retry...'.format(
+                            index, taxon))
+                alignSubQueries.q.put(index)
+            finally:
+                lock.release()
+            return None
 
         time_merged_query = time.time() - s14
 
@@ -267,13 +274,9 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             Configs.runtime(' '.join(['(alignSubQueries,',
                     'i={}) Time to obtain the merged alignment'.format(index),
                     ' (s):', str(time_merged_query)]))
-            if weights_str != 'N/A':
-                Configs.debug("[MAGUS] Command used: {}".format(' '.join(cmd)))
-                Configs.log(weights_str)
-                Configs.log('{} passed to main pipeline...'.format(taxon))
-            else:
-                Configs.warning('{} in task #{}'.format(taxon, index) \
-                        + ' do not have any matching HMMs, skipping...')
+            Configs.debug("[MAGUS] Command used: {}".format(' '.join(cmd)))
+            Configs.log(weights_str)
+            Configs.log('{} passed to main pipeline...'.format(taxon))
         finally:
             lock.release()
         return query
