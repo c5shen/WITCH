@@ -23,7 +23,7 @@ For a more detailed explanation of the WITCH algorithm, please refer to the publ
 ### Note and Acknowledgement
 - WITCH includes and uses:
     1. [MAGUS](https://github.com/vlasmirnov/MAGUS) (we use the Github version updated on April 5th 2021).
-    2. [HMMER suites](http://hmmer.org/) (v3.3.2 - hmmbuild, hmmsearch, hmmalign).
+    2. [HMMER suites](http://hmmer.org/) (v3.1b2 - hmmbuild, hmmsearch, hmmalign).
     3. [UPP](https://github.com/smirarab/sepp/blob/master/README.UPP.md) (v4.5.1; we use only partial functionalities).
     4. [FastTreeMP](http://www.microbesonline.org/fasttree/FastTreeMP) (v2.1).
     5. [MAFFT](https://mafft.cbrc.jp/alignment/software/macportable.html) (macOS v7.490).
