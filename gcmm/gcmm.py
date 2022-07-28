@@ -20,6 +20,10 @@ from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
 from functools import partial
 
+# max system recursion limit hard encoding to a large number
+# a temp fix for dendropy tree recursion issues
+sys.setrecursionlimit(10000)
+
 '''
 Delete all unnecessary intermediate files
 '''
