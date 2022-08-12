@@ -113,7 +113,7 @@ class DecompositionAlgorithm(object):
         func = partial(subset_alignment_and_hmmbuild, lock, 
                 self.path, outdirprefix,
                 self.molecule, self.ere, self.symfrac,
-                self.informat, alignment)
+                self.informat, self.backbone_path)
         hmmbuild_paths = list(pool.map(func, subset_args))
         assert len(hmmbuild_paths) == len(subset_args), \
                 'Number of HMMs created does not match ' \
@@ -237,10 +237,12 @@ Obtain subset alignment given taxa, and run hmmbuild on the subset
 alignment.
 '''
 def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule, 
-        ere, symfrac, informat, alignment, args):
+        ere, symfrac, informat, backbone_path, args):
     label, taxa = args
+    alignment = Alignment(); alignment.read_file_object(backbone_path)
     subalignment = alignment.sub_alignment(taxa)
     subalignment.delete_all_gaps()
+    del alignment
 
     outdir = os.path.join(outdirprefix, label)
     if not os.path.isdir(outdir):
