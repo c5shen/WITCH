@@ -1,7 +1,13 @@
 # WITCH - WeIghTed Consensus Hmm alignment
 ![visitors](https://visitor-badge.glitch.me/badge?page_id=c5shen.visitor-badge&left_color=blue&right_color=black)
+[![publication](https://img.shields.io/badge/-Publication%20Link-green?style=for-the-badge)](https://doi.org/10.1089/cmb.2021.0585)
 
 (C) Chengze Shen
+
+-----------------------------
+News
+-----------------------------
+* An improved version of WITCH (developed by Baqiao Liu) is available at [WITCH-ng](https://github.com/RuneBlaze/WITCH-NG). It improves WITCH runtime considerably with the same alignment accuracy.
 
 -----------------------------
 Method Overview
