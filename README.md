@@ -1,6 +1,9 @@
 # WITCH - WeIghTed Consensus Hmm alignment
-![visitors](https://visitor-badge.glitch.me/badge?page_id=c5shen.visitor-badge&left_color=blue&right_color=black)
-[![publication](https://img.shields.io/badge/-Publication%20Link-green?style=for-the-badge)](https://doi.org/10.1089/cmb.2021.0585)
+<!--
+![visitors](https://visitor-badge.glitch.me/badge?page_id=c5shen.visitor-badge&left_color=blue&right_color=black))
+-->
+
+[![publication](https://img.shields.io/badge/Publication-Journal_of_Computational_Biology-green?style=for-the-badge)](https://doi.org/10.1089/cmb.2021.0585)
 
 (C) Chengze Shen
 
