@@ -7,7 +7,7 @@
 
 (C) Chengze Shen, Baqiao Liu
 
-_Special thanks to Baqiao for writing the experimental GCM code that substantially speeds up query alignments!_
+_Special thanks to Baqiao for providing the experimental GCM code!_
 
 -----------------------------
 News
