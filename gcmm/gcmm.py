@@ -166,8 +166,20 @@ def mainAlignmentProcess(args):
     index_list = [i for i in range(num_seq)]
     subset_query_names = [sid_to_query_names[_i] for _i in range(num_seq)]
     subset_query_seqs = [sid_to_query_seqs[_i] for _i in range(num_seq)]
-    subset_weights = [taxon_to_weights[_q] for _q in subset_query_names]
-    #subset_weights = [taxon_to_weights[next(iter(_q))] for _q in subset_queries]
+    
+    # deal with queries that has no weight
+    subset_weights = []
+    ignored_queries = []
+    for _i in range(num_seq):
+        _q = sid_to_query_names[_i]
+        if _q in taxon_to_weights:
+            subset_weights.append(taxon_to_weights[_q])
+        else:
+            Configs.warning('{} does not have any weight/bitscore '.format(
+                _q) + 'and will be ignored the final alignment.')
+            subset_weights.append(tuple())
+            ignored_queries.append(_i)
+    #subset_weights = [taxon_to_weights[_q] for _q in subset_query_names]
 
     func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
 
@@ -213,6 +225,19 @@ def mainAlignmentProcess(args):
     print('\nAll GCM subproblems finished! Doing merging with transitivity...')
     mergeAlignmentsCollapsed(Configs.backbone_path, queries,
             renamed_taxa, pool)
+
+    # if there are any ignored queries, write them to local
+    ignored_path = Configs.outdir + '/ignored_queries.fasta'
+    Configs.log('Writing {} ignored sequences to local at {}'.format(
+        len(ignored_queries), ignored_path)) 
+    newname_to_oldname = {v: k for k, v in renamed_taxa.items()}
+    if len(ignored_queries) > 0:
+        with open(ignored_path, 'w') as f:
+            for _i in ignored_queries:
+                name, seq = sid_to_query_names[_i], sid_to_query_seqs[_i]
+                if name in newname_to_oldname:
+                    name = newname_to_oldname[name]
+                f.write('>{}\n{}\n'.format(name, seq))
 
     Configs.warning('Closing ProcessPoolExecutor instance...')
     pool.shutdown()

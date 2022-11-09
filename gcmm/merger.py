@@ -60,8 +60,9 @@ def mergeAlignmentsCollapsed(backbone_alignment_path, queries,
 
     # merge all queries to the backbone
     for query in queries:
-        full_aln.merge_in(query, False)
-        del query
+        if query != 'skipped':
+            full_aln.merge_in(query, False)
+            #del query
     full_aln.from_bytearray_to_string()
     
     # rename back taxa

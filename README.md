@@ -5,7 +5,9 @@
 
 [![publication](https://img.shields.io/badge/Publication-Journal_of_Computational_Biology-green?style=for-the-badge)](https://doi.org/10.1089/cmb.2021.0585)
 
-(C) Chengze Shen
+(C) Chengze Shen, Baqiao Liu
+
+_Special thanks to Baqiao for writing the experimental GCM code that substantially speeds up query alignments!_
 
 -----------------------------
 News
@@ -30,7 +32,7 @@ For a more detailed explanation of the WITCH algorithm, please refer to the publ
 ### Note and Acknowledgement
 - WITCH includes and uses:
     1. [MAGUS](https://github.com/vlasmirnov/MAGUS) (we use the Github version updated on April 5th 2021).
-    2. [HMMER suites](http://hmmer.org/) (v3.3.2 - hmmbuild, hmmsearch, hmmalign).
+    2. [HMMER suites](http://hmmer.org/) (v3.1b2 - hmmbuild, hmmsearch, hmmalign).
     3. [UPP](https://github.com/smirarab/sepp/blob/master/README.UPP.md) (v4.5.1; we use only partial functionalities).
     4. [FastTreeMP](http://www.microbesonline.org/fasttree/FastTreeMP) (v2.1).
     5. [MAFFT](https://mafft.cbrc.jp/alignment/software/macportable.html) (macOS v7.490).
@@ -48,8 +50,14 @@ This section lays out necessary steps to do to run WITCH. We tested WITCH on the
 Now the program fully supports Linux and macOS systems (for at least the ones mentioned above). We provide necessary binary executables for both types of systems, but you can supplement your own by changing the paths in the `main.config` file. In cases of conflicting installations (e.g., different versions of MAFFT), please supplement with the version on your system.
 If you experience any difficulty running WITCH, please contact Chengze Shen (chengze5@illinois.edu).
 
+### Python version (REQUIRED!)
+```
+python>=3.7
+```
+
 ### Requirements
 ```
+cython>=0.29
 configparser>=5.0.0
 DendroPy>=4.4.0
 numpy>=1.15
