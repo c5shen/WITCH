@@ -20,6 +20,10 @@ from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
 from functools import partial
 
+# max system recursion limit hard encoding to a large number
+# a temp fix for dendropy tree recursion issues
+sys.setrecursionlimit(10000)
+
 '''
 Delete all unnecessary intermediate files
 '''
@@ -110,7 +114,7 @@ def mainAlignmentProcess(args):
         # and HMMSearches
         print('\nDecomposing the backbone tree...')
         decomp = DecompositionAlgorithm(Configs.backbone_path,
-                Configs.backbone_tree_path)
+                Configs.backbone_tree_path, Configs.alignment_size)
         hmmbuild_paths = decomp.decomposition(lock, pool)
         print('\nPerforming all-against-all HMMSearches ' \
                 'between the backbone and queries...')
