@@ -68,7 +68,7 @@ class Configs:
     graphclustermethod = 'mcl'
     graphtracemethod = 'minclusters'
     graphtraceoptimize = 'false'
-    timeout = 60
+    timeout = 120
 
     @staticmethod
     def warning(msg, path=None):
