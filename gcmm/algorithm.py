@@ -49,11 +49,17 @@ class DecompositionAlgorithm(object):
     def read_alignment_and_tree(self):
         Configs.log('Reading backbone alignment: {}'.format(
             self.backbone_path))
+        assert os.path.exists(self.backbone_path), \
+                'Backbone alignment [{}] does not exist!'.format(
+                        self.backbone_path)
         alignment = Alignment()
         alignment.read_file_object(self.backbone_path)
 
         Configs.log('Reading backbone tree: {}'.format(
             self.backbone_tree_path))
+        assert os.path.exists(self.backbone_tree_path), \
+                'Backbone tree [{}] does not exist'.format(
+                        self.backbone_tree_path)
         tree = PhylogeneticTree(dendropy.Tree.get_from_stream(
             open(self.backbone_tree_path, 'r'),
             schema='newick',

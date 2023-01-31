@@ -199,18 +199,24 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     if weights_str != 'N/A':
         # run GCM (modified MAGUS which takes in weights) on the subset
         est_path = Configs.outdir + '/temp/magus_result_{}.txt'.format(index)
-        import glob
-        files = glob.glob(f'{constraints_dir}/*')
-        cmd = [gcmpath, 'merge',
-                '-i', *files, '-g', *list_of_bb,
-                '-o', est_path, '-w', *[str(w) for w in list_of_weights]]
+        cmd = ['python3', Configs.magus_path, '-np', '1',
+                '-d', gcm_outdir, '-s', constraints_dir, '-b', bb_dir,
+                '-o', est_path, '-f', str(Configs.inflation_factor),
+                '--graphclustermethod', Configs.graphclustermethod,
+                '--graphtracemethod', Configs.graphtracemethod,
+                '--graphtraceoptimize', Configs.graphtraceoptimize]
+        #import glob
+        #files = glob.glob(f'{constraints_dir}/*')
+        #cmd = [gcmpath, 'merge',
+        #        '-i', *files, '-g', *list_of_bb,
+        #        '-o', est_path, '-w', *[str(w) for w in list_of_weights]]
         #print(' '.join(cmd))
         # use macOS version mcl (version 21.257) if system is macOS
-        # if Configs.mclpath is not None:
-        #     cmd += ['--mclpath', Configs.mclpath]
-        # if Configs.use_weight:
-        #     weights_path = search_dir + '/weights.txt'
-        #     cmd += ['-w', weights_path] 
+        if Configs.mclpath is not None:
+            cmd += ['--mclpath', Configs.mclpath]
+        if Configs.use_weight:
+            weights_path = search_dir + '/weights.txt'
+            cmd += ['-w', weights_path] 
         #os.system(cmd)
         p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL)
