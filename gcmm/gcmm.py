@@ -7,7 +7,7 @@ Main pipeline of WITCH
 import os, sys, math, psutil, shutil 
 from configs import * 
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
-from gcmm.loader import loadSubQueries 
+from gcmm.loader import loadSubQueries, writeTempBackbone
 from gcmm.weighting import writeWeights, writeBitscores
 from gcmm.aligner import alignSubQueries
 from gcmm.backbone import BackboneJob
@@ -38,7 +38,7 @@ def clearTempFiles():
         #    Configs.outdir))
         os.system('rm -rf {}/temp'.format(Configs.outdir))
 
-    dirs_to_remove = ['tree_decomp/fragment_chunks', 'tree_decomp/root',
+    dirs_to_remove = ['tree_decomp',
             'backbone_alignments', 'constraints',
             'search_results', 'data', 'weights', 'bitscores']
     for _d in dirs_to_remove:
@@ -113,8 +113,9 @@ def mainAlignmentProcess(args):
         # after obtaining backbone alignment/tree, perform decomposition
         # and HMMSearches
         print('\nDecomposing the backbone tree...')
-        decomp = DecompositionAlgorithm(Configs.backbone_path,
-                Configs.backbone_tree_path, Configs.alignment_size)
+        decomp = DecompositionAlgorithm(
+                Configs.backbone_path, Configs.backbone_tree_path,
+                Configs.alignment_size)
         hmmbuild_paths = decomp.decomposition(lock, pool)
         print('\nPerforming all-against-all HMMSearches ' \
                 'between the backbone and queries...')
@@ -134,6 +135,10 @@ def mainAlignmentProcess(args):
     assert Configs.hmmdir != None \
             and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
 
+    # 0) create a temporary (working) backbone alignment,
+    # enforcing all letters to be upper-cases
+    tmp_backbone_path = writeTempBackbone(
+            Configs.outdir + '/tree_decomp/backbone', Configs.backbone_path)
 
     # 1) get all sub-queries, write to [outdir]/data
     num_seq, index_to_hmm, ranked_bitscores, sid_to_query_names, \
@@ -181,7 +186,7 @@ def mainAlignmentProcess(args):
             ignored_queries.append(_i)
     #subset_weights = [taxon_to_weights[_q] for _q in subset_query_names]
 
-    func = partial(alignSubQueries, Configs.backbone_path, index_to_hmm, lock)
+    func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock)
 
     #results = list(pool.map(func, subset_queries, subset_weights, index_list))
     results = list(pool.map(func, subset_query_names, subset_query_seqs,
@@ -223,8 +228,7 @@ def mainAlignmentProcess(args):
 
     # 4) merge all results 
     print('\nAll GCM subproblems finished! Doing merging with transitivity...')
-    mergeAlignmentsCollapsed(Configs.backbone_path, queries,
-            renamed_taxa, pool)
+    mergeAlignmentsCollapsed(tmp_backbone_path, queries, renamed_taxa, pool)
 
     # if there are any ignored queries, write them to local
     ignored_path = Configs.outdir + '/ignored_queries.fasta'

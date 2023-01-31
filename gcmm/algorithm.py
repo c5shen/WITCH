@@ -54,9 +54,6 @@ class DecompositionAlgorithm(object):
                         self.backbone_path)
         alignment = Alignment()
         alignment.read_file_object(self.backbone_path)
-        # make sure the backbone alignment is in upper-case
-        for key in alignment.keys():
-            alignment[key] = alignment[key].upper()
 
         Configs.log('Reading backbone tree: {}'.format(
             self.backbone_tree_path))

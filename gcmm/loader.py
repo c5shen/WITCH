@@ -50,6 +50,24 @@ Initialize global lock for writing to log file
 #    lock = l
 
 '''
+Function to create a local copy of the backbone alignment in upper-cases
+'''
+def writeTempBackbone(outdir, backbone_path):
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)
+    tmp_backbone_path = os.path.join(outdir, 'backbone.aln.fasta')
+    Configs.log('Creating a local copy of backbone alignment ' + \
+            '(all letters to upper-cases) at: ' + \
+            tmp_backbone_path)
+    alignment = Alignment(); alignment.read_file_object(backbone_path)
+    for key in alignment.keys():
+        alignment[key] = alignment[key].upper()
+    alignment.write(tmp_backbone_path, 'FASTA')
+    del alignment
+
+    return tmp_backbone_path
+
+'''
 Function to write a single set of queries to local, given its index, etc
 '''
 def writeOneQuerySet(frag_names, unaligned, outdir, args):
