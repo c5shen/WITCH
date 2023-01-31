@@ -229,7 +229,9 @@ def loadSubQueries(lock, pool):
     s1 = time.time()
     unaligned = Alignment()
     unaligned.read_file_object(Configs.query_path)
-    #num_subset = max(1, math.ceil(len(unaligned) / Configs.subset_size))
+    # make sure unaligned sequences are read in upper-case letters
+    for key in unaligned.keys():
+        unaligned[key] = unaligned[key].upper()
 
     # 1) get all sub-queries, write to [outdir]/data
     data_dir = Configs.outdir + '/data'
