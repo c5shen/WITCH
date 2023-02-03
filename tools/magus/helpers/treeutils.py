@@ -95,6 +95,11 @@ def decomposeGuideTree(subsetsDir, sequencesPath, guideTreePath, maxSubsetSize, 
     sequences = sequenceutils.readFromFasta(sequencesPath, removeDashes = False)
     guideTree = dendropy.Tree.get(path=guideTreePath, schema="newick", preserve_underscores=True)
     guideTree.collapse_basal_bifurcation()
+
+    # added by Chengze @ 2.3.2023
+    # resolved polytomies so that high-degree nodes will not be an issue
+    # for decomposition
+    guideTree.resolve_polytomies(update_bipartitions=True)
     
     for edge in guideTree.postorder_edge_iter():
         if len(edge.head_node.child_edges()) > 0:
