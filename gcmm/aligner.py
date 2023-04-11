@@ -236,7 +236,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
 
             err_to_write = 'Encountered subprocess.CalledProcessError!' \
                 + '\nerror code: {}'.format(ret_code) \
-                + '\ndetailed call process output:')
+                + '\ndetailed call process output:'
             print(err_to_write)
             Configs.error(err_to_write)
             for line in res[0].decode(encoding='utf-8').split('\n'):
