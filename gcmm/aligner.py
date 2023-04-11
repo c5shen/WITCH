@@ -218,9 +218,8 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             weights_path = search_dir + '/weights.txt'
             cmd += ['-w', weights_path] 
         #os.system(cmd)
-        p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL)
-
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
         try:
             p.wait(Configs.timeout)
         except subprocess.TimeoutExpired:
@@ -229,6 +228,18 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             for c in parent.children(recursive=True):
                 c.kill()
             parent.kill()
+        # additional check for called process error
+        except subprocess.CalledProcessError:
+            ret_code = p.returncode
+            res = p.communicate()
+            stderr_out = res[1]
+
+            print('Encountered subprocess.CalledProcessError!' +
+                '\nerror code: {}'.format(ret_code) +
+                '\ndetailed call process output:')
+            for line in res[0].decode(encoding='utf-8').split('\n'):
+                print(line)
+            exit(1)
     else:
         # no matching HMMs to align the given query sequence, directly
         # return
