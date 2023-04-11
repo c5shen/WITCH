@@ -234,11 +234,14 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             res = p.communicate()
             stderr_out = res[1]
 
-            print('Encountered subprocess.CalledProcessError!' +
-                '\nerror code: {}'.format(ret_code) +
-                '\ndetailed call process output:')
+            err_to_write = 'Encountered subprocess.CalledProcessError!' \
+                + '\nerror code: {}'.format(ret_code) \
+                + '\ndetailed call process output:')
+            print(err_to_write)
+            Configs.error(err_to_write)
             for line in res[0].decode(encoding='utf-8').split('\n'):
                 print(line)
+                Configs.error(line)
             exit(1)
     else:
         # no matching HMMs to align the given query sequence, directly
