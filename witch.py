@@ -6,7 +6,8 @@ from configs import _read_config_file
 from configs import *
 from gcmm.gcmm import mainAlignmentProcess
 
-version = "0.3.0"
+version = "0.3.1"
+_root_dir = os.path.dirname(os.path.realpath(__file__))
 
 def main():
     parser = _init_parser()
@@ -16,9 +17,13 @@ def main():
     opts = Namespace()
     main_cmd_defaults = []
 
-    if os.path.exists(main_config_path):
-        with open(main_config_path, 'r') as cfile:
-            main_cmd_defaults = _read_config_file(cfile, opts)
+    # generate main.config using default setting if it is missing
+    if not os.path.exists(main_config_path):
+        print('main.config not found, generating {}...'.format(main_config_path))
+        os.system('python3 {}/setup.py'.format(_root_dir))
+    with open(main_config_path, 'r') as cfile:
+        main_cmd_defaults = _read_config_file(cfile, opts)
+
     input_args = main_cmd_defaults + cmdline_args
     args = parser.parse_args(input_args, namespace=opts)
 

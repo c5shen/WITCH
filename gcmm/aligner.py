@@ -212,7 +212,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         #        '-o', est_path, '-w', *[str(w) for w in list_of_weights]]
         #print(' '.join(cmd))
         # use macOS version mcl (version 21.257) if system is macOS
-        if Configs.mclpath is not None:
+        if Configs.mclpath:
             cmd += ['--mclpath', Configs.mclpath]
         if Configs.use_weight:
             weights_path = search_dir + '/weights.txt'
@@ -303,6 +303,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
     else:
         lock.acquire()
         try:
+            Configs.debug("[MAGUS] Command used: {}".format(' '.join(cmd)))
             Configs.warning('Task #{}->{} failed, queuing for retry...'.format(
                 index, taxon))
             alignSubQueries.q.put(index)

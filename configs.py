@@ -4,7 +4,7 @@ Created on 1.22.2022 by Chengze Shen
 Global configuration class.
 '''
 
-import os, shutil
+import os
 import time
 try:
     import configparser
@@ -47,31 +47,12 @@ class Configs:
     # hmmalign/hmmsearch/magus paths
     magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
     gcm_path = os.path.join(_root_dir, 'tools/gcm137/gcm137')
-    if 'macOS' in platform():
-        hmmer_dir = os.path.join(_root_dir, 'tools/macOS')
-        fasttreepath = os.path.join(_root_dir, 'tools/macOS/FastTreeMP')
-        mclpath = os.path.join(_root_dir, 'tools/macOS/mcl')
-        gcm_path = os.path.join(_root_dir, 'tools/macOS/gcm137')
-    else:
-        hmmer_dir = os.path.join(_root_dir, 'tools/hmmer')
-        fasttreepath = os.path.join(_root_dir, 'tools/fasttree/FastTreeMP')
-        mclpath = None
-    hmmalignpath = os.path.join(hmmer_dir, 'hmmalign')
-    hmmsearchpath = os.path.join(hmmer_dir, 'hmmsearch')
-    hmmbuildpath = os.path.join(hmmer_dir, 'hmmbuild')
-
-    # binaries from the user's environment will be used in priority
-    # if they exist
-    if shutil.which('mcl'):
-        mclpath = shutil.which('mcl')
-    if shutil.which('hmmsearch'):
-        hmmsearchpath = shutil.which('hmmsearch')
-    if shutil.which('hmmbuild'):
-        hmmbuildpath = shutil.which('hmmbuild')
-    if shutil.which('hmmalign'):
-        hmmalignpath = shutil.which('hmmalign')
-    if shutil.which('FastTreeMP'):
-        fasttreepath = shutil.which('FastTreeMP')
+    mafftpath = None
+    fasttreepath = None
+    mclpath = None
+    hmmsearchpath = None
+    hmmalignpath = None
+    hmmbuildpath = None
 
     log_path = None
     error_path = None
@@ -125,7 +106,7 @@ def set_valid_configuration(name, conf):
             'Looking for Namespace object but find {}'.format(type(conf))
 
     # backbone alignment settings
-    if name.lower() == 'backbone':
+    if name == 'Backbone':
         for k in conf.__dict__.keys():
             attr = getattr(conf, k)
             if not attr:
@@ -145,15 +126,14 @@ def set_valid_configuration(name, conf):
         setattr(Configs, name, conf)
     # settings that change basic Configs class variables such as:
     # fasttreepath, hmmalignpath, etc.
-    elif name.lower() == 'basic':
+    elif name == 'Basic':
         for k in conf.__dict__.keys():
             attr = getattr(conf, k)
             if not attr:
                 continue
             # set variable [k] to [attr] if provided
-            if getattr(Configs, k, None): 
-                setattr(Configs, k, attr)
-    elif name.lower() == 'magus':
+            setattr(Configs, k, attr)
+    elif name == 'MAGUS':
         setattr(Configs, name, conf)
 
 # valid attribute check
