@@ -66,19 +66,24 @@ psutil>=5.0
 
 ### Installation Steps
 ```bash
-# 1. install via GitHub repo
+# 1. Install via GitHub repo
 git clone https://github.com/c5shen/WITCH.git
 
-# 2. install all requirements
+# 2. Install all requirements
+# If you do not have root access, use "pip3 install -r requirements.txt --user"
 cd WITCH
 pip3 install -r requirements.txt
-# if not having root access, use "pip3 install -r requirements.txt --user"
 
-# 3. run setup.py to set up main.config. Please refer to default.config for additional information
-python3 setup.py
+# 3. Run setup.py to set up main.config. Please refer to default.config and use `-h` for additional information
+#    Additionally, software binaries that are available in the user's environment will be prioritized for usage.
+#    Use "-p false" to disable this priority.
+python3 setup.py [-h]
 
-# 4. execute the WITCH python script with -h to see allowed commandline parameter settings
-python3 witch.py -h
+# 4. Execute the WITCH python script with -h to see allowed commandline parameter settings
+#    When running WITCH normally, if step 3 is not run, WITCH will automatically generate a "main.config" file
+#    using the default "setup.py" settings.
+python3 witch.py [-h]
+
 ```
 
 ----------------------------
