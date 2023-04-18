@@ -4,7 +4,7 @@ Created on 1.22.2022 by Chengze Shen
 Global configuration class.
 '''
 
-import os
+import os, shutil
 import time
 try:
     import configparser
@@ -59,6 +59,19 @@ class Configs:
     hmmalignpath = os.path.join(hmmer_dir, 'hmmalign')
     hmmsearchpath = os.path.join(hmmer_dir, 'hmmsearch')
     hmmbuildpath = os.path.join(hmmer_dir, 'hmmbuild')
+
+    # binaries from the user's environment will be used in priority
+    # if they exist
+    if shutil.which('mcl'):
+        mclpath = shutil.which('mcl')
+    if shutil.which('hmmsearch'):
+        hmmsearchpath = shutil.which('hmmsearch')
+    if shutil.which('hmmbuild'):
+        hmmbuildpath = shutil.which('hmmbuild')
+    if shutil.which('hmmalign'):
+        hmmalignpath = shutil.which('hmmalign')
+    if shutil.which('FastTreeMP'):
+        fasttreepath = shutil.which('FastTreeMP')
 
     log_path = None
     error_path = None
@@ -138,7 +151,7 @@ def set_valid_configuration(name, conf):
             if not attr:
                 continue
             # set variable [k] to [attr] if provided
-            if getattr(Configs, k, None) != None: 
+            if getattr(Configs, k, None): 
                 setattr(Configs, k, attr)
     elif name.lower() == 'magus':
         setattr(Configs, name, conf)
