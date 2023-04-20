@@ -131,6 +131,9 @@ python3 witch.py -b examples/data/backbone.aln.fasta -q examples/data/unaligned_
 -------------------------
 To-do
 -------------------------
+1. Setting up checkpoint and allow resuming a job from checkpoints (to avoid re-running those paintstaking hmmsearch jobs!).
+2. Checking the effect of large chunks vs. smaller chunks when the number of cores is small. Maybe submit many jobs of smaller chunks can improve overall runtime.
+3. Improve logging to have some more intermediate output to `log.txt`.
 1. (DONE) ~~Optimize how merging is done to reduce the output file size (need to do a similar task as UPP where insertion columns are marked as lower cases and squeezed together.~~
 2. (DONE) ~~Optimize I/O so that there are fewer intermediate file writeouts and readins.~~
 3. (Need manual fix from users) ~~Support for arm64 systems (mainly an issue for FastTreeMP).~~
