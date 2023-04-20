@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os, sys, time
 from argparse import ArgumentParser, Namespace
 import logging

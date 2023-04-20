@@ -288,7 +288,8 @@ def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters, args):
     hmmsearch_path = tempfile.mktemp(
             prefix='hmmsearch.results.fragment_chunk_{}.'.format(frag_index),
             dir=outdir)
-    cmd = [binary, '--cpu', '1', '--noali', '-E', str(elim)]
+    # using --cpu 0 for hmmsearch to avoid usage of two cores per instance
+    cmd = [binary, '--cpu', '0', '--noali', '-E', str(elim)]
     if not piped:
         cmd.extend(['-o', hmmsearch_path])
     if not filters:
