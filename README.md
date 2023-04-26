@@ -131,6 +131,7 @@ python3 witch.py -b examples/data/backbone.aln.fasta -q examples/data/unaligned_
 -------------------------
 To-do
 -------------------------
+1. Optimize code struction in `gcmm/tree.py`, particularly for `decompose_tree(...)`.
 1. Setting up checkpoint and allow resuming a job from checkpoints (to avoid re-running those paintstaking hmmsearch jobs!).
 2. Checking the effect of large chunks vs. smaller chunks when the number of cores is small. Maybe submit many jobs of smaller chunks can improve overall runtime.
 3. Improve logging to have some more intermediate output to `log.txt`.
