@@ -116,7 +116,8 @@ def mainAlignmentProcess(args):
         decomp = DecompositionAlgorithm(
                 Configs.backbone_path, Configs.backbone_tree_path,
                 Configs.alignment_size)
-        hmmbuild_paths = decomp.decomposition(lock, pool)
+        hmmbuild_paths, subset_to_retained_columns = \
+                decomp.decomposition(lock, pool)
         print('\nPerforming all-against-all HMMSearches ' \
                 'between the backbone and queries...')
         search = SearchAlgorithm(hmmbuild_paths)

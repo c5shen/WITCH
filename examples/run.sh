@@ -15,8 +15,8 @@
 
 # 4) Scenario D - backbone alignment available; backbone tree available;
 #                 query sequences available; saving weights to local;
-#                 also saving working (temp) files to examine
 python3 ../witch.py --num-cpus -1 -b data/backbone.aln.fasta \
     -e data/backbone.tre \
     -q data/unaligned_frag.txt -d scenarioD_output -o aligned.txt \
-    --save-weight 1 --keeptemp --keepgcmtemp
+    --save-weight 1 
+    #--keeptemp --keepgcmtemp

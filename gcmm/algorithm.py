@@ -120,7 +120,17 @@ class DecompositionAlgorithm(object):
                 self.path, outdirprefix,
                 self.molecule, self.ere, self.symfrac,
                 self.informat, self.backbone_path)
-        hmmbuild_paths = list(pool.map(func, subset_args))
+        ret = list(pool.map(func, subset_args))
+        hmmbuild_paths = []
+        
+        # record the retained columns in each HMM subset
+        # (used in mapping hmmalign results to alignment graph)
+        subset_to_retained_columns = {}
+        for item in ret:
+            hmmbuild_paths.append(item[0])
+            # item[1] -- A_0_*
+            subset_to_retained_columns[int(item[1].split('_')[-1])] = item[2]
+        
         assert len(hmmbuild_paths) == len(subset_args), \
                 'Number of HMMs created does not match ' \
                 'the original number of subsets'
@@ -130,7 +140,7 @@ class DecompositionAlgorithm(object):
         dur = time.time() - start
         Configs.runtime('Time to decompose the backbone (s): {}'.format(
             dur))
-        return hmmbuild_paths
+        return hmmbuild_paths, subset_to_retained_columns
 
 '''
 Class to perform HMMSearch on all hmmbuild subsets and fragment sequences
@@ -279,7 +289,7 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
         Configs.debug('[HMMBuild] Command used: {}'.format(' '.join(cmd)))
     finally:
         lock.release()
-        return hmmbuild_path
+        return (hmmbuild_path, label, tuple(retained_columns))
 
 '''
 a single HMMSearch job between a frag chunk and an hmm
