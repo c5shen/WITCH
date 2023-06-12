@@ -123,22 +123,26 @@ def _init_parser():
             type=int, required=False,
             help='Whether to use adjusted bitscore (weights), default: 1',
             default=1)
+    witch_group.add_argument('--save-weight',
+            type=int, required=False,
+            help='Whether to save weights to local as weights.txt, default: 0',
+            default=0)
     witch_group.add_argument('-A', '--alignment-size', type=int,
             help='Minimum decomposition subset size for tree decomposition, ' \
                     + 'default: 10 (as UPP)',
             default=10, required=False)
-    #witch_group.add_argument('-s', '--subset-size', type=int,
-    #        help='Number of queries in a single GCM run, default: 1',
-    #        required=False, default=1)
-    witch_group.add_argument('--weight-adjust', type=str, required=False,
-            default='none', choices=['none', 'normalize', 'maxto1'],
-            help='(DEPRECATED) Optional adjustment of weights, default: none')
     witch_group.add_argument('-t', '--num-cpus', type=int,
             help='Number of cpus for multi-processing, default: -1 (all)',
             required=False, default=-1)
     witch_group.add_argument('--molecule', type=str,
             help='Whether input is amino/dna/rna, default: dna',
             required=False, default='dna', choices=['amino', 'dna', 'rna'])
+    #witch_group.add_argument('-s', '--subset-size', type=int,
+    #        help='Number of queries in a single GCM run, default: 1',
+    #        required=False, default=1)
+    #witch_group.add_argument('--weight-adjust', type=str, required=False,
+    #        default='none', choices=['none', 'normalize', 'maxto1'],
+    #        help='(DEPRECATED) Optional adjustment of weights, default: none')
 
     # GCM option
     gcm_group = parser.add_argument_group(

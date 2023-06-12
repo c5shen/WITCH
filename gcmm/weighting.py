@@ -155,3 +155,11 @@ def writeWeights(index_to_hmm, ranked_bitscores, pool):
     Configs.runtime('Time to obtain weights given bitscores (s): {}'.format(
         time_obtain_weights))
     return taxon_to_weights
+
+'''
+Write weights to local as [outdir]/weights.txt
+'''
+def writeWeightsToLocal(taxon_to_weights, path):
+    with open(path, 'w') as f:
+        for taxon, weights in taxon_to_weights.items():
+            f.write('{}:{}\n'.format(taxon, weights))
