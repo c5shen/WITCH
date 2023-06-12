@@ -35,10 +35,12 @@ class Configs:
     keeptemp = False
     #keepsubalignment = False
     
+    # WITCH configurations
     num_hmms = 10
     use_weight = True 
+    save_weight = False
     alignment_size = 10
-    weight_adjust = 'none'
+    #weight_adjust = 'none'
     #subset_size = 1
     num_cpus = -1
     molecule = 'dna'
@@ -231,8 +233,9 @@ def buildConfigs(args):
         Configs.num_hmms = args.num_hmms
 
     Configs.use_weight = args.use_weight == 1
+    Configs.save_weight = args.save_weight == 1
     Configs.alignment_size = args.alignment_size
-    Configs.weight_adjust = args.weight_adjust 
+    #Configs.weight_adjust = args.weight_adjust 
 
     Configs.chunksize = args.chunksize
 

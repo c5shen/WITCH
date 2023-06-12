@@ -43,13 +43,14 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
     # so here we just use them
     top_k_hmms = sorted_weights
     if Configs.use_weight:
-        if Configs.weight_adjust == 'normalize':
-            cur_total_w = sum([w[1] for w in top_k_hmms])
-            top_k_hmms = [(w[0], w[1] * (1. / cur_total_w))
-                    for w in top_k_hmms]
-        elif Configs.weight_adjust == 'maxto1':
-            max_w = top_k_hmms[0][1]
-            top_k_hmms = [(w[0], w[1] / max_w) for w in top_k_hmms]
+        pass
+        #if Configs.weight_adjust == 'normalize':
+        #    cur_total_w = sum([w[1] for w in top_k_hmms])
+        #    top_k_hmms = [(w[0], w[1] * (1. / cur_total_w))
+        #            for w in top_k_hmms]
+        #elif Configs.weight_adjust == 'maxto1':
+        #    max_w = top_k_hmms[0][1]
+        #    top_k_hmms = [(w[0], w[1] / max_w) for w in top_k_hmms]
     else:
         top_k_hmms = [(w[0], 1) for w in top_k_hmms]
     ret_str += 'weights for {}: {}'.format(taxon, top_k_hmms)

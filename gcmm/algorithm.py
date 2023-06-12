@@ -167,10 +167,11 @@ class SearchAlgorithm(object):
         subset_args = []
         for hmmbuild_path in self.hmmbuild_paths:
             hmmsearch_outdir = '/'.join(hmmbuild_path.split('/')[:-1])
+            hmm_label = hmmbuild_path.split('/')[-1].split('.')[-1]
             for i in range(0, len(frag_chunk_paths)):
                 frag_chunk_path = frag_chunk_paths[i]
-                subset_args.append((hmmsearch_outdir, hmmbuild_path,
-                    frag_chunk_path, i))
+                subset_args.append((hmmsearch_outdir, hmm_label,
+                    hmmbuild_path, frag_chunk_path, i))
 
         func = partial(subset_frag_chunk_hmmsearch, lock, self.path,
                 self.piped, self.elim, self.filters)
@@ -224,9 +225,10 @@ class SearchAlgorithm(object):
         for i in range(0, len(alg_chunks)):
             temp_file = None
             if alg_chunks[i]:
-                temp_file = tempfile.mktemp(
-                        prefix='fragment_chunk_{}'.format(i),
-                        suffix='.fasta', dir=fc_outdir)
+                temp_file = '{}/fragment_chunk_{}.fasta'.format(fc_outdir, i)
+                #temp_file = tempfile.mktemp(
+                #        prefix='fragment_chunk_{}'.format(i),
+                #        suffix='.fasta', dir=fc_outdir)
                 alg_chunks[i].write(temp_file, 'FASTA')
                 Configs.debug('Writing alignment chunk #{} to {}'.format(
                     i, temp_file))
@@ -247,7 +249,7 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
     label, taxa = args
     alignment = Alignment(); alignment.read_file_object(backbone_path)
     subalignment = alignment.sub_alignment(taxa)
-    subalignment.delete_all_gaps()
+    retained_columns = subalignment.delete_all_gaps()
     del alignment
 
     outdir = os.path.join(outdirprefix, label)
@@ -255,13 +257,15 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
         os.makedirs(outdir)
     
     # write subalignment to outdir
-    subalignment_path = tempfile.mktemp(prefix='hmmbuild.input.',
-            suffix='.fasta', dir=outdir)
+    subalignment_path = '{}/hmmbuild.input.{}.fasta'.format(outdir, label)
+    #subalignment_path = tempfile.mktemp(prefix='hmmbuild.input.',
+    #        suffix='.fasta', dir=outdir)
     subalignment.write(subalignment_path, 'FASTA')
 
     # run HMMBuild with 1 cpu given the subalignment
-    hmmbuild_path = tempfile.mktemp(prefix='hmmbuild.model.',
-            dir=outdir)
+    hmmbuild_path = '{}/hmmbuild.model.{}'.format(outdir, label)
+    #hmmbuild_path = tempfile.mktemp(prefix='hmmbuild.model.',
+    #        dir=outdir)
     cmd = [binary, '--cpu', '1',
             '--{}'.format(molecule),
             '--ere', str(ere),
@@ -281,13 +285,16 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
 a single HMMSearch job between a frag chunk and an hmm
 '''
 def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters, args):
-    outdir, hmm, unaligned, frag_index = args
+    outdir, hmm_label, hmm, unaligned, frag_index = args
     
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
-    hmmsearch_path = tempfile.mktemp(
-            prefix='hmmsearch.results.fragment_chunk_{}.'.format(frag_index),
-            dir=outdir)
+
+    hmmsearch_path = '{}/hmmsearch.results.{}.fragment_chunk_{}'.format(
+            outdir, hmm_label, frag_index)
+    #hmmsearch_path = tempfile.mktemp(
+    #        prefix='hmmsearch.results.fragment_chunk_{}.'.format(frag_index),
+    #        dir=outdir)
     cmd = [binary, '--cpu', '1', '--noali', '-E', str(elim)]
     if not piped:
         cmd.extend(['-o', hmmsearch_path])

@@ -8,7 +8,7 @@ import os, sys, math, psutil, shutil
 from configs import * 
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries, writeTempBackbone
-from gcmm.weighting import writeWeights, writeBitscores
+from gcmm.weighting import writeWeights, writeBitscores, writeWeightsToLocal
 from gcmm.aligner import alignSubQueries
 from gcmm.backbone import BackboneJob
 from gcmm.merger import mergeAlignmentsCollapsed
@@ -151,6 +151,11 @@ def mainAlignmentProcess(args):
     else:
         print('\nLoading bit-scores...')
         taxon_to_weights = writeBitscores(ranked_bitscores, pool)
+
+    # 2a) if saving weights to local
+    if Configs.save_weight:
+        print('\n(user option) Writing weights to local...')
+        writeWeightsToLocal(taxon_to_weights, Configs.outdir + '/weights.txt')
 
     # 3) solve each subset
     sub_alignment_paths = []
