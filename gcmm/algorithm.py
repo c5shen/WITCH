@@ -160,6 +160,47 @@ class SearchAlgorithm(object):
         
         self.outdir = Configs.outdir + '/tree_decomp'
 
+    # dummy constructor for pure usage of obtaining retained columns from 
+    # user-provided hmm directory
+    def __init__(self):
+        pass
+
+    ####### ONLY USED WHEN USER PROVIDES AN HMM DIRECTORY #######
+    def readHMMDirectory(self, lock, pool):
+        subset_to_retained_columns = dict()
+        
+        # use "find" command to find all subset directories
+        cmd = 'find {} -maxdepth 2 -name A_0_* -type d'.format(Configs.hmmdir)
+        subset_dirs = [os.path.realpath(x) 
+                for x in os.popen(cmd).read().split('\n')[:-1]]
+        Configs.log('User-provided HMM directory: {}'.format(Configs.hmmdir))
+        Configs.log('Reading {} subsets...'.format(len(subset_dirs)))
+
+        # use pool to process all subset dirs
+        subset_args = []
+        tmp_map = dict()
+        for sdir in subset_dirs:
+            ind = int(sdir.split('/')[-1].split('_')[-1])
+            subset_args.append((ind, sdir))
+            tmp_map[ind] = sdir
+
+        # obtain the backbone alignment, which should be of A_0_0
+        cmd = 'find {} -maxdepth 1 -name hmmbuild.input.*fasta -type f'.format(
+                tmp_map[0])
+        bb_path = os.path.realpath(os.popen(cmd).read().split('\n')[0])
+        bb_aln = Alignment(); bb_aln.read_file_object(bb_path)
+        
+        func = partial(subset_obtain_retained_columns, bb_aln)
+        ret = list(pool.map(func, subset_args))
+
+        for item in ret:
+            subset_to_retained_columns[int(item[0])] = item[1]
+
+        del bb_aln
+        Configs.log('Finished reading decomposition subsets...')
+        return subset_to_retained_columns
+    
+    # main function to perform all-against-all query-HMM searches in MP 
     def search(self, lock, pool):
         Configs.log('Running all-against-all HMM searches between queries ' \
                 'and HMMs...')
@@ -324,6 +365,28 @@ def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters, args):
     finally:
         lock.release()
         return hmmsearch_path
+
+'''
+helper function to read alignment from a subset alignment and obtain
+its retained columns with respect to the backbone alignment
+'''
+def subset_obtain_retained_columns(bbaln, args):
+    ind, sdir = args
+    # find the subset alignment path
+    cmd = 'find {} -maxdepth 1 -name hmmbuild.input.*fasta -type f'.format(
+            sdir)
+    try:
+        path = os.path.realpath(os.popen(cmd).read().split('\n')[0])
+        aln = Alignment(); aln.read_file_object(path)
+        keys = aln.keys()
+        subaln = bbaln.sub_alignment(keys)
+        retained_columns = subaln.delete_all_gaps()
+        return ind, retained_columns
+    except:
+        # cannot find the hmm input path in the corresponding directory
+        raise Exception(
+            'Cannot load subset {} at {}! Decomposition may be incomplete.'.format(
+                ind, sdir))
 
 '''
 helper function for modifying HMMSearch output file

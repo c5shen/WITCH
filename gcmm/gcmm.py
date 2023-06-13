@@ -125,6 +125,11 @@ def mainAlignmentProcess(args):
         
         # default to <outdir>/tree_comp/root
         Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
+    else:
+        # go over the given hmm directory and obtain all subset alignment
+        # get their retained columns with respect to the backbone alignment
+        _dummy_search = SearchAlgorithm()
+        subset_to_retained_columns = _dummy_search.readHMMDirectory(lock, pool)
 
     # sanity check before moving on
     assert Configs.backbone_path != None \
@@ -135,6 +140,13 @@ def mainAlignmentProcess(args):
             and os.path.exists(Configs.query_path), 'query sequences missing'
     assert Configs.hmmdir != None \
             and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
+
+    ####### Addition - 6.13.2023 #######
+    # Create a shared memory dict that records retained column indexes
+    # of each subset alignment for in-memory merging of HMM-query alignments,
+    # instead of calling GCM (the WITCH-ng's way)
+    shared_subset_to_retained_columns = m.dict(subset_to_retained_columns,
+            lock=False)
 
     # 0) create a temporary (working) backbone alignment,
     # enforcing all letters to be upper-cases
@@ -192,7 +204,8 @@ def mainAlignmentProcess(args):
             ignored_queries.append(_i)
     #subset_weights = [taxon_to_weights[_q] for _q in subset_query_names]
 
-    func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock)
+    func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock,
+            shared_subset_to_retained_columns)
 
     #results = list(pool.map(func, subset_queries, subset_weights, index_list))
     results = list(pool.map(func, subset_query_names, subset_query_seqs,

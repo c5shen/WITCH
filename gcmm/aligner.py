@@ -53,7 +53,8 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
         #    top_k_hmms = [(w[0], w[1] / max_w) for w in top_k_hmms]
     else:
         top_k_hmms = [(w[0], 1) for w in top_k_hmms]
-    ret_str += 'weights for {}: {}'.format(taxon, top_k_hmms)
+    ret_str += '{}\tpassed to main pipeline with top {} weights: {}'.format(
+            taxon, len(top_k_hmms), top_k_hmms)
     for item in top_k_hmms:
         # denote that this HMM will be used
         ret[item[0]] = 1
@@ -136,10 +137,14 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(backbone_path, index_to_hmm, lock,
+def alignSubQueries(backbone_path, index_to_hmm, lock, subset_to_retained_columns,
         taxon, seq, query_weights, index):
     # index maps to query in unaligned 
     # query_weights in the form ((hmmX, scoreX), (hmmY, scoreY), ...)
+
+    # DEBUG: test out if subset_to_retained_columns are passed successfully
+    # in shared memory
+    #print(subset_to_retained_columns[0])
 
     s11 = time.time()
     # add constraints
@@ -297,7 +302,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
                     ' (s):', str(time_merged_query)]))
             Configs.debug("[MAGUS] Command used: {}".format(' '.join(cmd)))
             Configs.log(weights_str)
-            Configs.log('{} passed to main pipeline...'.format(taxon))
+            #Configs.log('{} passed to main pipeline...'.format(taxon))
         finally:
             lock.release()
         return query
