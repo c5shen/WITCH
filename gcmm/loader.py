@@ -60,12 +60,17 @@ def writeTempBackbone(outdir, backbone_path):
             '(all letters to upper-cases) at: ' + \
             tmp_backbone_path)
     alignment = Alignment(); alignment.read_file_object(backbone_path)
+    backbone_length = alignment.sequence_length()
+
+    assert backbone_length != None, \
+            'The input backbone {} is not aligned!'.format(backbone_path)
+
     for key in alignment.keys():
         alignment[key] = alignment[key].upper()
     alignment.write(tmp_backbone_path, 'FASTA')
     del alignment
 
-    return tmp_backbone_path
+    return tmp_backbone_path, backbone_length
 
 '''
 Function to write a single set of queries to local, given its index, etc

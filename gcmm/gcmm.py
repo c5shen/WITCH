@@ -9,11 +9,12 @@ from configs import *
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries, writeTempBackbone
 from gcmm.weighting import writeWeights, writeBitscores, writeWeightsToLocal
-from gcmm.aligner import alignSubQueries
+from gcmm.aligner import alignSubQueries, alignSubQueriesNew
 from gcmm.backbone import BackboneJob
 from gcmm.merger import mergeAlignmentsCollapsed
 
 from helpers.alignment_tools import Alignment
+from helpers.general_tools import memoryUsage
 
 import multiprocessing as mp
 from multiprocessing import Lock, Queue, Manager#, Pool
@@ -58,9 +59,19 @@ def clearTempFiles():
 
 '''
 Init function for a queue and get configurations for each worker
+6.21.2023 - Additionally, init the manager shared memories for two dicts
+          - used later
 '''
-def initiate_pool(q, args):
+def initiate_pool(q,
+        shared_subset_to_retained_columns,
+        shared_subset_to_nongaps_per_column,
+        args):
     buildConfigs(args)
+
+    alignSubQueriesNew.subset_to_retained_columns = \
+            shared_subset_to_retained_columns
+    alignSubQueriesNew.subset_to_nongaps_per_column = \
+            shared_subset_to_nongaps_per_column
 
     alignSubQueries.q = q
 
@@ -79,17 +90,34 @@ def mainAlignmentProcess(args):
     #l = Lock()
     q = Queue()
 
+    ####### Addition - 6.13.2023 #######
+    # Create shared memory dicts that record retained column indexes and the
+    # number of nongap characters per column
+    # of each subset alignment for in-memory merging of HMM-query alignments,
+    # instead of calling GCM (the WITCH-ng's way)
+    # lock to False since we are not updating them in subprocesses (doesn't
+    # really matter)
+    shared_subset_to_retained_columns = m.dict(lock=False)
+    shared_subset_to_nongaps_per_column = m.dict(lock=False)
+
     # initialize the main pool at the start so that it's not memory
     # intensive
     Configs.warning('Initializing ProcessorPoolExecutor instance...')
     pool = ProcessPoolExecutor(Configs.num_cpus,
-            initializer=initiate_pool, initargs=(q, args))
+            initializer=initiate_pool, initargs=(q,
+                shared_subset_to_retained_columns,
+                shared_subset_to_nongaps_per_column,
+                args))
             #mp_context=mp.get_context('spawn'),
     _ = pool.submit(dummy)
 
-    # 0) obtain the backbone alignment/tree and eHMMs
-    # If no UPP eHMM directory provided, decompose from the backbone
+    # if not user provided, default to <outdir>/tree_comp/root
     if not Configs.hmmdir:
+        Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
+
+    # 0) obtain the backbone alignment/tree and eHMMs
+    # If no UPP eHMM directory detected, decompose from the backbone
+    if not os.path.exists(Configs.hmmdir):
         # if both backbone alignment/tree present
         if Configs.backbone_path and Configs.backbone_tree_path:
             pass
@@ -116,20 +144,19 @@ def mainAlignmentProcess(args):
         decomp = DecompositionAlgorithm(
                 Configs.backbone_path, Configs.backbone_tree_path,
                 Configs.alignment_size)
-        hmmbuild_paths, subset_to_retained_columns = \
+        hmmbuild_paths, subset_to_retained_columns, subset_to_nongaps_per_column = \
                 decomp.decomposition(lock, pool)
         print('\nPerforming all-against-all HMMSearches ' \
                 'between the backbone and queries...')
         search = SearchAlgorithm(hmmbuild_paths)
         hmmsearch_paths = search.search(lock, pool)
         
-        # default to <outdir>/tree_comp/root
-        Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
     else:
         # go over the given hmm directory and obtain all subset alignment
         # get their retained columns with respect to the backbone alignment
-        _dummy_search = SearchAlgorithm()
-        subset_to_retained_columns = _dummy_search.readHMMDirectory(lock, pool)
+        _dummy_search = SearchAlgorithm(None)
+        subset_to_retained_columns, subset_to_nongaps_per_column \
+                = _dummy_search.readHMMDirectory(lock, pool)
 
     # sanity check before moving on
     assert Configs.backbone_path != None \
@@ -141,16 +168,16 @@ def mainAlignmentProcess(args):
     assert Configs.hmmdir != None \
             and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
 
-    ####### Addition - 6.13.2023 #######
-    # Create a shared memory dict that records retained column indexes
-    # of each subset alignment for in-memory merging of HMM-query alignments,
-    # instead of calling GCM (the WITCH-ng's way)
-    shared_subset_to_retained_columns = m.dict(subset_to_retained_columns,
-            lock=False)
+    # update the shared memory dicts to have the correct values
+    # (should be used by all workers)
+    shared_subset_to_retained_columns.update(subset_to_retained_columns)
+    shared_subset_to_nongaps_per_column.update(subset_to_nongaps_per_column)
+
+    print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
 
     # 0) create a temporary (working) backbone alignment,
     # enforcing all letters to be upper-cases
-    tmp_backbone_path = writeTempBackbone(
+    tmp_backbone_path, backbone_length = writeTempBackbone(
             Configs.outdir + '/tree_decomp/backbone', Configs.backbone_path)
 
     # 1) get all sub-queries, write to [outdir]/data
@@ -202,12 +229,10 @@ def mainAlignmentProcess(args):
                 _q) + 'and will be ignored the final alignment.')
             subset_weights.append(tuple())
             ignored_queries.append(_i)
-    #subset_weights = [taxon_to_weights[_q] for _q in subset_query_names]
 
-    func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock,
-            shared_subset_to_retained_columns)
+    #func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock)
+    func = partial(alignSubQueriesNew, tmp_backbone_path, index_to_hmm, lock)
 
-    #results = list(pool.map(func, subset_queries, subset_weights, index_list))
     results = list(pool.map(func, subset_query_names, subset_query_seqs,
         subset_weights, index_list, chunksize=Configs.chunksize))
     retry_results, success, failure = [], [], []

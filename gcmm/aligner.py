@@ -137,7 +137,7 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(backbone_path, index_to_hmm, lock, subset_to_retained_columns,
+def alignSubQueries(backbone_path, index_to_hmm, lock,
         taxon, seq, query_weights, index):
     # index maps to query in unaligned 
     # query_weights in the form ((hmmX, scoreX), (hmmY, scoreY), ...)
@@ -316,3 +316,36 @@ def alignSubQueries(backbone_path, index_to_hmm, lock, subset_to_retained_column
         finally:
             lock.release()
         return None
+
+'''
+New query-HMM alignment merging function that does not rely on GCM/MAGUS.
+This one will use the knowledge of the index mapping between each sub-alignment
+to the backbone alignment to create an alignment graph, and add weights to edges
+between nodes (of backbone and a query).
+
+Then, the merged alignment for a query is obtained by running Smith-Waterman
+on the alignment graph (|C|x|q|, where |C| is the # sites of the backbone and 
+|q| the length of the query sequence.
+
+All of the above can be achieved without calls to subprocesses such as MAGUS
+or the experimental GCM code (by Baqiao), and most operations can be done
+in-memory (for speed).
+'''
+def alignSubQueriesNew(backbone_length, index_to_hmm, lock,
+        taxon, seq, query_weights, index):
+    # create alignment graph with backbone_length (backbone alignment)
+    # and seq (the target query sequence)
+    s11 = time.time()
+    # TODO
+    time_alignment_graph = time.time() - s11
+
+    # added weighted edges to the alignment graph from gluing alignment
+    s12 = time.time()
+    # TODO
+    time_add_edges = time.time() - s12
+
+    # run Smith-Waterman on the alignment graph to obtain the highest weighted
+    # trace (thus, alignment of the query to the backbone)
+    s13 = time.time()
+    # TODO
+    time_alignment_trace = time.time() - s13
