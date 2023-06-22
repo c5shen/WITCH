@@ -4,7 +4,7 @@ import math
 from collections import defaultdict
 from configs import Configs
 from gcmm.weighting import readWeights, readBitscores
-from helpers.alignment_tools import Alignment, ExtendedAlignment
+from helpers.alignment_tools import Alignment, ExtendedAlignment, compressInsertions
 from multiprocessing import Queue#, Lock
 
 ## initialize the lock for asynchronous safe logging
@@ -476,28 +476,8 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock,
         result = ['-'] * min_col_ind + result + \
                 ['-'] * (backbone_length - max_col_ind - 1)
 
-        # push insertions at sides to both ends (to "compress" insertion columns)
-        p = re.compile(r'[a-z*.]')
-        insertions = [(m.start(), m.end()) for m in p.finditer(''.join(result))]
-        
-        sides = []
-        if len(insertions) == 1:
-            sides = [0]
-        elif len(insertions) > 1:
-            sides = [0, -1]
-        for side in sides:
-            s, t = insertions[side]
-            side_set = result[s:t]
-            insertion_length = t - s
-            if side == 0:
-                result[0:insertion_length] = side_set
-            else:
-                result[-insertion_length:-1] = side_set
-            result[s:t] = ['-'] * insertion_length 
-        combined = ''.join(result)
-        #print(min_col_ind, max_col_ind, len(combined))
-        #print(taxon, seq, combined)
-        #exit(0)
+        # compress insertions at front/end of the query alignment
+        combined = compressInsertions(''.join(result))
 
         # return an extended alignment object with just the query
         # sequences and its updated indexes

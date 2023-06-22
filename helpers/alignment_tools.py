@@ -1343,3 +1343,38 @@ def readHMMSearch(path):
                         float(matches.group(2).strip()))
     f.close()
     return results
+
+'''
+Given an aligned string (represented by upper/lower case letters and gaps,
+return a condensed version that have the lowercase letters from both sides
+compressed to front/back.
+'''
+def compressInsertions(seq):
+    p = re.compile(r'[A-Z*.]')
+    alns = [(m.start(), m.end()) for m in p.finditer(seq)]
+    # do not perform such task if there is no aligned column at all
+    if len(alns) == 0:
+        return seq
+
+    # first occurrence of aligned position defines the back of front search space
+    # i.e., [start, end)
+    f_start, f_end = 0, alns[0][0]
+    f_len = f_end - f_start
+
+    # last occurrence of aligned position defines the front of the back search space
+    b_start, b_end = alns[-1][1], len(seq)
+    b_len = b_end - b_start
+
+    # simplest way of compression: remove all gaps and add them back
+    f_str_ins = seq[f_start:f_end].replace('-', '')
+    f_len_ins = len(f_str_ins)
+    f_str = f_str_ins + '-' * (f_len - f_len_ins)
+
+    b_str_ins = seq[b_start:b_end].replace('-', '')
+    b_len_ins = len(b_str_ins)
+    b_str = '-' * (b_len - b_len_ins) + b_str_ins
+
+    # combine the compressed front/back with the remaining sequence
+    combined = f_str + seq[f_end:b_start+1] + b_str
+
+    return combined

@@ -176,7 +176,7 @@ def mainAlignmentProcess(args):
             #mp_context=mp.get_context('spawn'),
     Configs.warning('ProcessPoolExecutor instance re-opened (for query alignment).')
 
-    print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
+    #print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
 
     # 0) create a temporary (working) backbone alignment,
     # enforcing all letters to be upper-cases
@@ -238,7 +238,7 @@ def mainAlignmentProcess(args):
             index_to_hmm, lock)
     #,
     #        subset_to_retained_columns, subset_to_nongaps_per_column)
-    print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
+    #print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
 
     results = list(pool.map(func, subset_query_names, subset_query_seqs,
         subset_weights, index_list, chunksize=Configs.chunksize))

@@ -323,7 +323,7 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
     nongaps_per_column = [0] * subalignment.sequence_length() 
     for seq in subalignment.values():
         nongaps_per_column = map(add, nongaps_per_column,
-                [int(x == '-') for x in seq])
+                [int(x != '-') for x in seq])
     del alignment
 
     outdir = os.path.join(outdirprefix, label)
