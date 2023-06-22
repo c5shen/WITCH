@@ -1350,7 +1350,7 @@ return a condensed version that have the lowercase letters from both sides
 compressed to front/back.
 '''
 def compressInsertions(seq):
-    p = re.compile(r'[A-Z*.]')
+    p = re.compile(r'[A-Z]+')
     alns = [(m.start(), m.end()) for m in p.finditer(seq)]
     # do not perform such task if there is no aligned column at all
     if len(alns) == 0:
@@ -1375,6 +1375,6 @@ def compressInsertions(seq):
     b_str = '-' * (b_len - b_len_ins) + b_str_ins
 
     # combine the compressed front/back with the remaining sequence
-    combined = f_str + seq[f_end:b_start+1] + b_str
+    combined = f_str + seq[f_end:b_start] + b_str
 
     return combined
