@@ -113,6 +113,11 @@ def _init_parser():
             help='Keep ALL temporary files in the process (constraints' \
                     + ', backbones, HMMSearch results, GCM results, etc.)',
             default=False)
+    witch_group.add_argument('--keep-decomposition', action='store_const',
+            const=True,
+            help='Keep the tree decomposition (including temp backbone/frag ' \
+                    + 'files and HMMBuild/HMMSearch results).',
+            default=False)
     #witch_group.add_argument('--keepsubalignment',
     #        action='store_const', const=True,
     #        help='Keep all subalignments by MAGUS/GCM', default=False)
@@ -125,7 +130,7 @@ def _init_parser():
             default=1)
     witch_group.add_argument('--save-weight',
             type=int, required=False,
-            help='Whether to save weights to local as weights.txt, default: 0',
+            help='Whether to save weights to [outdir]/weights.txt, default: 0',
             default=0)
     witch_group.add_argument('-A', '--alignment-size', type=int,
             help='Minimum decomposition subset size for tree decomposition, ' \

@@ -42,6 +42,9 @@ def clearTempFiles():
     dirs_to_remove = ['tree_decomp',
             'backbone_alignments', 'constraints',
             'search_results', 'data', 'weights', 'bitscores']
+    if Configs.keep_decomposition:
+        dirs_to_remove = dirs_to_remove[1:]
+
     for _d in dirs_to_remove:
         if os.path.isdir('{}/{}'.format(Configs.outdir, _d)):
             os.system('rsync -a --delete {}/ {}/{}/'.format(blank_dir,
@@ -59,21 +62,22 @@ def clearTempFiles():
 
 '''
 Init function for a queue and get configurations for each worker
-6.21.2023 - Additionally, init the manager shared memories for two dicts
-          - used later
 '''
-def initiate_pool(q,
-        shared_subset_to_retained_columns,
-        shared_subset_to_nongaps_per_column,
-        args):
+def initiate_pool(args):
     buildConfigs(args)
 
-    alignSubQueriesNew.subset_to_retained_columns = \
-            shared_subset_to_retained_columns
-    alignSubQueriesNew.subset_to_nongaps_per_column = \
-            shared_subset_to_nongaps_per_column
-
+'''
+6.21.2023 - Additionally, init pool for query alignment with two dicts
+          - used later
+'''
+def initiate_pool_query_alignment(q, args,
+        subset_to_retained_columns,
+        subset_to_nongaps_per_column):
+    buildConfigs(args)
     alignSubQueries.q = q
+    alignSubQueriesNew.subset_to_retained_columns = subset_to_retained_columns
+    alignSubQueriesNew.subset_to_nongaps_per_column = \
+            subset_to_nongaps_per_column
 
 '''
 Dummy function
@@ -90,26 +94,13 @@ def mainAlignmentProcess(args):
     #l = Lock()
     q = Queue()
 
-    ####### Addition - 6.13.2023 #######
-    # Create shared memory dicts that record retained column indexes and the
-    # number of nongap characters per column
-    # of each subset alignment for in-memory merging of HMM-query alignments,
-    # instead of calling GCM (the WITCH-ng's way)
-    # lock to False since we are not updating them in subprocesses (doesn't
-    # really matter)
-    shared_subset_to_retained_columns = m.dict(lock=False)
-    shared_subset_to_nongaps_per_column = m.dict(lock=False)
-
     # initialize the main pool at the start so that it's not memory
     # intensive
     Configs.warning('Initializing ProcessorPoolExecutor instance...')
     pool = ProcessPoolExecutor(Configs.num_cpus,
-            initializer=initiate_pool, initargs=(q,
-                shared_subset_to_retained_columns,
-                shared_subset_to_nongaps_per_column,
-                args))
+            initializer=initiate_pool, initargs=(args,))
             #mp_context=mp.get_context('spawn'),
-    _ = pool.submit(dummy)
+    #_ = pool.submit(dummy)
 
     # if not user provided, default to <outdir>/tree_comp/root
     if not Configs.hmmdir:
@@ -168,10 +159,22 @@ def mainAlignmentProcess(args):
     assert Configs.hmmdir != None \
             and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
 
-    # update the shared memory dicts to have the correct values
-    # (should be used by all workers)
-    shared_subset_to_retained_columns.update(subset_to_retained_columns)
-    shared_subset_to_nongaps_per_column.update(subset_to_nongaps_per_column)
+    ####### Addition - 6.13.2023 #######
+    # Create lists that record retained column indexes and the
+    # number of nongap characters per column
+    # of each subset alignment for in-memory merging of HMM-query alignments,
+    # instead of calling GCM (the WITCH-ng's way)
+    # will be passed to the initiation of process pool as initial arguments
+
+    # close pool and re-initiate pool to run the actual query alignment part
+    Configs.warning('Closing ProcessPoolExecutor instance (for backbone)...')
+    pool.shutdown()
+    pool = ProcessPoolExecutor(Configs.num_cpus,
+            initializer=initiate_pool_query_alignment,
+            initargs=(q, args, subset_to_retained_columns,
+                subset_to_nongaps_per_column))
+            #mp_context=mp.get_context('spawn'),
+    Configs.warning('ProcessPoolExecutor instance re-opened (for query alignment).')
 
     print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
 
@@ -231,15 +234,23 @@ def mainAlignmentProcess(args):
             ignored_queries.append(_i)
 
     #func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock)
-    func = partial(alignSubQueriesNew, tmp_backbone_path, index_to_hmm, lock)
+    func = partial(alignSubQueriesNew, tmp_backbone_path, backbone_length,
+            index_to_hmm, lock)
+    #,
+    #        subset_to_retained_columns, subset_to_nongaps_per_column)
+    print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
 
     results = list(pool.map(func, subset_query_names, subset_query_seqs,
         subset_weights, index_list, chunksize=Configs.chunksize))
-    retry_results, success, failure = [], [], []
-    while len(success) < num_seq:
+    retry_results, success, failure, ignored = [], [], [], []
+    while len(success) < (num_seq - len(ignored_queries)):
         success.extend([r for r in results if r is not None])
         success.extend([r for r in retry_results if r is not None])
-        
+        ignored.extend([':'.join(r.split(':')[1:]) 
+                    for r in results if 'skipped:' in r])
+        ignored.extend([':'.join(r.split(':')[1:])
+                    for r in retry_results if 'skipped:' in r])
+
         failed_items = []; failed_item_queries = []; failed_item_weights = []
         while not q.empty():
             failed_items.append(q.get())

@@ -33,6 +33,7 @@ class Configs:
     chunksize = 1
 
     keeptemp = False
+    keep_decomposition = False
     #keepsubalignment = False
     
     # WITCH configurations
@@ -222,6 +223,7 @@ def buildConfigs(args):
     Configs.output_path = os.path.join(Configs.outdir, args.output_path)
 
     Configs.keeptemp = args.keeptemp
+    Configs.keep_decomposition = args.keep_decomposition
     #Configs.keepsubalignment = args.keepsubalignment
 
     Configs.log_path = os.path.join(Configs.outdir, 'log.txt')

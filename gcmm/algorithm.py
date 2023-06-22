@@ -133,6 +133,12 @@ class DecompositionAlgorithm(object):
             ind = int(item[1].split('_')[-1])
             subset_to_retained_columns[ind] = item[2]
             subset_to_nongaps_per_column[ind] = item[3]
+
+        # convert to list
+        subset_to_retained_columns = [subset_to_retained_columns[k]
+                    for k in sorted(subset_to_retained_columns.keys())]
+        subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
+                    for k in sorted(subset_to_nongaps_per_column.keys())]
         
         assert len(hmmbuild_paths) == len(subset_args), \
                 'Number of HMMs created does not match ' \
@@ -164,7 +170,7 @@ class SearchAlgorithm(object):
         
         self.outdir = Configs.outdir + '/tree_decomp'
 
-    ####### ONLY USED WHEN USER PROVIDES AN HMM DIRECTORY #######
+    ####### ONLY USED WHEN PRESENTS WITH AN HMM DIRECTORY #######
     def readHMMDirectory(self, lock, pool):
         subset_to_retained_columns = dict()
         subset_to_nongaps_per_column = dict()
@@ -173,7 +179,7 @@ class SearchAlgorithm(object):
         cmd = 'find {} -maxdepth 2 -name A_0_* -type d'.format(Configs.hmmdir)
         subset_dirs = [os.path.realpath(x) 
                 for x in os.popen(cmd).read().split('\n')[:-1]]
-        Configs.log('User-provided HMM directory: {}'.format(Configs.hmmdir))
+        Configs.log('Found existing HMM directory: {}'.format(Configs.hmmdir))
         Configs.log('Reading {} subsets...'.format(len(subset_dirs)))
         
         # terminate if not finding any HMMs in the current directory
@@ -204,7 +210,13 @@ class SearchAlgorithm(object):
             subset_to_retained_columns[int(item[0])] = item[1]
             subset_to_nongaps_per_column[int(item[0])] = item[2]
 
-        del bb_aln
+        # convert to list
+        subset_to_retained_columns = [subset_to_retained_columns[k]
+                    for k in sorted(subset_to_retained_columns.keys())]
+        subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
+                    for k in sorted(subset_to_nongaps_per_column.keys())]
+
+        #del bb_aln
         Configs.log('Finished reading decomposition subsets...')
         return subset_to_retained_columns, subset_to_nongaps_per_column
     

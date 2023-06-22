@@ -956,7 +956,11 @@ class ExtendedAlignment(MutableAlignment):
     '''
     def read_query_alignment(self, query_name, path, aformat='fasta'):
         insertions = []
-        entries = [(n, s) for n, s in read_fasta(path)]
+        if aformat == 'fasta':
+            entries = [(n, s) for n, s in read_fasta(path)]
+        elif isinstance(path, MutableAlignment):
+            entries = [(n, s) for n, s in path.items()]
+
         num_elem_per_col = [0 for _i in range(len(entries[0][1]))]
 
         # count how many non-gaps in each col
@@ -973,11 +977,16 @@ class ExtendedAlignment(MutableAlignment):
 
         # go over the query entry and see which column it has non-gap char
         # but backbone is gap (i.e., insertion)
+        # additionally, record the columns that query aligns to
         query_entry = [c for c in query_entry]
+        query_aligned_columns = []
         for j in range(0, len(query_entry), 1):
             if num_elem_per_col[j] == 0 and query_entry[j] != '-':
                 query_entry[j] = query_entry[j].lower()
                 insertions.append(j)
+                query_aligned_columns.append(-1)
+            elif num_elem_per_col[j] != 0 and query_entry[j] != '-':
+                query_aligned_columns.append(j)
         self.fragments.add(query_name); self[query_name] = ''.join(query_entry)
         self._reset_col_names()
 
@@ -991,7 +1000,7 @@ class ExtendedAlignment(MutableAlignment):
             if self._col_labels[c] >= 0:
                 self._col_labels[c] = regular
                 regular += 1
-        return query_name, set(insertions)
+        return query_name, set(insertions), tuple(query_aligned_columns)
 
     def build_extended_alignment(self, base_alignment, path_to_sto_extension,
                                  convert_to_string=True):
