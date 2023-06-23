@@ -80,12 +80,6 @@ def initiate_pool_query_alignment(q, args,
             subset_to_nongaps_per_column
 
 '''
-Dummy function
-'''
-def dummy():
-    pass
-
-'''
 Main process for WITCH 
 '''
 def mainAlignmentProcess(args):
@@ -100,7 +94,6 @@ def mainAlignmentProcess(args):
     pool = ProcessPoolExecutor(Configs.num_cpus,
             initializer=initiate_pool, initargs=(args,))
             #mp_context=mp.get_context('spawn'),
-    #_ = pool.submit(dummy)
 
     # if not user provided, default to <outdir>/tree_comp/root
     if not Configs.hmmdir:
