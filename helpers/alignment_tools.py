@@ -8,7 +8,11 @@ from functools import reduce
 from dendropy.datamodel.taxonmodel import Taxon
 import time
 import io
-from collections import defaultdict, Mapping
+from collections import defaultdict
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 from operator import add
 
 try:
@@ -706,7 +710,7 @@ class MutableAlignment(dict, ReadOnlyAlignment, object):
         If duplicate sequence names are encountered then the old name will
         be replaced.
         """
-        file_obj = open(filename, 'rU')
+        file_obj = open(filename, 'r')
         return self.read_file_object(file_obj, file_format=file_format)
 
     def read_file_object(self, file_obj, file_format='FASTA'):
@@ -1038,7 +1042,7 @@ class ExtendedAlignment(MutableAlignment):
         columns. Labels insertion columns with special labels and labels the
         rest of columns (i.e. original columns) sequentially.
         """
-        handle = open(path, 'rU')
+        handle = open(path, 'r')
         insertions = None
         if aformat.lower() == "stockholm":
             insertions = self._read_sto(handle)
