@@ -7,7 +7,7 @@ from configs import _read_config_file
 from configs import *
 from gcmm.gcmm import mainAlignmentProcess
 
-version = "0.3.1"
+version = "0.4.0"
 _root_dir = os.path.dirname(os.path.realpath(__file__))
 
 def main():
@@ -77,6 +77,9 @@ def _init_parser():
     basic_group.add_argument('-o', '--output-path', type=str,
             help='Output file name, default: merged.fasta', required=False,
             default='merged.fasta')
+    basic_group.add_argument('-t', '--num-cpus', type=int,
+            help='Number of cpus for multi-processing, default: -1 (all)',
+            required=False, default=-1)
     basic_group.add_argument('--chunksize', type=int,
             help='Chunksize for multiprocessing', required=False,
             default=1)
@@ -109,6 +112,10 @@ def _init_parser():
             ' '.join(["These options are used to customize WITCH",
                 "pipeline."]))
     parser.groups['witch_group'] = witch_group
+    witch_group.add_argument('-m', '--mode', type=str,
+            help='Mode for aligning query sequences. Default: witch-ng',
+            required=False, default='witch-ng',
+            choices=['default', 'witch-ng', 'smart'])
     witch_group.add_argument('--keeptemp', action='store_const', const=True,
             help='Keep ALL temporary files in the process (constraints' \
                     + ', backbones, HMMSearch results, GCM results, etc.)',
@@ -136,9 +143,6 @@ def _init_parser():
             help='Minimum decomposition subset size for tree decomposition, ' \
                     + 'default: 10 (as UPP)',
             default=10, required=False)
-    witch_group.add_argument('-t', '--num-cpus', type=int,
-            help='Number of cpus for multi-processing, default: -1 (all)',
-            required=False, default=-1)
     witch_group.add_argument('--molecule', type=str,
             help='Whether input is amino/dna/rna, default: dna',
             required=False, default='dna', choices=['amino', 'dna', 'rna'])

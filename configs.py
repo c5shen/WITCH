@@ -46,6 +46,7 @@ class Configs:
     #keepsubalignment = False
     
     # WITCH configurations
+    mode = 'witch-ng'
     num_hmms = 10
     use_weight = True 
     save_weight = False
@@ -239,6 +240,12 @@ def buildConfigs(args):
     Configs.error_path = os.path.join(Configs.outdir, 'error.txt')
     Configs.debug_path = os.path.join(Configs.outdir, 'debug.txt')
     Configs.runtime_path = os.path.join(Configs.outdir, 'runtime_breakdown.txt')
+
+    # query alignment mode. Default WITCH uses MAGUS/GCM, while I also
+    # implemented the WITCH-ng way.
+    # TODO: Implement a smart way that mixes the two for runtime, since
+    # running Smith-Waterman can be slow on super long sequences
+    Configs.mode = args.mode
 
     if args.num_hmms > 0:
         Configs.num_hmms = args.num_hmms
