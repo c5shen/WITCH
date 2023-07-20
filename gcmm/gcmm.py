@@ -20,10 +20,11 @@ from helpers.alignment_tools import Alignment
 from helpers.general_tools import memoryUsage
 
 import multiprocessing as mp
+import concurrent.futures
 from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
-import concurrent.futures
 from functools import partial
+from tqdm import tqdm
 
 # max system recursion limit hard encoding to a large number
 # a temp fix for dendropy tree recursion issues
@@ -228,19 +229,22 @@ def mainAlignmentProcess(args):
 
     # try submit jobs one-by-one and collect results
     futures, success = [], []
-    while len(success) < (num_seq - len(ignored_queries)):
-        for i in range(len(subset_query_names)):
-            futures.append(pool.submit(func, subset_query_names[i],
-                subset_query_seqs[i], subset_weights[i], index_list[i]))
+    #while len(success) < (num_seq - len(ignored_queries)):
+    for i in range(len(subset_query_names)):
+        futures.append(pool.submit(func, subset_query_names[i],
+            subset_query_seqs[i], subset_weights[i], index_list[i]))
 
-        # iterate over jobs as they complete
-        for future in concurrent.futures.as_completed(futures):
-            _query, _index = future.result()
-            # failed job, should be ignored in the output
-            if len(_query) == 0:
-                ignored_queries.append(subset_query_names[_index])
-            else:
-                success.append(_query)
+    # iterate over jobs as they complete
+    for future in tqdm(
+            concurrent.futures.as_completed(futures),
+            desc="\tRunning...",
+            ascii=False, total=len(subset_query_names), ncols=80):
+        _query, _index = future.result()
+        # failed job, should be ignored in the output
+        if len(_query) == 0:
+            ignored_queries.append(subset_query_names[_index])
+        else:
+            success.append(_query)
 
     #results = list(pool.map(func, subset_query_names, subset_query_seqs,
     #    subset_weights, index_list, chunksize=Configs.chunksize))
@@ -271,7 +275,7 @@ def mainAlignmentProcess(args):
     queries = success
 
     # 4) merge all results 
-    print('\n\nAll GCM subproblems finished! Doing merging with transitivity...')
+    print('\nAll GCM subproblems finished! Doing merging with transitivity...')
     mergeAlignmentsCollapsed(tmp_backbone_path, queries, renamed_taxa, pool)
 
     # if there are any ignored queries, write them to local

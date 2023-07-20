@@ -62,6 +62,7 @@ configparser>=5.0.0
 DendroPy>=4.4.0,<4.6.0
 numpy>=1.15
 psutil>=5.0
+tqdm>=4.0.0
 ```
 
 ### Installation Steps

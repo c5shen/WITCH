@@ -16,13 +16,12 @@ class WITCHProcessPoolExecutor(ProcessPoolExecutor):
         future = super().submit(*args, **kwargs)
         self._running_jobs += 1
         self._submitted_jobs += 1
-        future.add_done_callback(self._worker_is_done)
+        #future.add_done_callback(self._worker_is_done)
         return future
 
     def _worker_is_done(self, future):
         self._running_jobs -= 1
         self._finished_jobs += 1
-        # TODO - handle progress bar
         print('Finished jobs: {}/{}'.format(
             self._finished_jobs, self._submitted_jobs), end='\r', flush=True)
     
