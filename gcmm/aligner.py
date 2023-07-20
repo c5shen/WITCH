@@ -516,7 +516,7 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock,
             Configs.log(weights_str)
         finally:
             lock.release()
-        return query
+        return query, index
     else:
         lock.acquire()
         try:
@@ -524,4 +524,5 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock,
                 index, taxon))
         finally:
             lock.release()
-        return 'skipped:{}'.format(taxon)
+        # return an empty alignment as indication of failure
+        return ExtendedAlignment([]), index

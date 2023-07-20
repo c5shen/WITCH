@@ -13,12 +13,16 @@ from gcmm.aligner import alignSubQueries, alignSubQueriesNew
 from gcmm.backbone import BackboneJob
 from gcmm.merger import mergeAlignmentsCollapsed
 
+# experimental, customized ProcessPoolExecutor
+from gcmm import WITCHProcessPoolExecutor
+
 from helpers.alignment_tools import Alignment
 from helpers.general_tools import memoryUsage
 
 import multiprocessing as mp
 from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
+import concurrent.futures
 from functools import partial
 
 # max system recursion limit hard encoding to a large number
@@ -152,23 +156,6 @@ def mainAlignmentProcess(args):
     assert Configs.hmmdir != None \
             and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
 
-    ####### Addition - 6.13.2023 #######
-    # Create lists that record retained column indexes and the
-    # number of nongap characters per column
-    # of each subset alignment for in-memory merging of HMM-query alignments,
-    # instead of calling GCM (the WITCH-ng's way)
-    # will be passed to the initiation of process pool as initial arguments
-
-    # close pool and re-initiate pool to run the actual query alignment part
-    Configs.warning('Closing ProcessPoolExecutor instance (for backbone)...')
-    pool.shutdown()
-    pool = ProcessPoolExecutor(Configs.num_cpus,
-            initializer=initiate_pool_query_alignment,
-            initargs=(q, args, subset_to_retained_columns,
-                subset_to_nongaps_per_column))
-            #mp_context=mp.get_context('spawn'),
-    Configs.warning('ProcessPoolExecutor instance re-opened (for query alignment).')
-
     #print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
 
     # 0) create a temporary (working) backbone alignment,
@@ -198,18 +185,27 @@ def mainAlignmentProcess(args):
     if not os.path.isdir(Configs.outdir + '/temp'):
         os.makedirs(Configs.outdir + '/temp')
 
-    ############ multiprocessing with Pool ##########
-    # manager version
-    #pool = Pool(Configs.num_cpus, initializer=init_queue, initargs=(q,))
-    #index_list = [i for i in range(num_seq)]
-    #func = partial(alignSubQueries, index_to_hmm, lock)
-    #sub_alignment_paths = pool.map(func, index_list)
-    #pool.close()
-    #pool.join()
+    ####### Addition - 6.13.2023 #######
+    # Create lists that record retained column indexes and the
+    # number of nongap characters per column
+    # of each subset alignment for in-memory merging of HMM-query alignments,
+    # instead of calling GCM (the WITCH-ng's way)
+    # will be passed to the initiation of process pool as initial arguments
+
+    # close pool and re-initiate pool to run the actual query alignment part
+    Configs.warning('Closing ProcessPoolExecutor instance (for backbone)...')
+    pool.shutdown()
+    #pool = ProcessPoolExecutor(Configs.num_cpus,
+    pool = WITCHProcessPoolExecutor(Configs.num_cpus,
+            initializer=initiate_pool_query_alignment,
+            initargs=(q, args, subset_to_retained_columns,
+                subset_to_nongaps_per_column))
+            #mp_context=mp.get_context('spawn'),
+    Configs.warning('ProcessPoolExecutor instance re-opened (for query alignment).')
 
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
-    index_list = [i for i in range(num_seq)]
+    index_list = [_i for _i in range(num_seq)]
     subset_query_names = [sid_to_query_names[_i] for _i in range(num_seq)]
     subset_query_seqs = [sid_to_query_seqs[_i] for _i in range(num_seq)]
     
@@ -229,53 +225,53 @@ def mainAlignmentProcess(args):
     #func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock)
     func = partial(alignSubQueriesNew, tmp_backbone_path, backbone_length,
             index_to_hmm, lock)
-    #,
-    #        subset_to_retained_columns, subset_to_nongaps_per_column)
-    #print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
 
-    results = list(pool.map(func, subset_query_names, subset_query_seqs,
-        subset_weights, index_list, chunksize=Configs.chunksize))
-    retry_results, success, failure, ignored = [], [], [], []
+    # try submit jobs one-by-one and collect results
+    futures, success = [], []
     while len(success) < (num_seq - len(ignored_queries)):
-        success.extend([r for r in results if r is not None])
-        success.extend([r for r in retry_results if r is not None])
-        ignored.extend([':'.join(r.split(':')[1:]) 
-                    for r in results if 'skipped:' in r])
-        ignored.extend([':'.join(r.split(':')[1:])
-                    for r in retry_results if 'skipped:' in r])
+        for i in range(len(subset_query_names)):
+            futures.append(pool.submit(func, subset_query_names[i],
+                subset_query_seqs[i], subset_weights[i], index_list[i]))
 
-        failed_items = []; failed_item_queries = []; failed_item_weights = []
-        while not q.empty():
-            failed_items.append(q.get())
-        if len(failed_items) > 0:
-            Configs.log('Rerunning failed jobs: {}'.format(failed_items))
-            failed_item_query_names = [sid_to_query_names[_i]
-                                    for _i in failed_items]
-            failed_item_query_seqs = [sid_to_query_seqs[_i]
-                                    for _i in failed_items]
-            failed_item_weights = [taxon_to_weights[_q]
-                                    for _q in failed_item_query_names]
-            failure.append(failed_items)
-            retry_results = list(pool.map(func, failed_item_query_names,
-                failed_item_query_seqs, failed_item_weights, failed_items,
-                chunksize=Configs.chunksize))
+        # iterate over jobs as they complete
+        for future in concurrent.futures.as_completed(futures):
+            _query, _index = future.result()
+            # failed job, should be ignored in the output
+            if len(_query) == 0:
+                ignored_queries.append(subset_query_names[_index])
+            else:
+                success.append(_query)
+
+    #results = list(pool.map(func, subset_query_names, subset_query_seqs,
+    #    subset_weights, index_list, chunksize=Configs.chunksize))
+    #retry_results, success, failure, ignored = [], [], [], []
+    #while len(success) < (num_seq - len(ignored_queries)):
+    #    success.extend([r for r, _i in results if r is not None])
+    #    success.extend([r for r, _i in retry_results if r is not None])
+    #    ignored.extend([':'.join(r.split(':')[1:]) 
+    #                for r, _i in results if 'skipped:' in r])
+    #    ignored.extend([':'.join(r.split(':')[1:])
+    #                for r, _i in retry_results if 'skipped:' in r])
+
+    #    failed_items = []; failed_item_queries = []; failed_item_weights = []
+    #    while not q.empty():
+    #        failed_items.append(q.get())
+    #    if len(failed_items) > 0:
+    #        Configs.log('Rerunning failed jobs: {}'.format(failed_items))
+    #        failed_item_query_names = [sid_to_query_names[_i]
+    #                                for _i in failed_items]
+    #        failed_item_query_seqs = [sid_to_query_seqs[_i]
+    #                                for _i in failed_items]
+    #        failed_item_weights = [taxon_to_weights[_q]
+    #                                for _q in failed_item_query_names]
+    #        failure.append(failed_items)
+    #        retry_results = list(pool.map(func, failed_item_query_names,
+    #            failed_item_query_seqs, failed_item_weights, failed_items,
+    #            chunksize=Configs.chunksize))
     queries = success
 
-    # global lock version
-    #pool = Pool(Configs.num_cpus, initializer=init_lock, initargs=(l))
-    #index_list = [i for i in range(num_seq)]
-    #func = partial(alignSubQueries, index_to_hmm)
-    #sub_alignment_paths = pool.map(func, index_list)
-    #pool.close()
-    #pool.join()
-
-    ############ sequential version #################
-    #for i in range(num_seq):
-    #    output_path = alignSubQueries(i, index_to_hmm)
-    #    sub_alignment_paths.append(os.path.abspath(output_path))
-
     # 4) merge all results 
-    print('\nAll GCM subproblems finished! Doing merging with transitivity...')
+    print('\n\nAll GCM subproblems finished! Doing merging with transitivity...')
     mergeAlignmentsCollapsed(tmp_backbone_path, queries, renamed_taxa, pool)
 
     # if there are any ignored queries, write them to local
