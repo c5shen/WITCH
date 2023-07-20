@@ -7,14 +7,17 @@ Algorithms for tree decomposition and hmmsearch.
 import re, os, subprocess, math, time, psutil, shutil 
 from operator import add
 from functools import partial
+from tqdm import tqdm
 
 import dendropy
 from dendropy.datamodel.treemodel import Tree
 
-from configs import Configs
+from configs import Configs, tqdm_styles
 from gcmm.tree import PhylogeneticTree
 from helpers.alignment_tools import Alignment, MutableAlignment 
 from helpers.math_utils import lcm
+
+import concurrent.futures
 
 
 '''
@@ -180,6 +183,7 @@ class SearchAlgorithm(object):
         subset_dirs = [os.path.realpath(x) 
                 for x in os.popen(cmd).read().split('\n')[:-1]]
         Configs.log('Found existing HMM directory: {}'.format(Configs.hmmdir))
+        print('\nFound existing HMM directory: {}'.format(Configs.hmmdir))
         Configs.log('Reading {} subsets...'.format(len(subset_dirs)))
         
         # terminate if not finding any HMMs in the current directory
@@ -246,7 +250,15 @@ class SearchAlgorithm(object):
 
         func = partial(subset_frag_chunk_hmmsearch, lock, self.path,
                 self.piped, self.elim, self.filters)
-        hmmsearch_paths = list(pool.map(func, subset_args))
+        hmmsearch_paths, futures = [], []
+        for subset_arg in subset_args:
+            futures.append(pool.submit(func, subset_arg))
+        for future in tqdm(
+                concurrent.futures.as_completed(futures),
+                total=len(subset_args), **tqdm_styles):
+            res = future.result()
+            if res:
+                hmmsearch_paths.append(res)
         assert len(hmmsearch_paths) == len(subset_args), \
                 'It seems that some HMMSearch jobs failed'
         Configs.log('Finished {} HMMSearch jobs.'.format(len(hmmsearch_paths)))

@@ -237,8 +237,7 @@ def mainAlignmentProcess(args):
     # iterate over jobs as they complete
     for future in tqdm(
             concurrent.futures.as_completed(futures),
-            desc="\tRunning...",
-            ascii=False, total=len(subset_query_names), ncols=80):
+            total=len(futures), **tqdm_styles):
         _query, _index = future.result()
         # failed job, should be ignored in the output
         if len(_query) == 0:

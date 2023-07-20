@@ -16,6 +16,15 @@ from platform import platform
 _root_dir = os.path.dirname(os.path.realpath(__file__))
 main_config_path = os.path.join(_root_dir, 'main.config')
 
+# default settings for tqdm progress bar style
+tqdm_styles = {
+        'desc': '\tRunning...', 'ascii': False,
+        'ncols': 80, 
+        #'disable': True,
+        #'colour': 'green',
+        'mininterval': 0.5
+        }
+
 '''
 Configurations defined by users
 '''

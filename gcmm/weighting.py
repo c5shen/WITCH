@@ -7,7 +7,9 @@ Bitscore to weight calculation.
 import os
 import time
 import numpy as np
-from configs import Configs
+import concurrent.futures
+from configs import Configs, tqdm_styles
+from tqdm import tqdm
 
 class Weights(object):
     weights = dict()
@@ -144,8 +146,18 @@ def writeWeights(index_to_hmm, ranked_bitscores, pool):
         #weights[taxon] = sorted([(ind, w) for ind, w in this_weights_map.items()],
         #        key = lambda x: x[1], reverse=True)
         #weights_map[taxon] = this_weights_map
-    all_taxon_to_weights = list(pool.map(calculateWeights, args,
-        chunksize=Configs.chunksize))
+    #all_taxon_to_weights = list(pool.map(calculateWeights, args,
+    #    chunksize=Configs.chunksize))
+    all_taxon_to_weights, futures = [], []
+    for arg in args:
+        futures.append(pool.submit(calculateWeights, arg))
+    for future in tqdm(
+            concurrent.futures.as_completed(futures),
+            total=len(args), **tqdm_styles):
+        res = future.result()
+        if res:
+            all_taxon_to_weights.append(res)
+
     taxon_to_weights = {}
     for item in all_taxon_to_weights:
         taxon_to_weights.update(item)
