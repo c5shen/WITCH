@@ -4,18 +4,21 @@ Created on 1.22.2022 by Chengze Shen
 Algorithms for tree decomposition and hmmsearch.
 '''
 
-import os, subprocess, math, time, psutil, shutil 
-from configs import Configs
-from helpers.alignment_tools import Alignment, MutableAlignment 
-from gcmm.tree import PhylogeneticTree
+import re, os, subprocess, math, time, psutil, shutil 
+from operator import add
+from functools import partial
+from tqdm import tqdm
+
 import dendropy
 from dendropy.datamodel.treemodel import Tree
-import tempfile
-from functools import partial
-import re
 
+from configs import Configs, tqdm_styles
+from gcmm.tree import PhylogeneticTree
+from helpers.alignment_tools import Alignment, MutableAlignment 
 from helpers.math_utils import lcm
-#from multiprocessing import Queue, Lock
+
+import concurrent.futures
+
 
 '''
 ***** ADOPTED from sepp/exhaustive.py - ExhaustiveAlgorithm class *****
@@ -120,7 +123,26 @@ class DecompositionAlgorithm(object):
                 self.path, outdirprefix,
                 self.molecule, self.ere, self.symfrac,
                 self.informat, self.backbone_path)
-        hmmbuild_paths = list(pool.map(func, subset_args))
+        ret = list(pool.map(func, subset_args))
+        hmmbuild_paths = []
+        
+        # record the retained columns in each HMM subset
+        # (used in mapping hmmalign results to alignment graph)
+        subset_to_retained_columns = dict()
+        subset_to_nongaps_per_column = dict()
+        for item in ret:
+            hmmbuild_paths.append(item[0])
+            # item[1] -- A_0_*
+            ind = int(item[1].split('_')[-1])
+            subset_to_retained_columns[ind] = item[2]
+            subset_to_nongaps_per_column[ind] = item[3]
+
+        # convert to list
+        subset_to_retained_columns = [subset_to_retained_columns[k]
+                    for k in sorted(subset_to_retained_columns.keys())]
+        subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
+                    for k in sorted(subset_to_nongaps_per_column.keys())]
+        
         assert len(hmmbuild_paths) == len(subset_args), \
                 'Number of HMMs created does not match ' \
                 'the original number of subsets'
@@ -128,9 +150,10 @@ class DecompositionAlgorithm(object):
             len(hmmbuild_paths), outdirprefix))
         
         dur = time.time() - start
-        Configs.runtime('Time to decompose the backbone (s): {}'.format(
-            dur))
-        return hmmbuild_paths
+        Configs.runtime(' '.join(['(DecompositionAlgorithm.decomposition)',
+                'Time to decompose the backbone (s):', str(dur)]))
+        return hmmbuild_paths, subset_to_retained_columns, \
+                subset_to_nongaps_per_column
 
 '''
 Class to perform HMMSearch on all hmmbuild subsets and fragment sequences
@@ -150,6 +173,58 @@ class SearchAlgorithm(object):
         
         self.outdir = Configs.outdir + '/tree_decomp'
 
+    ####### ONLY USED WHEN PRESENTS WITH AN HMM DIRECTORY #######
+    def readHMMDirectory(self, lock, pool):
+        subset_to_retained_columns = dict()
+        subset_to_nongaps_per_column = dict()
+        
+        # use "find" command to find all subset directories
+        cmd = 'find {} -maxdepth 2 -name A_0_* -type d'.format(Configs.hmmdir)
+        subset_dirs = [os.path.realpath(x) 
+                for x in os.popen(cmd).read().split('\n')[:-1]]
+        Configs.log('Found existing HMM directory: {}'.format(Configs.hmmdir))
+        print('\nFound existing HMM directory: {}'.format(Configs.hmmdir))
+        Configs.log('Reading {} subsets...'.format(len(subset_dirs)))
+        
+        # terminate if not finding any HMMs in the current directory
+        if len(subset_dirs) == 0:
+            msg = 'Cannot find any pre-existing HMMs in {}!'.format(
+                    Configs.hmmdir) + ' Please remove the directory and rerun.'
+            Configs.error(msg)
+            raise FileNotFoundError(msg)
+                    
+        # use pool to process all subset dirs
+        subset_args = []
+        tmp_map = dict()
+        for sdir in subset_dirs:
+            ind = int(sdir.split('/')[-1].split('_')[-1])
+            subset_args.append((ind, sdir))
+            tmp_map[ind] = sdir
+
+        # obtain the backbone alignment, which should be of A_0_0
+        cmd = 'find {} -maxdepth 1 -name hmmbuild.input.*fasta -type f'.format(
+                tmp_map[0])
+        bb_path = os.path.realpath(os.popen(cmd).read().split('\n')[0])
+        bb_aln = Alignment(); bb_aln.read_file_object(bb_path)
+        
+        func = partial(subset_obtain_retained_columns, bb_aln)
+        ret = list(pool.map(func, subset_args))
+
+        for item in ret:
+            subset_to_retained_columns[int(item[0])] = item[1]
+            subset_to_nongaps_per_column[int(item[0])] = item[2]
+
+        # convert to list
+        subset_to_retained_columns = [subset_to_retained_columns[k]
+                    for k in sorted(subset_to_retained_columns.keys())]
+        subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
+                    for k in sorted(subset_to_nongaps_per_column.keys())]
+
+        #del bb_aln
+        Configs.log('Finished reading decomposition subsets...')
+        return subset_to_retained_columns, subset_to_nongaps_per_column
+    
+    # main function to perform all-against-all query-HMM searches in MP 
     def search(self, lock, pool):
         Configs.log('Running all-against-all HMM searches between queries ' \
                 'and HMMs...')
@@ -175,14 +250,22 @@ class SearchAlgorithm(object):
 
         func = partial(subset_frag_chunk_hmmsearch, lock, self.path,
                 self.piped, self.elim, self.filters)
-        hmmsearch_paths = list(pool.map(func, subset_args))
+        hmmsearch_paths, futures = [], []
+        for subset_arg in subset_args:
+            futures.append(pool.submit(func, subset_arg))
+        for future in tqdm(
+                concurrent.futures.as_completed(futures),
+                total=len(subset_args), **tqdm_styles):
+            res = future.result()
+            if res:
+                hmmsearch_paths.append(res)
         assert len(hmmsearch_paths) == len(subset_args), \
                 'It seems that some HMMSearch jobs failed'
         Configs.log('Finished {} HMMSearch jobs.'.format(len(hmmsearch_paths)))
 
         dur = time.time() - start
-        Configs.runtime('Time to run all-against-all HMMSearches (s): {}'.format(
-            dur))
+        Configs.runtime(' '.join(['(SearchAlgorithm.search) Time to run',
+                'all-against-all HMMSearches (s):', str(dur)]))
         return frag_chunk_paths 
 
     def read_and_divide_unaligned(self, num_chunks, extra_frags={}):
@@ -226,9 +309,6 @@ class SearchAlgorithm(object):
             temp_file = None
             if alg_chunks[i]:
                 temp_file = '{}/fragment_chunk_{}.fasta'.format(fc_outdir, i)
-                #temp_file = tempfile.mktemp(
-                #        prefix='fragment_chunk_{}'.format(i),
-                #        suffix='.fasta', dir=fc_outdir)
                 alg_chunks[i].write(temp_file, 'FASTA')
                 Configs.debug('Writing alignment chunk #{} to {}'.format(
                     i, temp_file))
@@ -250,6 +330,12 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
     alignment = Alignment(); alignment.read_file_object(backbone_path)
     subalignment = alignment.sub_alignment(taxa)
     retained_columns = subalignment.delete_all_gaps()
+    
+    # also accumulate the number of nongaps for each column
+    nongaps_per_column = [0] * subalignment.sequence_length() 
+    for seq in subalignment.values():
+        nongaps_per_column = map(add, nongaps_per_column,
+                [int(x != '-') for x in seq])
     del alignment
 
     outdir = os.path.join(outdirprefix, label)
@@ -258,14 +344,10 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
     
     # write subalignment to outdir
     subalignment_path = '{}/hmmbuild.input.{}.fasta'.format(outdir, label)
-    #subalignment_path = tempfile.mktemp(prefix='hmmbuild.input.',
-    #        suffix='.fasta', dir=outdir)
     subalignment.write(subalignment_path, 'FASTA')
 
     # run HMMBuild with 1 cpu given the subalignment
     hmmbuild_path = '{}/hmmbuild.model.{}'.format(outdir, label)
-    #hmmbuild_path = tempfile.mktemp(prefix='hmmbuild.model.',
-    #        dir=outdir)
     cmd = [binary, '--cpu', '1',
             '--{}'.format(molecule),
             '--ere', str(ere),
@@ -279,7 +361,8 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
         Configs.debug('[HMMBuild] Command used: {}'.format(' '.join(cmd)))
     finally:
         lock.release()
-        return hmmbuild_path
+        return (hmmbuild_path, label, tuple(retained_columns),
+                tuple(nongaps_per_column))
 
 '''
 a single HMMSearch job between a frag chunk and an hmm
@@ -292,9 +375,6 @@ def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters, args):
 
     hmmsearch_path = '{}/hmmsearch.results.{}.fragment_chunk_{}'.format(
             outdir, hmm_label, frag_index)
-    #hmmsearch_path = tempfile.mktemp(
-    #        prefix='hmmsearch.results.fragment_chunk_{}.'.format(frag_index),
-    #        dir=outdir)
     cmd = [binary, '--cpu', '1', '--noali', '-E', str(elim)]
     if not piped:
         cmd.extend(['-o', hmmsearch_path])
@@ -314,6 +394,36 @@ def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters, args):
     finally:
         lock.release()
         return hmmsearch_path
+
+'''
+helper function to read alignment from a subset alignment and obtain
+its retained columns with respect to the backbone alignment
+Additionally, return the number of non-gap characters for each retained column
+'''
+def subset_obtain_retained_columns(bbaln, args):
+    ind, sdir = args
+    # find the subset alignment path
+    cmd = 'find {} -maxdepth 1 -name hmmbuild.input.*fasta -type f'.format(
+            sdir)
+    try:
+        path = os.path.realpath(os.popen(cmd).read().split('\n')[0])
+        aln = Alignment(); aln.read_file_object(path)
+        keys = aln.keys()
+        subaln = bbaln.sub_alignment(keys)
+        retained_columns = subaln.delete_all_gaps()
+        
+        # accumulate the number of nongaps for each column
+        nongaps_per_column = [0] * subaln.sequence_length() 
+        for seq in subaln.values():
+            nongaps_per_column = map(add, nongaps_per_column,
+                    [int(x != '-') for x in seq])
+
+        return ind, tuple(retained_columns), tuple(nongaps_per_column)
+    except FileNotFoundError as e:
+        # cannot find the hmm input path in the corresponding directory
+        raise Exception(
+            'Cannot load subset {} at {}! Decomposition may be incomplete.'.format(
+                ind, sdir))
 
 '''
 helper function for modifying HMMSearch output file

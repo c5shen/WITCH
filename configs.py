@@ -16,6 +16,15 @@ from platform import platform
 _root_dir = os.path.dirname(os.path.realpath(__file__))
 main_config_path = os.path.join(_root_dir, 'main.config')
 
+# default settings for tqdm progress bar style
+tqdm_styles = {
+        'desc': '\tRunning...', 'ascii': False,
+        'ncols': 80, 
+        #'disable': True,
+        #'colour': 'green',
+        'mininterval': 0.5
+        }
+
 '''
 Configurations defined by users
 '''
@@ -33,9 +42,11 @@ class Configs:
     chunksize = 1
 
     keeptemp = False
+    keep_decomposition = False
     #keepsubalignment = False
     
     # WITCH configurations
+    mode = 'witch-ng'
     num_hmms = 10
     use_weight = True 
     save_weight = False
@@ -222,12 +233,19 @@ def buildConfigs(args):
     Configs.output_path = os.path.join(Configs.outdir, args.output_path)
 
     Configs.keeptemp = args.keeptemp
+    Configs.keep_decomposition = args.keep_decomposition
     #Configs.keepsubalignment = args.keepsubalignment
 
     Configs.log_path = os.path.join(Configs.outdir, 'log.txt')
     Configs.error_path = os.path.join(Configs.outdir, 'error.txt')
     Configs.debug_path = os.path.join(Configs.outdir, 'debug.txt')
     Configs.runtime_path = os.path.join(Configs.outdir, 'runtime_breakdown.txt')
+
+    # query alignment mode. Default WITCH uses MAGUS/GCM, while I also
+    # implemented the WITCH-ng way.
+    # TODO: Implement a smart way that mixes the two for runtime, since
+    # running Smith-Waterman can be slow on super long sequences
+    Configs.mode = args.mode
 
     if args.num_hmms > 0:
         Configs.num_hmms = args.num_hmms
@@ -237,15 +255,7 @@ def buildConfigs(args):
     Configs.alignment_size = args.alignment_size
     #Configs.weight_adjust = args.weight_adjust 
 
-    Configs.chunksize = args.chunksize
-
-    #if args.subset_size > 0:
-    #    if args.subset_size >= 25:
-    #        Configs.warning('Subset size is recommended to be <= 25! Current: {}'.format(
-    #            args.subset_size))
-    #    Configs.subset_size = args.subset_size
-    #else:
-    #    Configs.warning('Subset size given was < 0! Using default value: 1')
+    #Configs.chunksize = args.chunksize
 
     if args.num_cpus > 0:
         Configs.num_cpus = args.num_cpus
@@ -257,11 +267,11 @@ def buildConfigs(args):
     #Configs.collapse_singletons = args.collapse_singletons == 1
 
     # MAGUS/GCM options
-    Configs.keepgcmtemp = args.keepgcmtemp
-    Configs.inflation_factor = args.inflation_factor
-    Configs.graphclustermethod = args.graphclustermethod
-    Configs.graphtracemethod = args.graphtracemethod
-    Configs.graphtraceoptimize = args.graphtraceoptimize
+    #Configs.keepgcmtemp = args.keepgcmtemp
+    #Configs.inflation_factor = args.inflation_factor
+    #Configs.graphclustermethod = args.graphclustermethod
+    #Configs.graphtracemethod = args.graphtracemethod
+    #Configs.graphtraceoptimize = args.graphtraceoptimize
     
     # additional MAGUS/GCM failsafe option to timeout a MAGUS process
     # if [timeout] seconds are reached before the process finished

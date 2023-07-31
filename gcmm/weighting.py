@@ -7,7 +7,9 @@ Bitscore to weight calculation.
 import os
 import time
 import numpy as np
-from configs import Configs
+import concurrent.futures
+from configs import Configs, tqdm_styles
+from tqdm import tqdm
 
 class Weights(object):
     weights = dict()
@@ -109,8 +111,8 @@ def writeBitscores(ranked_bitscores, pool):
 
     time_write_scores = time.time() - s2
     Configs.warning('Finished loading bitscores in memory.')
-    Configs.runtime('Time to write ranked bitscores to local (s): {}'.format(
-        time_write_scores))
+    Configs.runtime(' '.join(['(writeBitscores) Time to write ranked bitscores',
+            'to local (s):', str(time_write_scores)]))
     return taxon_to_bitscores
 
 '''
@@ -144,22 +146,49 @@ def writeWeights(index_to_hmm, ranked_bitscores, pool):
         #weights[taxon] = sorted([(ind, w) for ind, w in this_weights_map.items()],
         #        key = lambda x: x[1], reverse=True)
         #weights_map[taxon] = this_weights_map
-    all_taxon_to_weights = list(pool.map(calculateWeights, args,
-        chunksize=Configs.chunksize))
+    #all_taxon_to_weights = list(pool.map(calculateWeights, args,
+    #    chunksize=Configs.chunksize))
+    all_taxon_to_weights, futures = [], []
+    for arg in args:
+        futures.append(pool.submit(calculateWeights, arg))
+    for future in tqdm(
+            concurrent.futures.as_completed(futures),
+            total=len(args), **tqdm_styles):
+        res = future.result()
+        if res:
+            all_taxon_to_weights.append(res)
+
     taxon_to_weights = {}
     for item in all_taxon_to_weights:
         taxon_to_weights.update(item)
 
     time_obtain_weights = time.time() - s2
     Configs.warning('Finished calculating weights!')
-    Configs.runtime('Time to obtain weights given bitscores (s): {}'.format(
-        time_obtain_weights))
+    Configs.runtime(' '.join(['(writeWeights) Time to obtain weights',
+            'given bitscores (s):', str(time_obtain_weights)]))
     return taxon_to_weights
 
 '''
 Write weights to local as [outdir]/weights.txt
 '''
 def writeWeightsToLocal(taxon_to_weights, path):
+    Configs.log('Writing weights to {}'.format(path))
     with open(path, 'w') as f:
         for taxon, weights in taxon_to_weights.items():
             f.write('{}:{}\n'.format(taxon, weights))
+
+'''
+Function to read weights from a given weights path (e.g., ./weights.txt)
+Return a dictionary of taxon to weights
+'''
+def readWeightsFromLocal(path):
+    Configs.log('Reading weights from {}'.format(path))
+    taxon_to_weights = {}
+    with open(path, 'r') as f:
+        line = f.readline()
+        while line:
+            # split by ':'
+            taxon, taxon_weight = line.split(':')
+            taxon_to_weights[taxon] = eval(taxon_weight)
+            line = f.readline()
+    return taxon_to_weights

@@ -960,7 +960,11 @@ class ExtendedAlignment(MutableAlignment):
     '''
     def read_query_alignment(self, query_name, path, aformat='fasta'):
         insertions = []
-        entries = [(n, s) for n, s in read_fasta(path)]
+        if aformat == 'fasta':
+            entries = [(n, s) for n, s in read_fasta(path)]
+        elif isinstance(path, MutableAlignment):
+            entries = [(n, s) for n, s in path.items()]
+
         num_elem_per_col = [0 for _i in range(len(entries[0][1]))]
 
         # count how many non-gaps in each col
@@ -977,11 +981,16 @@ class ExtendedAlignment(MutableAlignment):
 
         # go over the query entry and see which column it has non-gap char
         # but backbone is gap (i.e., insertion)
+        # additionally, record the columns that query aligns to
         query_entry = [c for c in query_entry]
+        query_aligned_columns = []
         for j in range(0, len(query_entry), 1):
             if num_elem_per_col[j] == 0 and query_entry[j] != '-':
                 query_entry[j] = query_entry[j].lower()
                 insertions.append(j)
+                query_aligned_columns.append(-1)
+            elif num_elem_per_col[j] != 0 and query_entry[j] != '-':
+                query_aligned_columns.append(j)
         self.fragments.add(query_name); self[query_name] = ''.join(query_entry)
         self._reset_col_names()
 
@@ -995,7 +1004,7 @@ class ExtendedAlignment(MutableAlignment):
             if self._col_labels[c] >= 0:
                 self._col_labels[c] = regular
                 regular += 1
-        return query_name, set(insertions)
+        return query_name, set(insertions), tuple(query_aligned_columns)
 
     def build_extended_alignment(self, base_alignment, path_to_sto_extension,
                                  convert_to_string=True):
@@ -1338,3 +1347,38 @@ def readHMMSearch(path):
                         float(matches.group(2).strip()))
     f.close()
     return results
+
+'''
+Given an aligned string (represented by upper/lower case letters and gaps,
+return a condensed version that have the lowercase letters from both sides
+compressed to front/back.
+'''
+def compressInsertions(seq):
+    p = re.compile(r'[A-Z]+')
+    alns = [(m.start(), m.end()) for m in p.finditer(seq)]
+    # do not perform such task if there is no aligned column at all
+    if len(alns) == 0:
+        return seq
+
+    # first occurrence of aligned position defines the back of front search space
+    # i.e., [start, end)
+    f_start, f_end = 0, alns[0][0]
+    f_len = f_end - f_start
+
+    # last occurrence of aligned position defines the front of the back search space
+    b_start, b_end = alns[-1][1], len(seq)
+    b_len = b_end - b_start
+
+    # simplest way of compression: remove all gaps and add them back
+    f_str_ins = seq[f_start:f_end].replace('-', '')
+    f_len_ins = len(f_str_ins)
+    f_str = f_str_ins + '-' * (f_len - f_len_ins)
+
+    b_str_ins = seq[b_start:b_end].replace('-', '')
+    b_len_ins = len(b_str_ins)
+    b_str = '-' * (b_len - b_len_ins) + b_str_ins
+
+    # combine the compressed front/back with the remaining sequence
+    combined = f_str + seq[f_end:b_start] + b_str
+
+    return combined

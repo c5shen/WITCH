@@ -46,7 +46,9 @@ def mergeAlignmentsCollapsed(backbone_alignment_path, queries,
     start = time.time()
     outpath = Configs.output_path
     masked_outpath = Configs.output_path + '.masked'
-    assert len(queries) > 0
+    if not (len(queries) > 0):
+        print('No query alignment provided to merger!')
+        exit(1)
 
     # read in all backbone sequences/alignment
     full_aln = ExtendedAlignment([])
