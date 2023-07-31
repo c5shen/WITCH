@@ -7,12 +7,19 @@
 
 (C) Chengze Shen, Baqiao Liu
 
-_Special thanks to Baqiao for providing the experimental GCM code!_
-
 -----------------------------
 News
 -----------------------------
-* An improved version of WITCH (developed by Baqiao Liu) is available at [WITCH-ng](https://github.com/RuneBlaze/WITCH-NG). It improves WITCH runtime considerably with the same alignment accuracy.
+* (NEW) Added progress bar (python package `tqdm`) to visualize the alignment progress at various stages.
+* (NEW) Implemented WITCH-ng's way to align each query sequence with additional tweaks. Now the alignment process for query sequences is **fast and memory-efficient, particularly for short/fragmentary sequences**.
+* An improved version of WITCH (developed by Baqiao Liu) is available at [WITCH-ng](https://github.com/RuneBlaze/WITCH-NG). It improves WITCH runtime considerably with the same alignment accuracy. Also, _Special thanks to Baqiao for providing the experimental GCM code!_
+
+
+-------------------------
+To-do
+-------------------------
+1. (Priority) Setting up checkpoints and allowing resuming a job from checkpoints (to avoid re-running those painstaking HMMSearch and query-alignment jobs!).
+
 
 -----------------------------
 Method Overview
@@ -128,14 +135,3 @@ python3 witch.py -i examples/data/unaligned_all.txt -d scenarioB_output -o align
 ```bash
 python3 witch.py -b examples/data/backbone.aln.fasta -q examples/data/unaligned_frag.txt -d scenarioC_output -o aligned.txt
 ```
-
--------------------------
-To-do
--------------------------
-1. Optimize code struction in `gcmm/tree.py`, particularly for `decompose_tree(...)`.
-1. Setting up checkpoint and allow resuming a job from checkpoints (to avoid re-running those paintstaking hmmsearch jobs!).
-2. Checking the effect of large chunks vs. smaller chunks when the number of cores is small. Maybe submit many jobs of smaller chunks can improve overall runtime.
-3. Improve logging to have some more intermediate output to `log.txt`.
-1. (DONE) ~~Optimize how merging is done to reduce the output file size (need to do a similar task as UPP where insertion columns are marked as lower cases and squeezed together.~~
-2. (DONE) ~~Optimize I/O so that there are fewer intermediate file writeouts and readins.~~
-3. (Need manual fix from users) ~~Support for arm64 systems (mainly an issue for FastTreeMP).~~
