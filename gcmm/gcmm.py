@@ -8,10 +8,12 @@ import os, sys, math, psutil, shutil
 from configs import * 
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries, writeTempBackbone
-from gcmm.weighting import writeWeights, writeBitscores, writeWeightsToLocal
+from gcmm.weighting import writeWeights, writeBitscores, \
+        readWeightsFromLocal, writeWeightsToLocal
 from gcmm.aligner import alignSubQueries, alignSubQueriesNew
 from gcmm.backbone import BackboneJob
 from gcmm.merger import mergeAlignmentsCollapsed
+from gcmm.results_handler import submitAndCollectFutures
 
 # experimental, customized ProcessPoolExecutor
 from gcmm import WITCHProcessPoolExecutor
@@ -169,17 +171,23 @@ def mainAlignmentProcess(args):
             sid_to_query_seqs, renamed_taxa = loadSubQueries(lock, pool)
 
     # 2) calculate weights, if needed
-    if Configs.use_weight:
-        print('\nCalculating weights...')
-        taxon_to_weights = writeWeights(index_to_hmm, ranked_bitscores, pool)
+    # read in existing weights.txt file if it exists
+    weight_path = Configs.outdir + '/weights.txt'
+    if os.path.exists(weight_path): 
+        print('\nFound existing weights: {}'.format(weight_path))
+        taxon_to_weights = readWeightsFromLocal(weight_path)
     else:
-        print('\nLoading bit-scores...')
-        taxon_to_weights = writeBitscores(ranked_bitscores, pool)
+        if Configs.use_weight:
+            print('\nCalculating weights (adjusted bit-scores)...')
+            taxon_to_weights = writeWeights(index_to_hmm, ranked_bitscores, pool)
+        else:
+            print('\nLoading bit-scores...')
+            taxon_to_weights = writeBitscores(ranked_bitscores, pool)
 
-    # 2a) if saving weights to local
-    if Configs.save_weight:
-        print('\n(user option) Writing weights to local...')
-        writeWeightsToLocal(taxon_to_weights, Configs.outdir + '/weights.txt')
+        # 2a) if saving weights to local
+        if Configs.save_weight:
+            print('\n(user option) Writing weights to local...')
+            writeWeightsToLocal(taxon_to_weights, Configs.outdir + '/weights.txt')
 
     # 3) solve each subset
     sub_alignment_paths = []
@@ -206,117 +214,24 @@ def mainAlignmentProcess(args):
 
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
-    #index_list = [_i for _i in range(num_seq)]
-    subset_query_names = [sid_to_query_names[_i] for _i in range(num_seq)]
-    subset_query_seqs = [sid_to_query_seqs[_i] for _i in range(num_seq)]
-    
-    # deal with queries that has no weight
-    subset_weights = []
-    ignored_queries = []
-    for _i in range(num_seq):
-        _q = sid_to_query_names[_i]
-        if _q in taxon_to_weights:
-            subset_weights.append(taxon_to_weights[_q])
-        else:
-            Configs.warning('{} does not have any weight/bitscore '.format(
-                _q) + 'and will be ignored the final alignment.')
-            subset_weights.append(tuple())
-            ignored_queries.append(_i)
 
-    # Set up either WITCH or WITCH-ng's way of aligning the query sequence
-    func_map = {'old-witch': alignSubQueries, 'witch-ng': alignSubQueriesNew}
-    if func_map[Configs.mode]:
-        func = partial(func_map[Configs.mode], tmp_backbone_path,
-                backbone_length, index_to_hmm, lock, Configs.timeout)
-    else:
-        raise NotImplementedError
-
-    # try submit jobs one-by-one and collect results
-    futures, success = [], []
-    #while len(success) < (num_seq - len(ignored_queries)):
-    for i in range(len(subset_query_names)):
-        futures.append(pool.submit(func, subset_query_names[i],
-            subset_query_seqs[i], subset_weights[i], i))
-
-    # iterate over jobs as they complete
-    retry_indexes = []
-    for future in tqdm(
-            concurrent.futures.as_completed(futures),
-            total=len(futures), **tqdm_styles):
-        _query, _index = future.result()
-        # In the case of the <default> pipeline, there is a chance
-        # that the subprocess failed (e.g., due to timeout).
-        # Need to re-queue these jobs, possibly with a longer timeout threshold
-        if not _query:
-            retry_indexes.append(_index)
-        else:
-            # failed job indicated in the <witch-ng> or <default> pipelines,
-            # should be ignored in the output
-            if len(_query) == 0:
-                ignored_queries.append(subset_query_names[_index])
-            else:
-                success.append(_query)
-    
-    # run retries if any exist
-    # retry will use WTICH-ng's way (which presumably should be faster in the
-    # case the subprocess reaches <timeout> seconds
-    retry_futures = []
-    if len(retry_indexes) > 0:
-        print('\tQueuing up {} retries...'.format(len(retry_indexes)))
-        retry_func = partial(func_map['witch-ng'], tmp_backbone_path,
-                backbone_length, index_to_hmm, lock, Configs.timeout)
-        for i in retry_indexes:
-            retry_futures.append(pool.submit(retry_func, subset_query_names[i],
-                subset_query_seqs[i], subset_weights[i], i))
-        for future in tqdm(
-                concurrent.futures.as_completed(retry_futures),
-                total=len(retry_futures), **tqdm_styles):
-            _query, _index = future.result()
-            if len(_query) == 0:
-                ignored_queries.append(subset_query_names[_index])
-            else:
-                success.append(_query)
-
-    #results = list(pool.map(func, subset_query_names, subset_query_seqs,
-    #    subset_weights, index_list, chunksize=Configs.chunksize))
-    #retry_results, success, failure, ignored = [], [], [], []
-    #while len(success) < (num_seq - len(ignored_queries)):
-    #    success.extend([r for r, _i in results if r is not None])
-    #    success.extend([r for r, _i in retry_results if r is not None])
-    #    ignored.extend([':'.join(r.split(':')[1:]) 
-    #                for r, _i in results if 'skipped:' in r])
-    #    ignored.extend([':'.join(r.split(':')[1:])
-    #                for r, _i in retry_results if 'skipped:' in r])
-
-    #    failed_items = []; failed_item_queries = []; failed_item_weights = []
-    #    while not q.empty():
-    #        failed_items.append(q.get())
-    #    if len(failed_items) > 0:
-    #        Configs.log('Rerunning failed jobs: {}'.format(failed_items))
-    #        failed_item_query_names = [sid_to_query_names[_i]
-    #                                for _i in failed_items]
-    #        failed_item_query_seqs = [sid_to_query_seqs[_i]
-    #                                for _i in failed_items]
-    #        failed_item_weights = [taxon_to_weights[_q]
-    #                                for _q in failed_item_query_names]
-    #        failure.append(failed_items)
-    #        retry_results = list(pool.map(func, failed_item_query_names,
-    #            failed_item_query_seqs, failed_item_weights, failed_items,
-    #            chunksize=Configs.chunksize))
-    queries = success
+    queries, ignored_indexes = submitAndCollectFutures(pool, lock,
+            sid_to_query_names, sid_to_query_seqs,
+            num_seq, index_to_hmm, taxon_to_weights,
+            tmp_backbone_path, backbone_length)
 
     # 4) merge all results 
     print('\nAll GCM subproblems finished! Doing merging with transitivity...')
     mergeAlignmentsCollapsed(tmp_backbone_path, queries, renamed_taxa, pool)
 
-    # if there are any ignored queries, write them to local
+    # if there are any ignored indexes (queries), write them to local
     ignored_path = Configs.outdir + '/ignored_queries.fasta'
-    Configs.log('Writing {} ignored sequences to local at {}'.format(
-        len(ignored_queries), ignored_path)) 
-    newname_to_oldname = {v: k for k, v in renamed_taxa.items()}
-    if len(ignored_queries) > 0:
+    if len(ignored_indexes) > 0:
+        Configs.log('Writing {} ignored sequences to local at {}'.format(
+            len(ignored_indexes), ignored_path)) 
+        newname_to_oldname = {v: k for k, v in renamed_taxa.items()}
         with open(ignored_path, 'w') as f:
-            for _i in ignored_queries:
+            for _i in ignored_indexes:
                 name, seq = sid_to_query_names[_i], sid_to_query_seqs[_i]
                 if name in newname_to_oldname:
                     name = newname_to_oldname[name]
@@ -327,5 +242,3 @@ def mainAlignmentProcess(args):
     Configs.warning('ProcessPoolExecutor instance closed.')
     if not Configs.keeptemp:
         clearTempFiles()
-
-    print('\nAll done!')

@@ -43,6 +43,7 @@ def main():
     s2 = time.time()
 
     Configs.log('WITCH finished in {} seconds...'.format(s2 - s1))
+    print('\nAll done! WITCH finished in {} seconds...'.format(s2 - s1))
 
 def _init_parser():
     parser = ArgumentParser(

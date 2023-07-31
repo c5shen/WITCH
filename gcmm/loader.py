@@ -1,13 +1,12 @@
-import os
-import time
-import math
-import tempfile
-from configs import Configs
+import os, time, math, gzip, tempfile
+from configs import Configs, tqdm_styles
 from collections import defaultdict
-from helpers.alignment_tools import Alignment, read_fasta
+from helpers.alignment_tools import ExtendedAlignment, Alignment, read_fasta
 
 #from multiprocessing import Lock, Pool
+import concurrent.futures
 from functools import partial
+from tqdm import tqdm
 
 '''
 A class holding directory/alignment information for each HMM subset from the
@@ -43,11 +42,89 @@ class HMMSubset(object):
                     break
 
 '''
-Initialize global lock for writing to log file
+Function to write an extended alignment output (for a query alignment job)
+to local as intermediate outputs. These can be used as checkpoints to avoid
+rerunning the jobs if the main task is interrupted.
+Writing and reading to compressed format (gzip by default)
+This needs to be as compact as possible, possibly only saving a few fields:
+    1. the query taxon name
+    2. the intermediate query alignment
 '''
-#def init_lock_loader(l):
-#    global lock
-#    lock = l
+def writeOneCheckpointAlignment(path, query):
+    # make sure we are dealing with ExtendedAlignment object
+    if not isinstance(query, ExtendedAlignment):
+        return
+    # make sure only one taxon is present (hence, query alignment)
+    if len(query) != 1:
+        return
+    taxon = list(query.keys())[0]; seq = query[taxon]
+    line = "{}\t{}\n".format(taxon, seq)
+    encoded = line.encode('utf-8')
+
+    # every line corresponds to a query taxon and its seq, separated by a tab
+    with gzip.open(path, 'ab') as f:
+        f.write(encoded)
+
+'''
+Helper function to process a splice of lines (query taxa) when reading 
+checkpoint alignments
+'''
+def readOneCheckpointAlignment(lines):
+    subset_checkpoint_queries = []
+    for line in lines:
+        taxon = '\t'.join(line.split('\t')[:-1])
+        seq = line.split('\t')[-1]
+        query = ExtendedAlignment([])
+        query[taxon] = seq; query._reset_col_names()
+        insertion = -1; regular = 0
+        for i in range(len(seq)):
+            if seq[i].islower():
+                query._col_labels[i] = insertion; insertion -= 1
+            else:
+                query._col_labels[i] = regular; regular += 1
+        subset_checkpoint_queries.append(query)
+
+    return subset_checkpoint_queries
+
+'''
+Function to read from existing checkpoint query alignments, if any exists
+(e.g., ./checkpoint_alignments.txt)
+Use multiple cores to simulatenously process lines
+'''
+def readCheckpointAlignments(path, pool, lock):
+    Configs.log('Reading existing checkpoint query alignments: {}'.format(
+        path))
+    checkpoint_queries = {}
+    s1 = time.time()
+
+    # read from the file and decode using utf-8 (gzipped)
+    raw_inputs = []
+    with gzip.open(path, 'rb') as f:
+        raw_inputs = f.read().decode('utf-8').split('\n')[:-1]
+    num_inputs = len(raw_inputs)
+
+    # split tasks evenly based on the number of cpus
+    per_task = int(num_inputs / pool._max_workers)
+
+    futures = []
+    for i in range(0, num_inputs, per_task):
+        end_ind = min(num_inputs, i + per_task)
+        futures.append(pool.submit(readOneCheckpointAlignment,
+            raw_inputs[i:end_ind]))
+    for future in tqdm(
+            concurrent.futures.as_completed(futures),
+            total=num_inputs, **tqdm_styles):
+        subset_checkpoint_queries = future.result()
+        for query in subset_checkpoint_queries:
+            checkpoint_queries[list(query.keys())[0]] = query
+
+    runtime_read_checkpoint = time.time() - s1
+    Configs.log('Finished reading {} existing checkpoint query alignments'.format(
+        len(checkpoint_queries)))
+    Configs.runtime(' '.join(['(readCheckpointAlignments) Time to read',
+            'existing checkpoint query alignments (s):',
+            str(runtime_read_checkpoint)]))
+    return checkpoint_queries
 
 '''
 Function to create a local copy of the backbone alignment in upper-cases
@@ -269,7 +346,7 @@ def loadSubQueries(lock, pool):
     ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, renamed_taxa,
                                             lock, pool)
     time_load_files = time.time() - s1
-    Configs.runtime('Time to split queries and rank bit-scores (s): {}'.format(
-        time_load_files))
+    Configs.runtime(' '.join(['(loadSubQueries) Time to split queries and',
+            'rank bit-scores (s):', str(time_load_files)]))
     return num_seq, index_to_hmm, ranked_bitscore, sid_to_query_names, \
             sid_to_query_seqs, renamed_taxa

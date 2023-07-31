@@ -480,7 +480,7 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
         combined = compressInsertions(''.join(result))
 
         # return an extended alignment object with just the query
-        # sequences and its updated indexes
+        # sequence and its updated indexes
         query = ExtendedAlignment([])
         query[taxon] = combined; query._reset_col_names()
         insertion = -1; regular = 0
@@ -492,8 +492,8 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
 
     else:
         Configs.warning('{} in task #{}'.format(taxon, index) \
-                + ' does not have any matching HMMs, skipping...')
-        return 'skipped'
+                + ' does not have any matching HMMs, ignored in final output...')
+        return ExtendedAlignment([]), index
     
     # remove temp folders
     if not Configs.keeptemp:

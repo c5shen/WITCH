@@ -150,8 +150,8 @@ class DecompositionAlgorithm(object):
             len(hmmbuild_paths), outdirprefix))
         
         dur = time.time() - start
-        Configs.runtime('Time to decompose the backbone (s): {}'.format(
-            dur))
+        Configs.runtime(' '.join(['(DecompositionAlgorithm.decomposition)',
+                'Time to decompose the backbone (s):', str(dur)]))
         return hmmbuild_paths, subset_to_retained_columns, \
                 subset_to_nongaps_per_column
 
@@ -264,8 +264,8 @@ class SearchAlgorithm(object):
         Configs.log('Finished {} HMMSearch jobs.'.format(len(hmmsearch_paths)))
 
         dur = time.time() - start
-        Configs.runtime('Time to run all-against-all HMMSearches (s): {}'.format(
-            dur))
+        Configs.runtime(' '.join(['(SearchAlgorithm.search) Time to run',
+                'all-against-all HMMSearches (s):', str(dur)]))
         return frag_chunk_paths 
 
     def read_and_divide_unaligned(self, num_chunks, extra_frags={}):
