@@ -206,7 +206,7 @@ def mainAlignmentProcess(args):
 
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
-    index_list = [_i for _i in range(num_seq)]
+    #index_list = [_i for _i in range(num_seq)]
     subset_query_names = [sid_to_query_names[_i] for _i in range(num_seq)]
     subset_query_seqs = [sid_to_query_seqs[_i] for _i in range(num_seq)]
     
@@ -223,27 +223,59 @@ def mainAlignmentProcess(args):
             subset_weights.append(tuple())
             ignored_queries.append(_i)
 
-    #func = partial(alignSubQueries, tmp_backbone_path, index_to_hmm, lock)
-    func = partial(alignSubQueriesNew, tmp_backbone_path, backbone_length,
-            index_to_hmm, lock)
+    # Set up either WITCH or WITCH-ng's way of aligning the query sequence
+    func_map = {'old-witch': alignSubQueries, 'witch-ng': alignSubQueriesNew}
+    if func_map[Configs.mode]:
+        func = partial(func_map[Configs.mode], tmp_backbone_path,
+                backbone_length, index_to_hmm, lock, Configs.timeout)
+    else:
+        raise NotImplementedError
 
     # try submit jobs one-by-one and collect results
     futures, success = [], []
     #while len(success) < (num_seq - len(ignored_queries)):
     for i in range(len(subset_query_names)):
         futures.append(pool.submit(func, subset_query_names[i],
-            subset_query_seqs[i], subset_weights[i], index_list[i]))
+            subset_query_seqs[i], subset_weights[i], i))
 
     # iterate over jobs as they complete
+    retry_indexes = []
     for future in tqdm(
             concurrent.futures.as_completed(futures),
             total=len(futures), **tqdm_styles):
         _query, _index = future.result()
-        # failed job, should be ignored in the output
-        if len(_query) == 0:
-            ignored_queries.append(subset_query_names[_index])
+        # In the case of the <default> pipeline, there is a chance
+        # that the subprocess failed (e.g., due to timeout).
+        # Need to re-queue these jobs, possibly with a longer timeout threshold
+        if not _query:
+            retry_indexes.append(_index)
         else:
-            success.append(_query)
+            # failed job indicated in the <witch-ng> or <default> pipelines,
+            # should be ignored in the output
+            if len(_query) == 0:
+                ignored_queries.append(subset_query_names[_index])
+            else:
+                success.append(_query)
+    
+    # run retries if any exist
+    # retry will use WTICH-ng's way (which presumably should be faster in the
+    # case the subprocess reaches <timeout> seconds
+    retry_futures = []
+    if len(retry_indexes) > 0:
+        print('\tQueuing up {} retries...'.format(len(retry_indexes)))
+        retry_func = partial(func_map['witch-ng'], tmp_backbone_path,
+                backbone_length, index_to_hmm, lock, Configs.timeout)
+        for i in retry_indexes:
+            retry_futures.append(pool.submit(retry_func, subset_query_names[i],
+                subset_query_seqs[i], subset_weights[i], i))
+        for future in tqdm(
+                concurrent.futures.as_completed(retry_futures),
+                total=len(retry_futures), **tqdm_styles):
+            _query, _index = future.result()
+            if len(_query) == 0:
+                ignored_queries.append(subset_query_names[_index])
+            else:
+                success.append(_query)
 
     #results = list(pool.map(func, subset_query_names, subset_query_seqs,
     #    subset_weights, index_list, chunksize=Configs.chunksize))

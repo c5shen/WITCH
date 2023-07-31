@@ -152,7 +152,7 @@ bitscore, which takes the number of queries in an HMM into consideration. 2)
 GCM+eHMMs can utilize more than one HMM (while UPP uses the best HMM based on
 bitscore) to align the queries; hence, more information is used.
 '''
-def alignSubQueries(backbone_path, index_to_hmm, lock,
+def alignSubQueries(backbone_path, backbone_length, index_to_hmm, lock, timeout,
         taxon, seq, query_weights, index):
     # index maps to query in unaligned 
     # query_weights in the form ((hmmX, scoreX), (hmmY, scoreY), ...)
@@ -239,7 +239,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
         try:
-            p.wait(Configs.timeout)
+            p.wait(timeout)
         except subprocess.TimeoutExpired:
             task_timed_out = True
             parent = psutil.Process(p.pid)
@@ -266,7 +266,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
         # return
         Configs.warning('{} in task #{}'.format(taxon, index) \
                 + ' does not have any matching HMMs, skipping...')
-        return 'skipped'
+        return ExtendedAlignment([]), index
 
     # remove temp folders
     if not Configs.keeptemp:
@@ -294,7 +294,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
                 alignSubQueries.q.put(index)
             finally:
                 lock.release()
-            return None
+            return None, index
 
         time_merged_query = time.time() - s14
 
@@ -317,7 +317,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             #Configs.log('{} passed to main pipeline...'.format(taxon))
         finally:
             lock.release()
-        return query
+        return query, index
     else:
         lock.acquire()
         try:
@@ -327,7 +327,7 @@ def alignSubQueries(backbone_path, index_to_hmm, lock,
             alignSubQueries.q.put(index)
         finally:
             lock.release()
-        return None
+        return None, index
 
 '''
 New query-HMM alignment merging function that does not rely on GCM/MAGUS.
@@ -343,7 +343,7 @@ All of the above can be achieved without calls to subprocesses such as MAGUS
 or the experimental GCM code (by Baqiao), and most operations can be done
 in-memory (for speed).
 '''
-def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock,
+def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeout,
         taxon, seq, query_weights, index):
     ############## STEP 1 ###############
     # obtain backbones (edges without weights yet)

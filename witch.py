@@ -6,6 +6,7 @@ import logging
 from configs import _read_config_file 
 from configs import *
 from gcmm.gcmm import mainAlignmentProcess
+from helpers.general_tools import SmartHelpFormatter
 
 version = "0.4.0"
 _root_dir = os.path.dirname(os.path.realpath(__file__))
@@ -48,7 +49,8 @@ def _init_parser():
             description=(
                 "This program runs WITCH, an alignment method "
                 "extended from UPP and MAGUS."),
-            conflict_handler='resolve')
+            conflict_handler='resolve',
+            formatter_class=SmartHelpFormatter)
     parser.add_argument('-v', '--version', action='version',
             version="%(prog)s " + version)
 
@@ -78,11 +80,16 @@ def _init_parser():
             help='Output file name, default: merged.fasta', required=False,
             default='merged.fasta')
     basic_group.add_argument('-t', '--num-cpus', type=int,
-            help='Number of cpus for multi-processing, default: -1 (all)',
+            help='Number of cpus for multi-processing. Default: -1 (all)',
             required=False, default=-1)
-    basic_group.add_argument('--chunksize', type=int,
-            help='Chunksize for multiprocessing', required=False,
-            default=1)
+    basic_group.add_argument('--timeout', type=int,
+            help=' '.join(['Retry a query alignment after [timeout] seconds.',
+                    'The retry will always use \'witch-ng mode\' (see WTICH',
+                    'option below). Default: 120']),
+            default=120, required=False)
+    #basic_group.add_argument('--chunksize', type=int,
+    #        help='Chunksize for multiprocessing', required=False,
+    #        default=1)
     #basic_group.add_argument('--collapse-singletons', type=int,
     #        default=1, required=False,
     #        help='Collapse singleton columns and make them lower cases. default: 1')
@@ -113,38 +120,48 @@ def _init_parser():
                 "pipeline."]))
     parser.groups['witch_group'] = witch_group
     witch_group.add_argument('-m', '--mode', type=str,
-            help='Mode for aligning query sequences. Default: witch-ng',
+            help=' '.join(['Mode for aligning query sequences.',
+                    '\nIn the case of adding query sequences into a large',
+                    'backbone alignment, the original script used by WITCH',
+                    'is inefficient and can lead to extremely long runtime.',
+                    '\nThe re-implementation of WITCH-ng\'s way of adding',
+                    'sequences (i.e., with DP algorithm) now enables WITCH',
+                    'to be much faster and memory-efficient (with some',
+                    'additional tweaks). It is advised to use',
+                    '\'witch-ng mode\' (enabled as default) within WITCH.',
+                    '\nDefault: witch-ng']),
             required=False, default='witch-ng',
-            choices=['default', 'witch-ng', 'smart'])
+            choices=['old-witch', 'witch-ng'])
     witch_group.add_argument('--keeptemp', action='store_const', const=True,
             help='Keep ALL temporary files in the process (constraints' \
                     + ', backbones, HMMSearch results, GCM results, etc.)',
             default=False)
     witch_group.add_argument('--keep-decomposition', action='store_const',
             const=True,
-            help='Keep the tree decomposition (including temp backbone/frag ' \
-                    + 'files and HMMBuild/HMMSearch results).',
+            help=' '.join(['Keep the tree decomposition (including temp'
+                    'backbone/frag files and HMMBuild/HMMSearch results).']),
             default=False)
     #witch_group.add_argument('--keepsubalignment',
     #        action='store_const', const=True,
     #        help='Keep all subalignments by MAGUS/GCM', default=False)
     witch_group.add_argument('-k', '--num-hmms', type=int,
-            help='The number of top-scored HMMs used for aligning a query, default: 10',
+            help=' '.join(['The number of top-scored HMMs used for aligning',
+                    'a query. Default: 10']),
             required=False, default=10)
     witch_group.add_argument('-w', '--use-weight',
             type=int, required=False,
-            help='Whether to use adjusted bitscore (weights), default: 1',
+            help='Whether to use adjusted bitscore (weights). Default: 1',
             default=1)
     witch_group.add_argument('--save-weight',
             type=int, required=False,
-            help='Whether to save weights to [outdir]/weights.txt, default: 0',
+            help='Whether to save weights to [outdir]/weights.txt. Default: 0',
             default=0)
     witch_group.add_argument('-A', '--alignment-size', type=int,
-            help='Minimum decomposition subset size for tree decomposition, ' \
-                    + 'default: 10 (as UPP)',
+            help=' '.join(['Minimum decomposition subset size for tree',
+                    'decomposition. Default: 10 (as UPP)']),
             default=10, required=False)
     witch_group.add_argument('--molecule', type=str,
-            help='Whether input is amino/dna/rna, default: dna',
+            help='Whether input is amino/dna/rna. Default: dna',
             required=False, default='dna', choices=['amino', 'dna', 'rna'])
     #witch_group.add_argument('-s', '--subset-size', type=int,
     #        help='Number of queries in a single GCM run, default: 1',
@@ -154,31 +171,28 @@ def _init_parser():
     #        help='(DEPRECATED) Optional adjustment of weights, default: none')
 
     # GCM option
-    gcm_group = parser.add_argument_group(
-            'MAGUS/GCM options'.upper(),
-            ' '.join(['These options are used to customize MAGUS/GCM,',
-                'for example the graph trace method.']))
-    parser.groups['gcm_group'] = gcm_group
-    gcm_group.add_argument('--keepgcmtemp', action='store_const',
-            const=True, default=False, required=False,
-            help='Keep temporary files generated from MAGUS/GCM')
-    gcm_group.add_argument('--timeout', type=int,
-            default=60, required=False,
-            help='Retry a MAGUS/GCM subtask after [timeout] seconds, default: 60')
-    gcm_group.add_argument('-f', '--inflation-factor', type=float,
-            default=4, required=False,
-            help="Inflation factor for MCL, default: 4") 
-    gcm_group.add_argument('--graphclustermethod', type=str,
-            choices=['mcl', 'mlrmcl', 'rg', 'none'],
-            default='mcl', required=False,
-            help="Method for initial clustering of the alignment graph, default: mcl")
-    gcm_group.add_argument('--graphtracemethod', type=str,
-            choices=['minclusters', 'mwtgreedy', 'mwtsearch', 'fm', 'rg', 'rgfast'],
-            default='minclusters', required=False,
-            help="Method for finding a trace from the alignment graph, default: minclusters")
-    gcm_group.add_argument('--graphtraceoptimize', type=str,
-            choices=['true', 'false'], required=False, default='false',
-            help="Run an optimization step on the graph trace, default: false")
+    #gcm_group = parser.add_argument_group(
+    #        'MAGUS/GCM options'.upper(),
+    #        ' '.join(['These options are used to customize MAGUS/GCM,',
+    #            'for example the graph trace method.']))
+    #parser.groups['gcm_group'] = gcm_group
+    #gcm_group.add_argument('--keepgcmtemp', action='store_const',
+    #        const=True, default=False, required=False,
+    #        help='Keep temporary files generated from MAGUS/GCM')
+    #gcm_group.add_argument('-f', '--inflation-factor', type=float,
+    #        default=4, required=False,
+    #        help="Inflation factor for MCL.\n[default: 4]") 
+    #gcm_group.add_argument('--graphclustermethod', type=str,
+    #        choices=['mcl', 'mlrmcl', 'rg', 'none'],
+    #        default='mcl', required=False,
+    #        help="Method for initial clustering of the alignment graph.\n[default: mcl]")
+    #gcm_group.add_argument('--graphtracemethod', type=str,
+    #        choices=['minclusters', 'mwtgreedy', 'mwtsearch', 'fm', 'rg', 'rgfast'],
+    #        default='minclusters', required=False,
+    #        help="Method for finding a trace from the alignment graph.\n[default: minclusters]")
+    #gcm_group.add_argument('--graphtraceoptimize', type=str,
+    #        choices=['true', 'false'], required=False, default='false',
+    #        help="Run an optimization step on the graph trace.\n[default: false]")
     return parser
 
 
