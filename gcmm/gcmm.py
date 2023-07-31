@@ -102,14 +102,18 @@ def mainAlignmentProcess(args):
             initializer=initiate_pool, initargs=(args,))
             #mp_context=mp.get_context('spawn'),
 
-    # if not user provided, default to <outdir>/tree_comp/root
-    if not Configs.hmmdir:
-        Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
+    # if not user provided, default to <outdir>/tree_decomp/root
+    #if not Configs.hmmdir:
+    #    Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
 
     # 0) obtain the backbone alignment/tree and eHMMs
     # If no UPP eHMM directory detected, decompose from the backbone
-    if not os.path.exists(Configs.hmmdir):
-        # if both backbone alignment/tree present
+    #if not os.path.exists(Configs.hmmdir):
+    if not Configs.hmmdir:
+        # default to <outdir>/tree_decomp/root
+        Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
+
+        # if both backbone alignment/tree are provided by the user
         if Configs.backbone_path and Configs.backbone_tree_path:
             pass
         else:
