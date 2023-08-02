@@ -3,7 +3,8 @@ import os, sys, time
 from configs import *
 from gcmm.aligner import alignSubQueries, alignSubQueriesNew
 from gcmm.loader import writeOneCheckpointAlignment, readCheckpointAlignments
-from alignment_tools import ExtendedAlignment
+
+from helpers.alignment_tools import ExtendedAlignment
 
 import concurrent.futures
 from functools import partial
