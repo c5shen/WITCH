@@ -183,7 +183,6 @@ class SearchAlgorithm(object):
         subset_dirs = [os.path.realpath(x) 
                 for x in os.popen(cmd).read().split('\n')[:-1]]
         Configs.log('Found existing HMM directory: {}'.format(Configs.hmmdir))
-        print('\nFound existing HMM directory: {}'.format(Configs.hmmdir))
         Configs.log('Reading {} subsets...'.format(len(subset_dirs)))
         
         # terminate if not finding any HMMs in the current directory
@@ -222,7 +221,7 @@ class SearchAlgorithm(object):
 
         #del bb_aln
         Configs.log('Finished reading decomposition subsets...')
-        return subset_to_retained_columns, subset_to_nongaps_per_column
+        return bb_path, subset_to_retained_columns, subset_to_nongaps_per_column
     
     # main function to perform all-against-all query-HMM searches in MP 
     def search(self, lock, pool):

@@ -83,6 +83,10 @@ def _init_parser():
     basic_group.add_argument('-t', '--num-cpus', type=int,
             help='Number of cpus for multi-processing. Default: -1 (all)',
             required=False, default=-1)
+    basic_group.add_argument('--max-concurrent-jobs', type=int,
+            help=' '.join(['Maximum number of concurrently running jobs.'
+                    'Default: 5 * num_cpus']),
+            required=False, default=None)
     basic_group.add_argument('--timeout', type=int,
             help=' '.join(['Retry a query alignment after [timeout] seconds.',
                     'The retry will always use \'witch-ng mode\' (see WTICH',
@@ -137,11 +141,11 @@ def _init_parser():
             help='Keep ALL temporary files in the process (constraints' \
                     + ', backbones, HMMSearch results, GCM results, etc.)',
             default=False)
-    witch_group.add_argument('--keep-decomposition', action='store_const',
-            const=True,
-            help=' '.join(['Keep the tree decomposition (including temp'
-                    'backbone/frag files and HMMBuild/HMMSearch results).']),
-            default=False)
+    witch_group.add_argument('--keep-decomposition', type=int,
+            help=' '.join(['Whether to keep the tree decomposition',
+                    '(including temp backbone/frag files and',
+                    'HMMBuild/HMMSearch results). Default: 1']),
+            default=1, required=False)
     #witch_group.add_argument('--keepsubalignment',
     #        action='store_const', const=True,
     #        help='Keep all subalignments by MAGUS/GCM', default=False)

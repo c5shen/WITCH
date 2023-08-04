@@ -1,4 +1,4 @@
-import os, sys, time
+import os, sys, time, itertools
 
 from configs import *
 from gcmm.aligner import alignSubQueries, alignSubQueriesNew
@@ -9,6 +9,40 @@ from helpers.alignment_tools import ExtendedAlignment
 import concurrent.futures
 from functools import partial
 from tqdm import tqdm
+
+'''
+Function to yield the list of arguments for a job/task to perform.
+'''
+def getTasks(remaining_indexes,
+        subset_query_names, subset_query_seqs, subset_weights):
+    for i in range(len(remaining_indexes)):
+        _i = remaining_indexes[i]
+        yield subset_query_names[_i], subset_query_seqs[_i], \
+                subset_weights[_i], _i
+
+'''
+Function to handle a single future returned from the main query alignment job
+    future.result() should have two fields:
+        0 - query alignment in ExtendedAlignment
+        1 - query index
+    Return: runtime in handling the future object
+'''
+def handleFuture(future, success, ignored, retry_indexes, checkpoint_path,
+        i_retry=0):
+    s1 = time.time()
+    _query, _index = future.result()
+    if not _query and i_retry > 0:
+        retry_indexes.append(_index)
+    else:
+        # failed job indicated in the <witch-ng> or <default> pipelines,
+        # should be ignored in the output
+        if (not _query) or len(_query) == 0:
+            ignored.append(subset_query_names[_index])
+        else:
+            # write to checkpoint file
+            writeOneCheckpointAlignment(checkpoint_path, _query)
+            success.append(_query)
+    return time.time() - s1
 
 '''
 Function to handle returned future objects from query-alignments
@@ -37,7 +71,7 @@ def handleFutures(futures, subset_query_names, success, ignored, i_retry,
         else:
             # failed job indicated in the <witch-ng> or <default> pipelines,
             # should be ignored in the output
-            if len(_query) == 0:
+            if (not _query) or len(_query) == 0:
                 ignored.append(subset_query_names[_index])
             else:
                 # write to checkpoint file
@@ -100,6 +134,10 @@ def submitAndCollectFutures(pool, lock, sid_to_query_names, sid_to_query_seqs,
     remaining_indexes = list(set(remaining_indexes).difference(set(completed_indexes)))
     remaining_indexes = list(set(remaining_indexes).difference(set(ignored_indexes)))
 
+    # early return if no remaining indexes
+    if len(remaining_indexes) == 0:
+        return queries, ignored_indexes
+
     # Set up either WITCH or WITCH-ng's way of aligning the query sequence
     func_map = {'old-witch': alignSubQueries, 'witch-ng': alignSubQueriesNew}
     if func_map[Configs.mode]:
@@ -109,18 +147,47 @@ def submitAndCollectFutures(pool, lock, sid_to_query_names, sid_to_query_seqs,
         raise NotImplementedError
 
     # try submitting jobs one-by-one and collect results
-    futures, success = [], []
-    for i in remaining_indexes:
-        futures.append(pool.submit(func, subset_query_names[i],
-            subset_query_seqs[i], subset_weights[i], i))
+    futures, success, retry_indexes = [], [], []
+    # UPDATE 8.4.2023 - try limiting the total number of existing jobs
+    #                 - by pausing submission after queue is full
+    with tqdm(total=len(remaining_indexes), **tqdm_styles) as pbar:
+        tasks_to_do = getTasks(remaining_indexes, subset_query_names,
+                subset_query_seqs, subset_weights)
+        futures = {
+            pool.submit(func, *task): task[-1]
+            for task in itertools.islice(tasks_to_do, Configs.max_concurrent_jobs)
+        }
+        while futures:
+            # wait for the next future to complete
+            done, _ = concurrent.futures.wait(
+                    futures, return_when=concurrent.futures.FIRST_COMPLETED)
 
-    # iterate over jobs as they complete
-    # only allow for one retry for each failed subtask
-    i_retry = 1
-    retry_indexes, i_retry, _runtime = handleFutures(futures,
-            subset_query_names, success, ignored_indexes, i_retry,
-            checkpoint_path)
-    handle_runtime += _runtime
+            # process results
+            for future in done:
+                # allow re-adding some failed jobs back to queue
+                handle_runtime += handleFuture(future, success, ignored_indexes,
+                        retry_indexes, checkpoint_path, i_retry=1)
+                original_task = futures.pop(future)
+                #print(f"Output of {original_task} is {future.result()}")
+            pbar.update(len(done))
+
+            # schedule the next set of tasks, no more than the number
+            # of done to only have Configs.max_concurrent_jobs in the pool
+            for task in itertools.islice(tasks_to_do, len(done)):
+                future = pool.submit(func, *task)
+                futures[future] = task[-1]
+
+    #for i in remaining_indexes:
+    #    futures.append(pool.submit(func, subset_query_names[i],
+    #        subset_query_seqs[i], subset_weights[i], i))
+
+    ## iterate over jobs as they complete
+    ## only allow for one retry for each failed subtask
+    #i_retry = 1
+    #retry_indexes, i_retry, _runtime = handleFutures(futures,
+    #        subset_query_names, success, ignored_indexes, i_retry,
+    #        checkpoint_path)
+    #handle_runtime += _runtime
     
     # run retries if any exist
     # retry will use WTICH-ng's way (which presumably should be faster in the

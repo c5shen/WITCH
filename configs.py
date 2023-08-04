@@ -42,7 +42,7 @@ class Configs:
     chunksize = 1
 
     keeptemp = False
-    keep_decomposition = False
+    keep_decomposition = True
     #keepsubalignment = False
     
     # WITCH configurations
@@ -54,6 +54,7 @@ class Configs:
     #weight_adjust = 'none'
     #subset_size = 1
     num_cpus = -1
+    max_concurrent_jobs = None
     molecule = 'dna'
     #collapse_singletons = True
 
@@ -233,7 +234,7 @@ def buildConfigs(args):
     Configs.output_path = os.path.join(Configs.outdir, args.output_path)
 
     Configs.keeptemp = args.keeptemp
-    Configs.keep_decomposition = args.keep_decomposition
+    Configs.keep_decomposition = args.keep_decomposition == 1
     #Configs.keepsubalignment = args.keepsubalignment
 
     Configs.log_path = os.path.join(Configs.outdir, 'log.txt')
@@ -261,6 +262,11 @@ def buildConfigs(args):
         Configs.num_cpus = args.num_cpus
     else:
         Configs.num_cpus = os.cpu_count()
+
+    if args.max_concurrent_jobs:
+        Configs.max_concurrent_jobs = args.max_concurrent_jobs
+    else:
+        Configs.max_concurrent_jobs = 5 * Configs.num_cpus
 
     Configs.molecule = args.molecule
 

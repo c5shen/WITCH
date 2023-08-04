@@ -16,7 +16,8 @@ Backbone alignment/tree job
 '''
 class BackboneJob(object):
     # default setting for a backbone alignment job
-    def __init__(self):
+    def __init__(self, backbone_path=None, query_path=None,
+            backbone_tree_path=None):
         self.alignment_method = 'magus'
         self.backbone_size = None 
         self.backbone_threshold = 0.25
@@ -27,9 +28,9 @@ class BackboneJob(object):
         self.tree_path = Configs.fasttreepath
 
         self.unaligned_backbone_path = None
-        self.backbone_path = None
-        self.query_path = None
-        self.backbone_tree_path = None
+        self.backbone_path = backbone_path
+        self.query_path = query_path
+        self.backbone_tree_path = backbone_tree_path
 
         # magus options
         self.magus_options = Namespace()
@@ -142,10 +143,6 @@ class BackboneJob(object):
     def run_alignment(self):
         start = time.time()
 
-        # first make sure we have unaligned sequences
-        assert Configs.input_path != None, \
-                'No input sequences to split to backbone/query!'
-
         if self.alignment_method == 'magus':
             self.path = Configs.magus_path
         
@@ -175,6 +172,12 @@ class BackboneJob(object):
                 and os.path.exists(self.query_path):
             pass
         else:
+            # before we split the backbone/query sequences, make sure
+            # the unaligned sequences (input) exist
+            if not (Configs.input_path and os.path.exists(Configs.input_path)):
+                Configs.error('Input sequences file does not exist')
+                notifyError('gcmm/backbone.py - BackboneJob.run_alignment()')
+
             # select backbone sequences
             input_sequences = MutableAlignment()
             input_sequences.read_file_object(Configs.input_path)
@@ -256,10 +259,6 @@ class BackboneJob(object):
     # run tree estimation
     def run_tree(self):
         start = time.time()
-        if not os.path.exists(self.backbone_path):
-            Configs.error('Did not find a backbone alignment when '
-                    + 'estimating the backbone tree.')
-            notifyError('gcmm/backbone.py - BackboneJob.run_tree()')
 
         # some scenarios for backbone tree estimation
         # (1) backbone_tree_path exists (finished)
@@ -271,6 +270,13 @@ class BackboneJob(object):
             print('\nFound existing backbone tree: {}'.format(
                 self.backbone_tree_path))
         else:
+            # before estimating the tree, making sure the backbone alignment
+            # exists
+            if not os.path.exists(self.backbone_path):
+                Configs.error('Did not find a backbone alignment when '
+                        + 'estimating the backbone tree.')
+                notifyError('gcmm/backbone.py - BackboneJob.run_tree()')
+
             # MP-version of FastTree2
             logfile_name = self.outdir \
                     + '/{}_tree_log.txt'.format(self.tree_method)

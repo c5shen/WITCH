@@ -7,7 +7,7 @@ Main pipeline of WITCH
 import os, sys, math, psutil, shutil 
 from configs import * 
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
-from gcmm.loader import loadSubQueries, writeTempBackbone
+from gcmm.loader import loadSubQueries, rankBitscores, writeTempBackbone
 from gcmm.weighting import writeWeights, writeBitscores, \
         readWeightsFromLocal, writeWeightsToLocal
 from gcmm.aligner import alignSubQueries, alignSubQueriesNew
@@ -108,11 +108,15 @@ def mainAlignmentProcess(args):
 
     # 0) obtain the backbone alignment/tree and eHMMs
     # If no UPP eHMM directory detected, decompose from the backbone
-    #if not os.path.exists(Configs.hmmdir):
     if not Configs.hmmdir:
         # default to <outdir>/tree_decomp/root
         Configs.hmmdir = Configs.outdir + '/tree_decomp/root'
+    else:
+        # if user provides a directory but it does not exist, exit program
+        assert os.path.isdir(Configs.hmmdir), \
+            'Provided HMM directory does not exist'
 
+    if not os.path.isdir(Configs.hmmdir):
         # if both backbone alignment/tree are provided by the user
         if Configs.backbone_path and Configs.backbone_tree_path:
             pass
@@ -126,13 +130,14 @@ def mainAlignmentProcess(args):
 
             # jobs will only run if the corresponding paths are missing
             print('\nPerforming backbone alignment and/or tree estimation...')
-            bb_job = BackboneJob()
+            bb_job = BackboneJob(Configs.backbone_path, Configs.query_path,
+                    Configs.backbone_tree_path)
             bb_job.setup()
 
             Configs.backbone_path, Configs.query_path = \
                     bb_job.run_alignment()
             Configs.backbone_tree_path = bb_job.run_tree()
-
+    
         # after obtaining backbone alignment/tree, perform decomposition
         # and HMMSearches
         print('\nDecomposing the backbone tree...')
@@ -149,15 +154,20 @@ def mainAlignmentProcess(args):
     else:
         # go over the given hmm directory and obtain all subset alignment
         # get their retained columns with respect to the backbone alignment
+        print('\nFound existing HMM directory: {}'.format(Configs.hmmdir))        
         _dummy_search = SearchAlgorithm(None)
-        subset_to_retained_columns, subset_to_nongaps_per_column \
+        backbone_path, subset_to_retained_columns, subset_to_nongaps_per_column \
                 = _dummy_search.readHMMDirectory(lock, pool)
+        if not Configs.backbone_path:
+            Configs.backbone_path = backbone_path
 
     # sanity check before moving on
+    # minimum required at this point:
+    #   1. hmmdir   2. backbone_path    3. query_path
     assert Configs.backbone_path != None \
             and os.path.exists(Configs.backbone_path), 'backbone alignment missing'
-    assert Configs.backbone_tree_path != None \
-            and os.path.exists(Configs.backbone_tree_path), 'backbone tree missing'
+    #assert Configs.backbone_tree_path != None \
+    #        and os.path.exists(Configs.backbone_tree_path), 'backbone tree missing'
     assert Configs.query_path != None \
             and os.path.exists(Configs.query_path), 'query sequences missing'
     assert Configs.hmmdir != None \
@@ -170,8 +180,8 @@ def mainAlignmentProcess(args):
     tmp_backbone_path, backbone_length = writeTempBackbone(
             Configs.outdir + '/tree_decomp/backbone', Configs.backbone_path)
 
-    # 1) get all sub-queries, write to [outdir]/data
-    num_seq, index_to_hmm, ranked_bitscores, sid_to_query_names, \
+    # 1) get all sub-queries
+    num_seq, index_to_hmm, sid_to_query_names, \
             sid_to_query_seqs, renamed_taxa = loadSubQueries(lock, pool)
 
     # 2) calculate weights, if needed
@@ -181,6 +191,7 @@ def mainAlignmentProcess(args):
         print('\nFound existing weights: {}'.format(weight_path))
         taxon_to_weights = readWeightsFromLocal(weight_path)
     else:
+        ranked_bitscores = rankBitscores(index_to_hmm, renamed_taxa, lock, pool)
         if Configs.use_weight:
             print('\nCalculating weights (adjusted bit-scores)...')
             taxon_to_weights = writeWeights(index_to_hmm, ranked_bitscores, pool)

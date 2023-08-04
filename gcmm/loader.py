@@ -267,10 +267,18 @@ def readAndRankBitscoreMP(index_to_hmm, renamed_taxa, lock, pool):
     ranks = defaultdict(list)
     total_num_models = len(index_to_hmm)
     Configs.log('Reading and ranking bit-scores from HMMSearch files')
+    print('\nReading and ranking bit-scores from HMMSearch files...')
 
     # submit jobs to Pool
     func = partial(readHMMSearch, lock, total_num_models)
-    all_subset_ranks = list(pool.map(func, index_to_hmm.values()))
+    all_subset_ranks, futures = [], []
+    for value in index_to_hmm.values():
+        futures.append(pool.submit(func, value))
+    for future in tqdm(
+            concurrent.futures.as_completed(futures),
+            total=len(futures), **tqdm_styles):
+        all_subset_ranks.append(future.result())
+    #all_subset_ranks = list(pool.map(func, index_to_hmm.values()))
 
     # merge all MP results
     Configs.log('Ranking bit-scores')
@@ -323,6 +331,18 @@ Read in and rank bitscores from UPP decomposition
 #    return ranked
 
 '''
+Rank bit-scores
+'''
+def rankBitscores(index_to_hmm, renamed_taxa, lock, pool):
+    s1 = time.time()
+    ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, renamed_taxa,
+            lock, pool)
+    time_rank_bitscore = time.time() - s1
+    Configs.runtime(' '.join(['(rankBitscores) Time to rank bit-scores (s)',
+        str(time_rank_bitscore)]))
+    return ranked_bitscore
+
+'''
 Split query sequences into batches of a defined size
 '''
 def loadSubQueries(lock, pool):
@@ -342,11 +362,11 @@ def loadSubQueries(lock, pool):
     index_to_hmm = getAlignmentSubsets(Configs.hmmdir, lock, pool)
 
     # 1.3) read and rank bitscores
-    #ranked_bitscore = readAndRankBitscore(index_to_hmm)
-    ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, renamed_taxa,
-                                            lock, pool)
+    #ranked_bitscore = readAndRankBitscoreMP(index_to_hmm, renamed_taxa,
+    #                                        lock, pool)
+
     time_load_files = time.time() - s1
-    Configs.runtime(' '.join(['(loadSubQueries) Time to split queries and',
-            'rank bit-scores (s):', str(time_load_files)]))
-    return num_seq, index_to_hmm, ranked_bitscore, sid_to_query_names, \
+    Configs.runtime(' '.join(['(loadSubQueries) Time to split queries',
+            '(s):', str(time_load_files)]))
+    return num_seq, index_to_hmm, sid_to_query_names, \
             sid_to_query_seqs, renamed_taxa
