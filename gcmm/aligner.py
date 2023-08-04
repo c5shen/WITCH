@@ -369,6 +369,7 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
     time_obtain_backbones = time.time() - s11
 
     s12 = time.time()
+    query = ExtendedAlignment([])
     if weights_str != 'N/A':
         ############## STEP 2 ###############
         # added weighted edges to the alignment graph from gluing alignment
@@ -481,7 +482,6 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
 
         # return an extended alignment object with just the query
         # sequence and its updated indexes
-        query = ExtendedAlignment([])
         query[taxon] = combined; query._reset_col_names()
         insertion = -1; regular = 0
         for i in range(len(combined)):
@@ -490,11 +490,6 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
             else:
                 query._col_labels[i] = regular; regular += 1
 
-    else:
-        Configs.warning('{} in task #{}'.format(taxon, index) \
-                + ' does not have any matching HMMs, ignored in final output...')
-        return ExtendedAlignment([]), index
-    
     # remove temp folders
     if not Configs.keeptemp:
         dirs_to_delete = [search_dir, constraints_dir]
@@ -503,6 +498,17 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
                 os.system('rm -rf {}'.format(_dir))
     time_alignment_trace = time.time() - s12
 
+    # if query is empty, meaning there is no weight and the whole algorithm
+    # did not run. Simply return the empty alignment obj
+    if len(query) == 0:
+        lock.acquire()
+        try:
+            Configs.warning('{} in task #{}'.format(taxon, index) \
+                    + ' does not have any matching HMMs, ignored in final output...')
+        finally:
+            lock.release()
+        return query, index
+    
     # sanity check for finishing the query-HMM alignment merge
     if query.get_length() >= backbone_length:
         lock.acquire()
