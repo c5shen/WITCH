@@ -94,7 +94,8 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
                 workdir, taxon, i)
         cmd = '{} -o {} {} {}'.format(Configs.hmmalignpath,
                 hmmalign_result_path, this_hmm, query_path)
-        subprocess.run(cmd.split(' '))
+        os.system(cmd)
+        #subprocess.run(cmd.split(' '))
     
         # Extended alignment
         ap_aln = ExtendedAlignment([taxon])
