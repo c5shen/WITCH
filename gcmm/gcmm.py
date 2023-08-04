@@ -150,7 +150,7 @@ def mainAlignmentProcess(args):
                 'between the backbone and queries...')
         search = SearchAlgorithm(hmmbuild_paths)
         hmmsearch_paths = search.search(lock, pool)
-        
+        del decomp; del search
     else:
         # go over the given hmm directory and obtain all subset alignment
         # get their retained columns with respect to the backbone alignment
@@ -173,7 +173,23 @@ def mainAlignmentProcess(args):
     assert Configs.hmmdir != None \
             and os.path.isdir(Configs.hmmdir), 'eHMM directory missing'
 
-    #print('--- Current memory usage: {} MB ---'.format(memoryUsage()))
+    ####### Addition - 6.13.2023 #######
+    # Create lists that record retained column indexes and the
+    # number of nongap characters per column
+    # of each subset alignment for in-memory merging of HMM-query alignments,
+    # instead of calling GCM (the WITCH-ng's way)
+    # will be passed to the initiation of process pool as initial arguments
+
+    # close pool and re-initiate pool to run the actual query alignment part
+    Configs.warning('Closing ProcessPoolExecutor instance (for backbone)...')
+    pool.shutdown()
+    #pool = ProcessPoolExecutor(Configs.num_cpus,
+    pool = WITCHProcessPoolExecutor(Configs.num_cpus,
+            initializer=initiate_pool_query_alignment,
+            initargs=(q, args, subset_to_retained_columns,
+                subset_to_nongaps_per_column))
+            #mp_context=mp.get_context('spawn'),
+    Configs.warning('ProcessPoolExecutor instance re-opened (for query alignment).')
 
     # 0) create a temporary (working) backbone alignment,
     # enforcing all letters to be upper-cases
@@ -198,6 +214,7 @@ def mainAlignmentProcess(args):
         else:
             print('\nLoading bit-scores...')
             taxon_to_weights = writeBitscores(ranked_bitscores, pool)
+        del ranked_bitscores
 
         # 2a) if saving weights to local
         if Configs.save_weight:
@@ -208,24 +225,6 @@ def mainAlignmentProcess(args):
     sub_alignment_paths = []
     if not os.path.isdir(Configs.outdir + '/temp'):
         os.makedirs(Configs.outdir + '/temp')
-
-    ####### Addition - 6.13.2023 #######
-    # Create lists that record retained column indexes and the
-    # number of nongap characters per column
-    # of each subset alignment for in-memory merging of HMM-query alignments,
-    # instead of calling GCM (the WITCH-ng's way)
-    # will be passed to the initiation of process pool as initial arguments
-
-    # close pool and re-initiate pool to run the actual query alignment part
-    Configs.warning('Closing ProcessPoolExecutor instance (for backbone)...')
-    pool.shutdown()
-    #pool = ProcessPoolExecutor(Configs.num_cpus,
-    pool = WITCHProcessPoolExecutor(Configs.num_cpus,
-            initializer=initiate_pool_query_alignment,
-            initargs=(q, args, subset_to_retained_columns,
-                subset_to_nongaps_per_column))
-            #mp_context=mp.get_context('spawn'),
-    Configs.warning('ProcessPoolExecutor instance re-opened (for query alignment).')
 
     # ProcessPoolExecutor version
     print('\nPerforming GCM alignments on query subsets...')
