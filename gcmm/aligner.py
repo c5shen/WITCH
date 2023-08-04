@@ -30,7 +30,7 @@ def getQueryAlignment(query_name, path, dtype='fasta'):
 '''
 Helper function to generate backbone alignments for the constraint sets
 '''
-def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights, 
+def getBackbones(index_to_hmm, taxon, taxon_ind, seq, query_path, sorted_weights, 
         workdir, backbone_dir, use_gcm=True):
     ret = dict()
 
@@ -91,7 +91,7 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
     
         # hmmalign
         hmmalign_result_path = '{}/hmmalign.results.{}.{}.out'.format(
-                workdir, taxon, i)
+                workdir, taxon_ind, i)
         cmd = '{} -o {} {} {}'.format(Configs.hmmalignpath,
                 hmmalign_result_path, this_hmm, query_path)
         os.system(cmd)
@@ -108,7 +108,7 @@ def getBackbones(index_to_hmm, taxon, seq, query_path, sorted_weights,
             for key in ap_aln.keys():
                 ap_aln[key] = ap_aln[key].upper()
             # save extended alignment to backbone directory
-            this_bb_path = backbone_dir + '/{}_{}.fasta'.format(taxon, i)
+            this_bb_path = backbone_dir + '/{}_{}.fasta'.format(taxon_ind, i)
             ap_aln.write(this_bb_path, 'FASTA')
 
             # add the weights of the bb to weights.txt
@@ -197,7 +197,7 @@ def alignSubQueries(backbone_path, backbone_length, index_to_hmm, lock, timeout,
 
     # get backbones with the information we have
     weights_str, weights_map, _ = getBackbones(index_to_hmm,
-            taxon, seq, query_path,
+            taxon, index, seq, query_path,
             query_weights, search_dir, bb_dir)
     time_obtain_backbones = time.time() - s12
 
@@ -363,7 +363,7 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
     if not os.path.isdir(search_dir):
         os.makedirs(search_dir)
     weights_str, subset_to_weight, subset_to_aligned_columns = \
-            getBackbones(index_to_hmm, taxon, seq, query_path,
+            getBackbones(index_to_hmm, taxon, index, seq, query_path,
                     query_weights, search_dir, None, use_gcm=False)
     #print(taxon, subset_to_weight[next(iter(subset_to_weight))],
     #        subset_to_aligned_columns[next(iter(subset_to_aligned_columns))])

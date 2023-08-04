@@ -165,26 +165,27 @@ Split and write sub-queries to local
 def writeSubQueries(unaligned, outdir, pool):
     #if not os.path.isdir(outdir):
     #    os.system('mkdir -p {}'.format(outdir))
-    frag_names = unaligned.get_sequence_names()
-
-    # rename taxon name with illegal characters
-    renamed_taxa = {}
-    for taxon in frag_names:
-        if '/' in taxon:
-            taxon_name = tempfile.mktemp().split('/')[-1]
-            renamed_taxa[taxon] = taxon_name
-            unaligned[taxon_name] = unaligned[taxon]
-            unaligned.pop(taxon)
-    frag_names = list(unaligned.keys())
-    num_seq = len(frag_names)
+    taxa_names = list(unaligned.keys())
+    num_seq = len(taxa_names)
 
     Configs.log('Started splitting queries (N={}) to subsets...'.format(
         num_seq))
     sid_to_query_names = {}; sid_to_query_seqs = {}
+    # also rename taxon name with illegal characters
+    renamed_taxa = {}
     for i in range(0, num_seq):
-        taxon = frag_names[i]; seq = unaligned[taxon]
-        #subaln = unaligned.sub_alignment([frag_names[i]])
-        sid_to_query_names[i] = taxon; sid_to_query_seqs[i] = seq
+        if '/' in taxa_names[i]:
+            # replace the taxon name at the same position in taxa_names
+            old_name = taxa_names[i]
+            new_name = 'renamed_query_{}'.format(i)
+            taxa_names[i] = new_name
+
+            renamed_taxa[old_name] = new_name
+            unaligned[new_name] = unaligned[old_name]
+            unaligned.pop(old_name)
+
+        seq = unaligned[taxa_names[i]]
+        sid_to_query_names[i] = taxa_names[i]; sid_to_query_seqs[i] = seq
     Configs.log('Finished splitting queries in memory.')
     #Configs.log('Index to query map: {}'.format(str(sid_to_query_names)))
     #args = []
