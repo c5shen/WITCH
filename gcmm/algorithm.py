@@ -13,11 +13,13 @@ import dendropy
 from dendropy.datamodel.treemodel import Tree
 
 from configs import Configs, tqdm_styles
+from gcmm import *
 from gcmm.tree import PhylogeneticTree
 from helpers.alignment_tools import Alignment, MutableAlignment 
 from helpers.math_utils import lcm
 
 import concurrent.futures
+import pyhmmer
 
 
 '''

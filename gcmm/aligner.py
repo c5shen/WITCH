@@ -267,7 +267,7 @@ def alignSubQueries(backbone_path, backbone_length, index_to_hmm, lock, timeout,
         # return
         Configs.warning('{} in task #{}'.format(taxon, index) \
                 + ' does not have any matching HMMs, skipping...')
-        return ExtendedAlignment([]), index
+        return ExtendedAlignment([]), index, taxon
 
     # remove temp folders
     if not Configs.keeptemp:
@@ -295,7 +295,7 @@ def alignSubQueries(backbone_path, backbone_length, index_to_hmm, lock, timeout,
                 alignSubQueries.q.put(index)
             finally:
                 lock.release()
-            return None, index
+            return None, index, taxon
 
         time_merged_query = time.time() - s14
 
@@ -318,7 +318,7 @@ def alignSubQueries(backbone_path, backbone_length, index_to_hmm, lock, timeout,
             #Configs.log('{} passed to main pipeline...'.format(taxon))
         finally:
             lock.release()
-        return query, index
+        return query, index, taxon
     else:
         lock.acquire()
         try:
@@ -328,7 +328,7 @@ def alignSubQueries(backbone_path, backbone_length, index_to_hmm, lock, timeout,
             alignSubQueries.q.put(index)
         finally:
             lock.release()
-        return None, index
+        return None, index, taxon
 
 '''
 New query-HMM alignment merging function that does not rely on GCM/MAGUS.
@@ -508,7 +508,7 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
                     + ' does not have any matching HMMs, ignored in final output...')
         finally:
             lock.release()
-        return query, index
+        return query, index, taxon
     
     # sanity check for finishing the query-HMM alignment merge
     if query.get_length() >= backbone_length:
@@ -523,7 +523,7 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
             Configs.log(weights_str)
         finally:
             lock.release()
-        return query, index
+        return query, index, taxon
     else:
         lock.acquire()
         try:
@@ -532,4 +532,4 @@ def alignSubQueriesNew(backbone_path, backbone_length, index_to_hmm, lock, timeo
         finally:
             lock.release()
         # return an empty alignment as indication of failure
-        return ExtendedAlignment([]), index
+        return ExtendedAlignment([]), index, taxon
