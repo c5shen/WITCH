@@ -166,8 +166,8 @@ def _init_parser():
                     'decomposition. Default: 10 (as UPP)']),
             default=10, required=False)
     witch_group.add_argument('--molecule', type=str,
-            help='Whether input is amino/dna/rna. Default: dna',
-            required=False, default='dna', choices=['amino', 'dna', 'rna'])
+            help='Whether input is amino/dna/rna. Default: infer from data',
+            required=False, default=None, choices=['amino', 'dna', 'rna'])
     #witch_group.add_argument('-s', '--subset-size', type=int,
     #        help='Number of queries in a single GCM run, default: 1',
     #        required=False, default=1)

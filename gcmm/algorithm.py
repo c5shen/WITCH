@@ -120,6 +120,8 @@ class DecompositionAlgorithm(object):
             len(subset_args)))
 
         # create all subset alignments and HMMBuild them
+        if self.molecule is None:
+            self.molecule = Configs.inferDataType(self.backbone_path)
         outdirprefix = self.outdir + '/root'
         func = partial(subset_alignment_and_hmmbuild, lock, 
                 self.path, outdirprefix,

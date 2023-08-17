@@ -176,7 +176,8 @@ class BackboneJob(object):
             # the unaligned sequences (input) exist
             if not (Configs.input_path and os.path.exists(Configs.input_path)):
                 Configs.error('Input sequences file does not exist')
-                notifyError('gcmm/backbone.py - BackboneJob.run_alignment()')
+                raise FileNotFoundError('Input sequences file does not exist')
+                #notifyError('gcmm/backbone.py - BackboneJob.run_alignment()')
 
             # select backbone sequences
             input_sequences = MutableAlignment()
@@ -282,6 +283,9 @@ class BackboneJob(object):
                     + '/{}_tree_log.txt'.format(self.tree_method)
             stderrdata = open(logfile_name, 'w')
             stdoutdata = open(self.backbone_tree_path, 'w')
+
+            if Configs.molecule is None:
+                Configs.molecule = Configs.inferDataType(self.backbone_path)
 
             cmd = [self.tree_path, '-gtr']
             if Configs.molecule == 'dna':
