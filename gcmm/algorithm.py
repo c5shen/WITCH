@@ -19,7 +19,6 @@ from helpers.alignment_tools import Alignment, MutableAlignment
 from helpers.math_utils import lcm
 
 import concurrent.futures
-import pyhmmer
 
 
 '''
