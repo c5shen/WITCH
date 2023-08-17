@@ -10,15 +10,17 @@
 -----------------------------
 News
 -----------------------------
+* (NEW) Automatically infer data type if None is specified (use `--molecule` to specify).
+* (NEW) Checkpoint system set up for most steps except HMMSearch jobs (ongoing).
 * (NEW) Added progress bar (python package `tqdm`) to visualize the alignment progress at various stages.
-* (NEW) Implemented WITCH-ng's way to align each query sequence with additional tweaks. Now the alignment process for query sequences is **fast and memory-efficient, particularly for short/fragmentary sequences**.
+* Implemented WITCH-ng's way to align each query sequence with additional tweaks. Now the alignment process for query sequences is **fast and memory-efficient, particularly for short/fragmentary sequences**.
 * An improved version of WITCH (developed by Baqiao Liu) is available at [WITCH-ng](https://github.com/RuneBlaze/WITCH-NG). It improves WITCH runtime considerably with the same alignment accuracy. Also, _Special thanks to Baqiao for providing the experimental GCM code!_
 
 
 -------------------------
 To-do
 -------------------------
-1. (Priority) Setting up checkpoints and allowing resuming a job from checkpoints (to avoid re-running those painstaking HMMSearch and query-alignment jobs!).
+1. (Priority) Setting up a checkpoint system for HMMSearch jobs.
 
 
 -----------------------------
