@@ -16,7 +16,7 @@ from gcmm.merger import mergeAlignmentsCollapsed
 from gcmm.results_handler import submitAndCollectFutures
 
 # experimental, customized ProcessPoolExecutor
-from gcmm import WITCHProcessPoolExecutor
+from gcmm import *
 
 from helpers.alignment_tools import Alignment
 from helpers.general_tools import memoryUsage

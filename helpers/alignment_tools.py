@@ -100,7 +100,7 @@ def write_compact_to_fasta(alignment, dest):
     if isinstance(dest, str):
         file_obj.close()
 
-def read_fasta(src):
+def read_fasta(src, remove_gaps=False):
     """generator that returns (name, sequence) tuples from either a FASTA
     formatted file or file object.
     """
@@ -119,7 +119,10 @@ def read_fasta(src):
     for line_number, i in enumerate(file_obj):
         if i.startswith('>'):
             if name:
-                yield name, ''.join(seq_list)
+                if remove_gaps:
+                    yield name, ''.join(seq_list).replace('-', '')
+                else:
+                    yield name, ''.join(seq_list)
                 seq_list = list()
             name = i[1:].strip()
         else:
@@ -129,7 +132,10 @@ def read_fasta(src):
             #    raise Exception("Error: illegal characeters in sequence at line %d" % line_number)
             seq_list.append(seq)
     if name:
-        yield name, ''.join(seq_list)
+        if remove_gaps:
+            yield name, ''.join(seq_list).replace('-', '')
+        else:
+            yield name, ''.join(seq_list)
     if isinstance(src, str):
         file_obj.close()
 
@@ -144,6 +150,37 @@ def write_fasta(alignment, dest):
         file_obj.write('>%s\n%s\n' % (name, seq) )
     if isinstance(dest, str):
         file_obj.close()
+
+'''
+Infer data type from file
+'''
+def inferDataType(path):
+    sequences = read_fasta(path, remove_gaps=True)
+    acg, t, u, total = 0, 0, 0, 0
+    for taxon, seq in sequences:
+        letters = seq.upper()
+        for letter in letters:
+            total = total + 1
+            
+            if letter in ('A', 'C', 'G', 'N'):
+                acg = acg + 1
+            elif letter == 'T':
+                t = t + 1
+            elif letter == 'U':
+                u = u + 1
+    
+    if u == 0 and (acg + t)/total > 0.9:
+        #print("Found {}% ACGT-N, assuming DNA..".format(int(100*(acg + t)/total)))
+        dataType = "dna"
+    elif t == 0 and (acg + u)/total > 0.9:
+        #print("Found {}% ACGU-N, assuming RNA..".format(int(100*(acg + u)/total)))
+        dataType = "rna"
+    else:
+        #print("Assuming protein..")
+        dataType = "amino"
+          
+    return dataType
+
 
 class Alignment(dict, object):
     """A simple class that maps taxa names to sequences.

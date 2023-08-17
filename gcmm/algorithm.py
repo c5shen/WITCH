@@ -13,11 +13,13 @@ import dendropy
 from dendropy.datamodel.treemodel import Tree
 
 from configs import Configs, tqdm_styles
+from gcmm import *
 from gcmm.tree import PhylogeneticTree
 from helpers.alignment_tools import Alignment, MutableAlignment 
 from helpers.math_utils import lcm
 
 import concurrent.futures
+import pyhmmer
 
 
 '''
@@ -118,6 +120,8 @@ class DecompositionAlgorithm(object):
             len(subset_args)))
 
         # create all subset alignments and HMMBuild them
+        if self.molecule is None:
+            self.molecule = Configs.inferDataType(self.backbone_path)
         outdirprefix = self.outdir + '/root'
         func = partial(subset_alignment_and_hmmbuild, lock, 
                 self.path, outdirprefix,

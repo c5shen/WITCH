@@ -12,6 +12,7 @@ except ImportError:
     import ConfigParser as configparser
 from argparse import ArgumentParser, Namespace
 from platform import platform
+from helpers.alignment_tools import inferDataType
 
 _root_dir = os.path.dirname(os.path.realpath(__file__))
 main_config_path = os.path.join(_root_dir, 'main.config')
@@ -113,6 +114,14 @@ class Configs:
             with open(path, 'a') as f:
                 f.write('{}\t[{}] {}\n'.format(time.strftime('%Y-%m-%d %H:%M:%S'),
                     level, msg))
+
+    @staticmethod
+    def inferDataType(path):
+        if Configs.molecule is None: 
+            Configs.molecule = inferDataType(path)
+            Configs.log('Molecule type was not specified. Inferred type: {}'.format(
+                Configs.molecule))
+        return Configs.molecule
 
 # check for valid configurations and set them
 def set_valid_configuration(name, conf):
