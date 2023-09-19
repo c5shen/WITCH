@@ -20,6 +20,9 @@ from helpers.math_utils import lcm
 
 import concurrent.futures
 
+import pyhmmer
+from helpers.pyhmmer_tools import *
+
 
 '''
 ***** ADOPTED from sepp/exhaustive.py - ExhaustiveAlgorithm class *****
@@ -169,6 +172,7 @@ class SearchAlgorithm(object):
         self.path = Configs.hmmsearchpath
 
         self.max_chunk_size = 20000             # default in SEPP/UPP
+        self.molecule = Configs.molecule
 
         self.filters = False                    # No filters
         self.elim = 99999999                    # elim value for hmmsearch
@@ -250,8 +254,11 @@ class SearchAlgorithm(object):
                 subset_args.append((hmmsearch_outdir, hmm_label,
                     hmmbuild_path, frag_chunk_path, i))
 
+        # run each subproblem
+        if self.molecule is None:
+            self.molecule = Configs.inferDataType(self.backbone_path)
         func = partial(subset_frag_chunk_hmmsearch, lock, self.path,
-                self.piped, self.elim, self.filters)
+                self.piped, self.elim, self.filters, self.molecule)
         hmmsearch_paths, futures = [], []
         for subset_arg in subset_args:
             futures.append(pool.submit(func, subset_arg))
@@ -348,6 +355,27 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
     subalignment_path = '{}/hmmbuild.input.{}.fasta'.format(outdir, label)
     subalignment.write(subalignment_path, 'FASTA')
 
+    ############# 9.19.2023 ############
+    ## added version to use pyhmmer for building
+    #hmmbuild_path = '{}/hmmbuild.model.{}'.format(outdir, label)
+    #alphabet = moleculeToAlphabet(molecule)
+    #msa_d = alignmentToTextMSA(
+    #        subalignment, name=f'hmmbuild.model.{label}').digitize(alphabet)
+
+    #builder = pyhmmer.plan7.Builder(alphabet, ere=ere, symfrac=symfrac)
+    #background = pyhmmer.plan7.Background(alphabet)
+    #hmm, _, _ = builder.build_msa(msa_d, background)
+    #with open(hmmbuild_path, 'wb') as fh:
+    #    hmm.write(fh, binary=False)
+    #lock.acquire()
+    #try:
+    #    Configs.debug('[pyhmmer.plan7.Builder] ere={}, symfrac={}'.format(
+    #        ere, symfrac))
+    #finally:
+    #    lock.release()
+    #    return (hmmbuild_path, label, tuple(retained_columns),
+    #            tuple(nongaps_per_column))
+
     # run HMMBuild with 1 cpu given the subalignment
     hmmbuild_path = '{}/hmmbuild.model.{}'.format(outdir, label)
     cmd = [binary, '--cpu', '1',
@@ -369,11 +397,47 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
 '''
 a single HMMSearch job between a frag chunk and an hmm
 '''
-def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters, args):
-    outdir, hmm_label, hmm, unaligned, frag_index = args
+def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters,
+        molecule, args):
+    outdir, hmm_label, hmmbuild_path, unaligned, frag_index = args
     
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
+
+    ########### 9.19.2023 ##############
+    ## use pyhmmer.plan7.Pipeline to do the HMMSearch
+    #hmmsearch_path = '{}/hmmsearch.results.{}.fragment_chunk_{}'.format(
+    #        outdir, hmm_label, frag_index)
+    #alphabet = moleculeToAlphabet(molecule)
+    #background = pyhmmer.plan7.Background(alphabet)
+
+    ## load HMM
+    #hmm = None
+    #with pyhmmer.plan7.HMMFile(hmmbuild_path) as hmm_file:
+    #    hmm = hmm_file.read()
+    #
+    ## set up the pipeline
+    #kwargs = {'E': elim}
+    #if not filters:
+    #    kwargs.update({'bias_filter': False, 'F1': 1.0, 'F2': 1.0, 'F3': 1.0})
+    #pipeline = pyhmmer.plan7.Pipeline(alphabet, background=background,
+    #        **kwargs)
+
+    ## run the pipeline
+    #tophits = None
+    #with pyhmmer.easel.SequenceFile(unaligned,
+    #        digital=True, alphabet=alphabet) as seq_file:
+    #    tophits = pipeline.search_hmm(hmm, seq_file)
+    #res = evalHMMSearchOutputPyhmmer(tophits)
+    #with open(hmmsearch_path, 'w') as f:
+    #    f.write(str(res))
+    #lock.acquire()
+    #try:
+    #    Configs.debug('[pyhmmer.plan7.Pipeline.search_hmm] query={}, model={}, outpath={}, kwargs={}'.format(
+    #        unaligned, hmmbuild_path, hmmsearch_path, kwargs))
+    #finally:
+    #    lock.release()
+    #    return hmmsearch_path
 
     hmmsearch_path = '{}/hmmsearch.results.{}.fragment_chunk_{}'.format(
             outdir, hmm_label, frag_index)
@@ -382,7 +446,7 @@ def subset_frag_chunk_hmmsearch(lock, binary, piped, elim, filters, args):
         cmd.extend(['-o', hmmsearch_path])
     if not filters:
         cmd.extend(['--max'])
-    cmd.extend([hmm, unaligned])
+    cmd.extend([hmmbuild_path, unaligned])
     os.system(' '.join(cmd))
 
     # modify the output file and only retain taxon name, E-value, bit-score
@@ -456,4 +520,14 @@ def evalHMMSearchOutput(path):
                 # .group(9).strip(),matches.group(1).strip(), matches.
                 # group(2).strip()))
     outfile.close()
+    return results
+
+'''
+helper function to keep just taxon name, e-value, and bit-score from tophits
+'''
+def evalHMMSearchOutputPyhmmer(tophits):
+    results = {}
+    for hit in tophits:
+        name, evalue, score = hit.name.decode(), hit.evalue, hit.score
+        results[name] = (evalue, f'{score:.1f}')
     return results
