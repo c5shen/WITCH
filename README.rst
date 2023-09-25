@@ -9,167 +9,79 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 |publication|
 
-(C) Chengze Shen, Baqiao Liu
+Developer: Chengze Shen, Baqiao Liu
 
-+-----------------------------+
-| News                        |
-+=============================+
-| \* (NEW) Automatically      |
-| infer data type if None is  |
-| specified (use              |
-| ``--molecule`` to specify). |
-| \* (NEW) Checkpoint system  |
-| set up for most steps       |
-| except HMMSearch jobs       |
-| (ongoing). \* (NEW) Added   |
-| progress bar (python        |
-| package ``tqdm``) to        |
-| visualize the alignment     |
-| progress at various stages. |
-| \* Implemented WITCH-ng’s   |
-| way to align each query     |
-| sequence with additional    |
-| tweaks. Now the alignment   |
-| process for query sequences |
-| is **fast and               |
-| memory-efficient,           |
-| particularly for            |
-| short/fragmentary           |
-| sequences**. \* An improved |
-| version of WITCH (developed |
-| by Baqiao Liu) is available |
-| at                          |
-| `WITCH-ng <https://github.  |
-| com/RuneBlaze/WITCH-NG>`__. |
-| It improves WITCH runtime   |
-| considerably with the same  |
-| alignment accuracy. Also,   |
-| *Special thanks to Baqiao   |
-| for providing the           |
-| experimental GCM code!*     |
-+-----------------------------+
+News
+----
+* (NEW) Automatically infer data type if None is specified (use ``--molecule`` to specify).
+* (NEW) Checkpoint system set up for most steps except HMMSearch jobs (ongoing).
+* (NEW) Added progress bar (python package ``tqdm``) to visualize the alignment progress at various stages.
+* Implemented `WITCH-ng <https://github.com/RuneBlaze/WITCH-NG>`__’s way to align each query sequence with additional tweaks. Now the alignment process for query sequences is **fast and memory-efficient, particularly for short/fragmentary sequences**.
 
-To-do
+
+TODO list
 -----
+#. (Priority) Setting up a checkpoint system for HMMSearch jobs.
 
-1. (Priority) Setting up a checkpoint system for HMMSearch jobs.
 
-+-----------------------------+
-| Method Overview             |
-+=============================+
-| ### Algorithm WITCH is a    |
-| new multiple sequence       |
-| alignment (MSA) tool that   |
-| combines techniques from    |
-| `UPP <https://              |
-| github.com/smirarab/sepp/bl |
-| ob/master/README.UPP.md>`__ |
-| and                         |
-| `MAGUS <https://githu       |
-| b.com/vlasmirnov/MAGUS>`__. |
-| It aims to solve alignment  |
-| problems particularly when  |
-| input sequences contain     |
-| fragments. The whole        |
-| pipeline can be described   |
-| as follows: 1. Given a set  |
-| of unaligned sequences      |
-| ``S``, pick at most 1,000   |
-| “full-length” sequences to  |
-| form a *backbone alignment* |
-| ``B`` and a *backbone tree* |
-| ``T`` (Full-length          |
-| sequences refer to          |
-| sequences of lengths that   |
-| are within 25% of the       |
-| median length). 2. Create   |
-| an ensemble of HMMs (eHMM,  |
-| see                         |
-| `UPP <https://              |
-| github.com/smirarab/sepp/bl |
-| ob/master/README.UPP.md>`__ |
-| for more details) from      |
-| ``B`` and ``T``. 3. For     |
-| each remaining unaligned    |
-| sequence, align it to       |
-| high-ranked HMMs to obtain  |
-| a set of weighted support   |
-| alignments; then, merge the |
-| support alignments using    |
-| Graph Clustering Merger     |
-| (GCM, an alignment merger   |
-| technique introduced in     |
-| MAGUS). 4. Transitively add |
-| the merged alignment of     |
-| each query to ``B``, and    |
-| report the final alignment  |
-| on ``S``.                   |
-+-----------------------------+
-| For a more detailed         |
-| explanation of the WITCH    |
-| algorithm, please refer to  |
-| the publication below:      |
-+-----------------------------+
-| #### Publication 1. Shen,   |
-| Chengze, Minhyuk Park, and  |
-| Tandy Warnow. “WITCH:       |
-| Improved Multiple Sequence  |
-| Alignment Through Weighted  |
-| Consensus Hidden Markov     |
-| Model Alignment.” Journal   |
-| of Computational Biology,   |
-| May 17, 2022.               |
-| https://doi                 |
-| .org/10.1089/cmb.2021.0585. |
-+-----------------------------+
-| ### Note and                |
-| Acknowledgement - WITCH     |
-| includes and uses: 1.       |
-| `MAGUS <https://gith        |
-| ub.com/vlasmirnov/MAGUS>`__ |
-| (we use the Github version  |
-| updated on April 5th 2021). |
-| 2. `HMMER                   |
-| su                          |
-| ites <http://hmmer.org/>`__ |
-| (v3.1b2 - hmmbuild,         |
-| hmmsearch, hmmalign). 3.    |
-| `UPP <https://              |
-| github.com/smirarab/sepp/bl |
-| ob/master/README.UPP.md>`__ |
-| (v4.5.1; we use only        |
-| partial functionalities).   |
-| 4.                          |
-| `FastTreeMP                 |
-| <http://www.microbesonline. |
-| org/fasttree/FastTreeMP>`__ |
-| (v2.1). 5.                  |
-| `MAFFT <https:/             |
-| /mafft.cbrc.jp/alignment/so |
-| ftware/macportable.html>`__ |
-| (macOS v7.490). 6.          |
-| `MCL <https:                |
-| //github.com/micans/mcl>`__ |
-| (linux version from MAGUS;  |
-| macOS version 21-257).      |
-+-----------------------------+
+Method Overview
+---------------
+WITCH is a new multiple sequence alignment (MSA) tool that combines techniques from `UPP <https://github.com/smirarab/sepp/blob/master/README.UPP.md>`__ and `MAGUS <https://github.com/vlasmirnov/MAGUS>`__.
+It aims to solve alignment problems, particularly when input sequences contain fragments. The whole pipeline can be described as follows:
+
+#. Given a set of unaligned sequences ``S``, pick at most 1,000 “full-length” sequences to form a *backbone alignment* ``B`` and a *backbone tree* ``T``
+   (Full-length sequences refer to sequences of lengths that are within 25% of the median length).
+#. Create an ensemble of HMMs (eHMM, see `UPP <https://github.com/smirarab/sepp/blob/master/README.UPP.md>`__ for more details) from ``B`` and ``T``. 
+#. For each remaining unaligned sequence, align it to high-ranked HMMs to obtain a set of weighted support alignments; then, merge the support alignments using Graph Clustering Merger
+   (GCM, an alignment merger technique introduced in MAGUS). 4. Transitively add the merged alignment of  each query to ``B``, and report the final alignment on ``S``.
+
+For a more detailed explanation of the WITCH algorithm, please refer to the publication below:
+
++----------------------------------------+
+| Publication                            |
++========================================+
+| Shen,                                  |  
+| Chengze, Minhyuk Park, and             |
+| Tandy Warnow. “WITCH:                  |
+| Improved Multiple Sequence             |
+| Alignment Through Weighted             |
+| Consensus Hidden Markov                |
+| Model Alignment.” Journal              |
+| of Computational Biology,              |
+| May 17, 2022.                          |
+| https://doi.org/10.1089/cmb.2021.0585. |
++----------------------------------------+
+
+Note and Acknowledgement
+~~~~~~~~~~~~~~~~~~~~~~~~
+WITCH includes and uses:
+
+#. `MAGUS <https://github.com/vlasmirnov/MAGUS>`__ (we use the Github version updated on April 5th 2021).
+#. `HMMER suites <http://hmmer.org/>`__ (v3.1b2 - hmmbuild, hmmsearch, hmmalign).
+#. `UPP <https://github.com/smirarab/sepp/blob/master/README.UPP.md>`__ (v4.5.1; we use only partial functionalities).
+#. `FastTreeMP <http://www.microbesonline.org/fasttree/FastTreeMP>`__ (v2.1). 
+#. `MAFFT <https://mafft.cbrc.jp/alignment/software/macportable.html>`__ (macOS v7.490).
+#. `MCL <https://github.com/micans/mcl>`__ (linux version from MAGUS; macOS version 21-257).
 
 Installation
 ------------
 
-This section lays out necessary steps to do to run WITCH. We tested
+This section lays out the necessary steps to run WITCH. We tested
 WITCH on the following systems: \* Red Hat Enterprise Linux Server
 release 7.9 (Maipo) with **Python 3.7.0** \* Ubuntu 18.04.6 LTS with
 **Python 3.7.6**, and Ubuntu 22.04 LTS with **Python 3.7.12** \* macOS
-*(x86 chip)* Monterey 12.4 with **Python 3.9.13**
+*(x86 chip)* Monterey 12.4 with **Python 3.9.13**.
 
-Now the program fully supports Linux and macOS systems (for at least the
+Now, the program fully supports Linux and macOS systems (for at least the
 ones mentioned above). We provide necessary binary executables for both
 types of systems, but you can supplement your own by changing the paths
 in the ``main.config`` file. In cases of conflicting installations
 (e.g., different versions of MAFFT), please supplement with the version
 on your system. If you experience any difficulty running WITCH, please
 contact Chengze Shen (chengze5@illinois.edu).
+
+   For the macOS system on the latest chips (e.g., M1/M2), you may need to compile and supply your own binaries for WITCH to run successfully.
+   That is, change the paths of binaries in ``main.config`` to the ones on your system.
 
 Python version (REQUIRED!)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,57 +125,42 @@ Installation Steps
    #    using the default "setup.py" settings.
    python3 witch.py [-h]
 
-+----------------------------+
-| Usage                      |
-+============================+
-| General command to run     |
-| WITCH:                     |
-+----------------------------+
-| #### Use regular bit       |
-| scores By default, WITCH   |
-| uses HMMSearch to obtain   |
-| bit scores, and then uses  |
-| bit scores to calculate    |
-| weights between unaligned  |
-| sequences and HMMs. To use |
-| bit scores instead of      |
-| weights, run WITCH by the  |
-| following command:         |
-+----------------------------+
-| #### Multi-processing By   |
-| default, WITCH uses all    |
-| available cores on the     |
-| machine. Users can choose  |
-| the number of cores by the |
-| following command:         |
-+----------------------------+
-| To obtain the full list of |
-| parameters and options,    |
-| please use                 |
-| ``python3 witch.py -h`` or |
-| ``                         |
-| python3 witch.py --help``. |
-+----------------------------+
+Usage
+-----
+The general command to run WITCH:
+
+.. code:: bash
+
+   python3 witch.py -i <unaligned sequence file> -d <output directory> -o <output filename>
+
+**Default behavior**: WITCH will pick at most 1,000 sequences from the input around the median length as the backbone sequences.
+Then, it uses MAGUS to align the backbone sequences and FastTree2 to estimate a tree. It uses UPP decomposition strategy to generate an eHMM,
+and uses HMMSearch to calculate bit scores between HMMs and unaligned sequences. Bit scores are used to calculate weights, and each unaligned
+sequence is aligned to top `k=10` HMMs ranked by weights.
+
 
 Examples
---------
+~~~~~~~~
 
 All the following examples can be found in the **examples/run.sh** bash
-script. ### Scenario A - unaligned sequences only
+script.
+
+Scenario A - unaligned sequences only
++++++++++++++++++++++++++++++++++++++
 
 .. code:: bash
 
    python3 witch.py -i examples/data/unaligned_all.txt -d scenarioA_output -o aligned.txt
 
 Scenario B - unaligned sequences only; using bit scores; using 10 HMMs to align a sequence
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. code:: bash
 
    python3 witch.py -i examples/data/unaligned_all.txt -d scenarioB_output -o aligned.txt -w 0 -k 10
 
 Scenario C - backbone alignment available; backbone tree missing; query sequences available
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. code:: bash
 
