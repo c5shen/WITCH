@@ -11,6 +11,10 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 Developer: Chengze Shen, Baqiao Liu
 
+.. contents:: Table of contents
+   :backlinks: top
+   :local:
+
 News
 ----
 * (NEW) Automatically infer data type if None is specified (use ``--molecule`` to specify).
@@ -34,6 +38,11 @@ It aims to solve alignment problems, particularly when input sequences contain f
 #. Create an ensemble of HMMs (eHMM, see `UPP <https://github.com/smirarab/sepp/blob/master/README.UPP.md>`__ for more details) from ``B`` and ``T``. 
 #. For each remaining unaligned sequence, align it to high-ranked HMMs to obtain a set of weighted support alignments; then, merge the support alignments using Graph Clustering Merger
    (GCM, an alignment merger technique introduced in MAGUS). 4. Transitively add the merged alignment of  each query to ``B``, and report the final alignment on ``S``.
+
+.. image:: https://chengzeshen.com/documents/gcm_ehmm/pipeline.png
+   :alt: WITCH pipeline
+   :width: 70%
+   :align: center
 
 For a more detailed explanation of the WITCH algorithm, please refer to the publication below:
 
