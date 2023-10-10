@@ -7,7 +7,7 @@ WITCH - WeIghTed Consensus Hmm alignment
    ![visitors](https://visitor-badge.glitch.me/badge?page_id=c5shen.visitor-badge&left_color=blue&right_color=black))
    -->
 
-|publication|
+|coverage| |publication|
 
 Developer: Chengze Shen, Baqiao Liu
 
@@ -177,3 +177,5 @@ Scenario C - backbone alignment available; backbone tree missing; query sequence
 
 .. |publication| image:: https://img.shields.io/badge/Publication-Journal_of_Computational_Biology-green?style=for-the-badge
    :target: https://doi.org/10.1089/cmb.2021.0585
+.. |coverage| image:: https://coveralls.io/repos/github/c5shen/WITCH/badge.svg?branch=main
+   :target: https://coveralls.io/github/c5shen/WITCH?branch=main
