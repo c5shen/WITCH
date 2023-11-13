@@ -8,7 +8,7 @@ from configs import *
 from gcmm.gcmm import mainAlignmentProcess
 from helpers.general_tools import SmartHelpFormatter
 
-version = "0.4.0"
+__version__ = "1.0.0rc1"
 _root_dir = os.path.dirname(os.path.realpath(__file__))
 
 def main():
@@ -53,7 +53,7 @@ def _init_parser():
             conflict_handler='resolve',
             formatter_class=SmartHelpFormatter)
     parser.add_argument('-v', '--version', action='version',
-            version="%(prog)s " + version)
+            version="%(prog)s " + __version__)
 
     # basic settings
     basic_group = parser.add_argument_group(
