@@ -1,5 +1,4 @@
 include witch.py
-include configs.py
 include default.config
 include requirements.txt
 graft tools/
