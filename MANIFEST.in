@@ -3,6 +3,7 @@ include default.config
 include requirements.txt
 graft tools/
 graft examples/
+graft tests/
 prune examples/scenario*_output*
 prune examples/data2
 global-exclude *.py[cod]
