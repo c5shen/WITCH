@@ -19,24 +19,31 @@ def get_version(path):
                 delim = '"' if '"' in line else "'"
                 return line.split(delim)[1]
 
-classifiers = [
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Scientists',
-        'Topic :: Bioinformatics',
-        'License :: GPL-3.0',
-        'Programming Language :: Python :: 3',
-        ]
-requirements = [
-        'cython>=0.29', 'configparser>=5.0.0',
-        'Dendropy>=4.4.0,<4.6.0', 'numpy>=1.15',
-        'psutil>=5.0', 'tqdm>=4.0.0',
-        ]
+#classifiers = [
+#        'Development Status :: 4 - Beta',
+#        'Operating System :: OS Independent',
+#        'Intended Audience :: Developers',
+#        'Intended Audience :: Science/Research',
+#        'Topic :: Bioinformatics',
+#        'License :: OSI Approved :: GNU General Public License v3',
+#        'Programming Language :: Python',
+#        'Programming Language :: Python :: 3',
+#        ]
+#requirements = [
+#        'cython>=0.29', 'configparser>=5.0.0',
+#        'Dendropy>=4.4.0,<4.6.0', 'numpy>=1.15',
+#        'psutil>=5.0', 'tqdm>=4.0.0',
+#        ]
 
 #def setup(prioritize_user_software, platform=platform()): 
 def main():
     from platform import platform
     prioritize_user_software = True
     platform = platform()
+
+    b_recreate_main = False
+    if len(sys.argv) > 1:
+        b_recreate_main = sys.argv[1] == 'main'
 
     config_defaults = []
     cparser = configparser.ConfigParser()
@@ -130,16 +137,22 @@ def main():
     print('If you would like to make manual changes, please directly edit {}'.format(
         main_config_path))
 
-    setuptools.setup(name="witch-msa",
-            packages=find_packages(),
-            version=get_version('witch.py'),
-            description="WITCH - A Multiple Sequence Alignment Tool",
-            url="https://github.com/c5shen/WITCH",
-            license="GPL-3.0",
-            classifiers=classifiers,
-            install_requires=requirements,
-            python_requires='>=3.7')
-        #long_description='text/x-rst',
+    if not b_recreate_main:
+        setuptools.setup(
+                #name="witch-msa",
+                packages=find_packages(),
+                #version=get_version('witch.py'),
+                #description="WITCH - A Multiple Sequence Alignment Tool",
+                #author='Chengze Shen',
+                #author_email='chengze5@illinois.edu',
+                #url="https://github.com/c5shen/WITCH",
+                #license="GPL-3.0",
+                #classifiers=classifiers,
+                #install_requires=requirements,
+                #python_requires='>=3.7',
+                scripts=['witch.py'],
+                )
+            #long_description='text/x-rst',
 
 #def main():
 #    parser = ArgumentParser()

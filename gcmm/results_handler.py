@@ -1,6 +1,6 @@
 import os, sys, time, itertools
 
-from configs import *
+from gcmm.configs import *
 from gcmm.aligner import alignSubQueries, alignSubQueriesNew
 from gcmm.loader import readCheckpointAlignments
 from gcmm.task import *

@@ -7,7 +7,7 @@ Allow backbone alignment (by MAGUS) and backbone tree estimation (by FastTree2)
 import os, subprocess, time
 import random
 from gcmm import * 
-from configs import Configs, valid_attribute
+from gcmm.configs import Configs, valid_attribute
 from helpers.alignment_tools import MutableAlignment
 from argparse import Namespace
 

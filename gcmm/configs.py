@@ -14,7 +14,7 @@ from argparse import ArgumentParser, Namespace
 from platform import platform
 from helpers.alignment_tools import inferDataType
 
-_root_dir = os.path.dirname(os.path.realpath(__file__))
+_root_dir = '/'.join(os.path.dirname(__file__).split('/')[:-1])
 main_config_path = os.path.join(_root_dir, 'main.config')
 
 # default settings for tqdm progress bar style

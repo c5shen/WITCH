@@ -1,5 +1,5 @@
 import time
-from configs import Configs, tqdm_styles
+from gcmm.configs import Configs, tqdm_styles
 from tqdm import tqdm
 import itertools
 

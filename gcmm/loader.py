@@ -1,6 +1,6 @@
 import os, time, math, gzip, tempfile
-from configs import Configs, tqdm_styles
 from collections import defaultdict
+from gcmm.configs import Configs, tqdm_styles
 from helpers.alignment_tools import ExtendedAlignment, Alignment, read_fasta
 
 #from multiprocessing import Lock, Pool
