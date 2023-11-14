@@ -143,6 +143,8 @@ def main():
                 packages=find_packages(),
                 #version=get_version('witch.py'),
                 #description="WITCH - A Multiple Sequence Alignment Tool",
+                long_description=open('README.rst').read(),
+                long_description_content_type='text/x-rst',
                 #author='Chengze Shen',
                 #author_email='chengze5@illinois.edu',
                 #url="https://github.com/c5shen/WITCH",
@@ -152,7 +154,6 @@ def main():
                 #python_requires='>=3.7',
                 scripts=['witch.py'],
                 )
-            #long_description='text/x-rst',
 
 #def main():
 #    parser = ArgumentParser()
