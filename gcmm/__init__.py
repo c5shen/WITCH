@@ -1,4 +1,4 @@
-from configs import Configs
+from gcmm.configs import Configs
 from concurrent.futures import ProcessPoolExecutor
 
 '''

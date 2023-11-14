@@ -1,0 +1,8 @@
+include witch.py
+include default.config
+include requirements.txt
+graft tools/
+graft examples/
+prune examples/scenario*_output*
+prune examples/data2
+global-exclude *.py[cod]

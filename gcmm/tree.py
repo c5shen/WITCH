@@ -27,7 +27,7 @@ from dendropy import DataSet as Dataset
 from dendropy.datamodel.treemodel import _convert_node_to_root_polytomy as \
     convert_node_to_root_polytomy
 from gcmm.decompose_tree import decompose_by_diameter
-from configs import Configs
+from gcmm.configs import Configs
 
 from operator import itemgetter
 def sort_by_value(d, reverse=False):

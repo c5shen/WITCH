@@ -5,3 +5,5 @@ __pycache__/
 *_output*
 main.config
 examples/data2
+dist/
+*egg-info

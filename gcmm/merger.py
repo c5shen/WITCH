@@ -7,7 +7,7 @@ is exactly the same one from PASTA and UPP (by transitivity).
 
 import os, sys, re
 import time
-from configs import Configs
+from gcmm.configs import Configs
 from helpers.alignment_tools import Alignment, read_fasta, \
         CompactAlignment, compact, ExtendedAlignment 
 from functools import partial

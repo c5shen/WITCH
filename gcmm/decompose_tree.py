@@ -12,7 +12,7 @@ try:
 except ImportError:
     from Queue import Queue  # python 2
 # from tree import PhylogeneticTree
-from configs import Configs
+from gcmm.configs import Configs
 
 
 def decompose_by_diameter(a_tree, strategy, max_size=None, min_size=None,

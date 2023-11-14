@@ -5,7 +5,7 @@ Main pipeline of WITCH
 '''
 
 import os, sys, math, psutil, shutil 
-from configs import * 
+from gcmm.configs import * 
 from gcmm.algorithm import DecompositionAlgorithm, SearchAlgorithm
 from gcmm.loader import loadSubQueries, rankBitscores, writeTempBackbone
 from gcmm.weighting import writeWeights, writeBitscores, \

@@ -3,13 +3,13 @@ import os, sys, time
 from argparse import ArgumentParser, Namespace
 import logging
 
-from configs import _read_config_file 
-from configs import *
+from gcmm.configs import _read_config_file, _root_dir 
+from gcmm.configs import *
 from gcmm.gcmm import mainAlignmentProcess
 from helpers.general_tools import SmartHelpFormatter
 
-version = "0.4.0"
-_root_dir = os.path.dirname(os.path.realpath(__file__))
+__version__ = "1.0.0rc1"
+#_root_dir = os.path.dirname(os.path.realpath(__file__))
 
 def main():
     parser = _init_parser()
@@ -22,7 +22,7 @@ def main():
     # generate main.config using default setting if it is missing
     if not os.path.exists(main_config_path):
         print('main.config not found, generating {}...'.format(main_config_path))
-        os.system('python3 {}/setup.py'.format(_root_dir))
+        os.system('python3 {}/setup.py main'.format(_root_dir))
     with open(main_config_path, 'r') as cfile:
         main_cmd_defaults = _read_config_file(cfile, opts)
 
@@ -53,7 +53,7 @@ def _init_parser():
             conflict_handler='resolve',
             formatter_class=SmartHelpFormatter)
     parser.add_argument('-v', '--version', action='version',
-            version="%(prog)s " + version)
+            version="%(prog)s " + __version__)
 
     # basic settings
     basic_group = parser.add_argument_group(

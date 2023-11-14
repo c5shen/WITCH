@@ -2,7 +2,7 @@ import re, os, subprocess, psutil, shutil
 import time
 import math
 from collections import defaultdict
-from configs import Configs
+from gcmm.configs import Configs
 from gcmm.weighting import readWeights, readBitscores
 from helpers.alignment_tools import Alignment, ExtendedAlignment, compressInsertions
 from multiprocessing import Queue#, Lock
