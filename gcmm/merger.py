@@ -17,13 +17,13 @@ from math import ceil
 '''
 function to merge a set of input paths (to alignments) sequentially
 '''
-def sequential_merger(inpath):
+def sequential_merger(queries, inpaths):
     init_index = 0
-    while init_index < len(inpath) and inpaths[init_index] == 'skipped':
+    while init_index < len(inpaths) and inpaths[init_index] == 'skipped':
         init_index += 1
     init_aln = Alignment(); init_aln.read_file_object(queries[init_index])
     new_aln = compact(init_aln)
-    for i in range(init_index + 1, len(inpath)):
+    for i in range(init_index + 1, len(inpaths)):
         inpath = inpaths[i]
         
         # skip these ones

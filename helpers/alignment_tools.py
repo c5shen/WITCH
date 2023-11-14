@@ -84,6 +84,17 @@ def readFastSP(file_path):
         ret['error'] = (ret['SPFN'] + ret['SPFP']) / 2
     return ret
 
+################    Adapted from SEPP.filemgr.py    ##################
+def open_with_intermediates(filepath, mode):
+    d = os.path.dirname(filepath)
+    if d:
+        if not os.path.exists(d):
+            os.makedirs(d)
+        elif not os.path.isdir(d):
+            raise IOError(
+                "The file %s cannot be created because %s exists "
+                "but is not a directory" % (filepath, d))
+    return open(filepath, mode)
 
 ################ Copied from PASTA-Alignment        ##################
 ################ CompactAlignment class definition  ##################
@@ -375,7 +386,9 @@ class Alignment(dict, object):
         #_LOG.debug("Masking done. Before masking: %d; After masking: %d; minimum requirement: %d;" %(n,nn,minimum_seq_requirement))
 
     def merge_in(self, she):
-        merge_in(self,she)
+        pass
+        # NOT IMPLEMENTED
+        #merge_in(self,she)
 
 
 class AlignmentSequence:
