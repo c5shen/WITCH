@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "witch-msa"
+dynamic = ["version", "dependencies"]
 description = "WITCH - A Multiple Sequence Alignment Tool"
+readme = "README.rst"
 authors = [
         {name = "Chengze Shen", email = "chengze5@illinois.edu"}
         ]
-readme = "README.rst"
 license = {file = "LICENSE"}
 requires-python = ">=3.7"
 classifiers = [
@@ -16,12 +17,12 @@ classifiers = [
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "Topic :: Bioinformatics",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "Topic :: Software Development",
         "License :: OSI Approved :: GNU General Public License (GPL)",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         ]
-dynamic = ["version", "dependencies"]
 #scripts = ["witch.py"]
 #packages = ["gcmm", "helpers"]
 

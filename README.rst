@@ -1,12 +1,6 @@
 WITCH - WeIghTed Consensus Hmm alignment
 ========================================
 
-.. raw:: html
-
-   <!--
-   ![visitors](https://visitor-badge.glitch.me/badge?page_id=c5shen.visitor-badge&left_color=blue&right_color=black))
-   -->
-
 |coverage| |publication|
 
 Developer: Chengze Shen, Baqiao Liu
@@ -24,7 +18,7 @@ News
 
 
 TODO list
------
+---------
 #. (Priority) Setting up a checkpoint system for HMMSearch jobs.
 
 
@@ -140,7 +134,7 @@ The general command to run WITCH:
 
 .. code:: bash
 
-   python3 witch.py -i <unaligned sequence file> -d <output directory> -o <output filename>
+    python3 witch.py -i [unaligned sequence file] -d [output directory] -o [output filename]
 
 **Default behavior**: WITCH will pick at most 1,000 sequences from the input around the median length as the backbone sequences.
 Then, it uses MAGUS to align the backbone sequences and FastTree2 to estimate a tree. It uses UPP decomposition strategy to generate an eHMM,

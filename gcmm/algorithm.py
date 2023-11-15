@@ -20,8 +20,8 @@ from helpers.math_utils import lcm
 
 import concurrent.futures
 
-import pyhmmer
-from helpers.pyhmmer_tools import *
+#import pyhmmer
+#from helpers.pyhmmer_tools import *
 
 
 '''

@@ -1,3 +1,4 @@
+include README.rst
 include witch.py
 include default.config
 include requirements.txt
