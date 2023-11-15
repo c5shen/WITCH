@@ -8,7 +8,7 @@ from gcmm.configs import *
 from gcmm.gcmm import mainAlignmentProcess
 from helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.0rc1"
+__version__ = "1.0.0rc3"
 #_root_dir = os.path.dirname(os.path.realpath(__file__))
 
 def main():
