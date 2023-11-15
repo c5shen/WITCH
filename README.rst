@@ -1,7 +1,7 @@
 WITCH - WeIghTed Consensus Hmm alignment
 ========================================
 
-|coverage| |PyPI version fury.io| |PyPI pyversions| |PyPI license| |DOI|
+|PyPI version fury.io| |PyPI pyversions| |PyPI license| |DOI|
 
 Developer: Chengze Shen, Baqiao Liu
 
