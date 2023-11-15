@@ -1,7 +1,7 @@
 WITCH - WeIghTed Consensus Hmm alignment
 ========================================
 
-|coverage| |publication|
+|coverage| |PyPI version fury.io| |PyPI pyversions| |PyPI license| |DOI|
 
 Developer: Chengze Shen, Baqiao Liu
 
@@ -148,28 +148,54 @@ Examples
 All the following examples can be found in the **examples/run.sh** bash
 script.
 
-Scenario A - unaligned sequences only
-+++++++++++++++++++++++++++++++++++++
+Scenario A
+++++++++++
+Unaligned sequences only.
 
 .. code:: bash
 
-   python3 witch.py -i examples/data/unaligned_all.txt -d scenarioA_output -o aligned.txt
+   python3 witch.py -i examples/data/unaligned_all.txt \
+      -d scenarioA_output -o aligned.txt
 
-Scenario B - unaligned sequences only; using bit scores; using 10 HMMs to align a sequence
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. code:: bash
-
-   python3 witch.py -i examples/data/unaligned_all.txt -d scenarioB_output -o aligned.txt -w 0 -k 10
-
-Scenario C - backbone alignment available; backbone tree missing; query sequences available
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Scenario B
+++++++++++
+Unaligned sequences only; using bit scores (instead of the default weighted bit scores); using 10 HMMs to align a sequence.
 
 .. code:: bash
 
-   python3 witch.py -b examples/data/backbone.aln.fasta -q examples/data/unaligned_frag.txt -d scenarioC_output -o aligned.txt
+   python3 witch.py -i examples/data/unaligned_all.txt \
+      -d scenarioB_output -o aligned.txt -w 0 -k 10
+
+Scenario C
+++++++++++
+Backbone alignment available; backbone tree missing; query sequences available.
+
+.. code:: bash
+
+   python3 witch.py -b examples/data/backbone.aln.fasta \
+      -q examples/data/unaligned_frag.txt -d scenarioC_output \
+      -o aligned.txt
+
+Scenario D - additional options
++++++++++++++++++++++++++++++++
+Backbone alignment available; backbone tree available; query sequences available; saving weights to local; saving decomposition results for future usage (e.g., faster rerun).
+
+.. code:: bash
+
+   python3 witch.py -b examples/data/backbone.aln.fasta \
+      -e examples/data/backbone.tre -q examples/data/unaligned_frag.txt \
+      -d scenarioD_output -o aligned.txt \
+      --save-weight 1 --keep-decomposition 1
 
 .. |publication| image:: https://img.shields.io/badge/Publication-Journal_of_Computational_Biology-green?style=for-the-badge
    :target: https://doi.org/10.1089/cmb.2021.0585
 .. |coverage| image:: https://coveralls.io/repos/github/c5shen/WITCH/badge.svg?branch=main
    :target: https://coveralls.io/github/c5shen/WITCH?branch=main
+.. |PyPI version fury.io| image:: https://badge.fury.io/py/witch-msa.svg
+   :target: https://pypi.python.org/pypi/witch-msa/
+.. |PyPI license| image:: https://img.shields.io/pypi/l/witch-msa.svg
+   :target: https://pypi.python.org/pypi/witch-msa/
+.. |PyPI pyversions| image:: https://img.shields.io/pypi/pyversions/witch-msa.svg
+   :target: https://pypi.python.org/pypi/witch-msa/
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.1089/cmb.2021.0585.svg
+   :target: https://doi.org/10.1089/cmb.2021.0585
