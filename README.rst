@@ -1,7 +1,7 @@
 WITCH - WeIghTed Consensus Hmm alignment
 ========================================
 
-|PyPI version fury.io| |PyPI pyversions| |PyPI license| |DOI|
+|PyPI version| |Python version| |Build| |License| |DOI|
 
 :Developer:
    Chengze Shen, Baqiao Liu
@@ -212,11 +212,20 @@ Backbone alignment available; backbone tree available; query sequences available
    :target: https://doi.org/10.1089/cmb.2021.0585
 .. |coverage| image:: https://coveralls.io/repos/github/c5shen/WITCH/badge.svg?branch=main
    :target: https://coveralls.io/github/c5shen/WITCH?branch=main
-.. |PyPI version fury.io| image:: https://badge.fury.io/py/witch-msa.svg
+.. |PyPI version| image:: https://img.shields.io/pypi/v/witch-msa
+   :alt: PyPI - Version
    :target: https://pypi.python.org/pypi/witch-msa/
-.. |PyPI license| image:: https://img.shields.io/pypi/l/witch-msa.svg
+.. |Python version| image:: https://img.shields.io/pypi/pyversions/witch-msa
+   :alt: PyPI - Python Version
    :target: https://pypi.python.org/pypi/witch-msa/
-.. |PyPI pyversions| image:: https://img.shields.io/pypi/pyversions/witch-msa.svg
+.. |License| image:: https://img.shields.io/github/license/c5shen/WITCH
+   :alt: GitHub License
    :target: https://pypi.python.org/pypi/witch-msa/
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.1089/cmb.2021.0585.svg
+   :alt: DOI
    :target: https://doi.org/10.1089/cmb.2021.0585
+.. |Build| image:: https://img.shields.io/github/actions/workflow/status/c5shen/WITCH/python-package.yml
+   :alt: GitHub Workflow Status (with event)
+   :target: https://github.com/c5shen/WITCH
+
+
