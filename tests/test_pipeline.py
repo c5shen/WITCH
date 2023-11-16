@@ -1,5 +1,5 @@
 from unittest import TestCase
-from gcmm.configs import *
+from witch_msa.gcmm.configs import *
 
 class TryPipeline(TestCase):
     def test_always_pass(self):
