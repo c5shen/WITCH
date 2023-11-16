@@ -1,11 +1,10 @@
 include README.rst
 include witch.py
-include default.config
+include witch_msa/default.config
 include requirements.txt
-graft examples/
-graft tools/
+graft witch_msa/tools/
+graft witch_msa/gcmm/
+graft witch_msa/helpers/
 graft tests/
-prune examples/scenario*_output*
-prune examples/data2
 prune */__pycache__
 global-exclude *.py[cod]

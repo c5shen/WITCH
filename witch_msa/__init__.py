@@ -18,9 +18,9 @@ def witch_runner():
     main_cmd_defaults = []
 
     # generate main.config using default setting if it is missing
-    if not os.path.exists(main_config_path):
-        print('main.config not found, generating {}...'.format(main_config_path))
-        os.system('python3 {}/setup.py main'.format(_root_dir))
+    #if not os.path.exists(main_config_path):
+    #    print('main.config not found, generating {}...'.format(main_config_path))
+    #    os.system('python3 {}/setup.py main'.format(_root_dir))
     with open(main_config_path, 'r') as cfile:
         main_cmd_defaults = _read_config_file(cfile, opts)
 

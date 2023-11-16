@@ -13,15 +13,11 @@ except ImportError:
 from argparse import ArgumentParser, Namespace
 from platform import platform
 from witch_msa.helpers.alignment_tools import inferDataType
+from witch_msa.init_configs import init_config_file
 
 # detect home.path location
 homepath = os.path.dirname(__file__) + '/home.path'
-_root_dir, main_config_path = None, None
-assert os.path.exists(homepath), 'home.path: {} does not exist'.format(homepath)
-with open(homepath, 'r') as f:
-    _root_dir = f.read().strip()
-    #_root_dir = '/'.join(os.path.dirname(__file__).split('/')[:-1])
-    main_config_path = os.path.join(_root_dir, 'main.config')
+_root_dir, main_config_path = init_config_file(homepath)
 
 # default settings for tqdm progress bar style
 tqdm_styles = {
@@ -66,8 +62,8 @@ class Configs:
     #collapse_singletons = True
 
     # hmmalign/hmmsearch/magus paths
-    magus_path = os.path.join(_root_dir, 'tools/magus/magus.py')
-    gcm_path = os.path.join(_root_dir, 'tools/gcm137/gcm137')
+    magus_path = None
+    #gcm_path = os.path.join(_root_dir, 'tools/gcm137/gcm137')
     mafftpath = None
     fasttreepath = None
     mclpath = None
