@@ -1,4 +1,4 @@
-#!/usr/local/python/3.7.0/bin/python3
+#!/usr/bin/env python3
 '''
 Created on Apr 14, 2020
 

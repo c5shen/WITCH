@@ -2,9 +2,10 @@ include README.rst
 include witch.py
 include default.config
 include requirements.txt
-graft tools/
 graft examples/
+graft tools/
 graft tests/
 prune examples/scenario*_output*
 prune examples/data2
+prune */__pycache__
 global-exclude *.py[cod]

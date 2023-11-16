@@ -7,3 +7,5 @@ main.config
 examples/data2
 dist/
 *egg-info
+home.path
+.witch_msa/

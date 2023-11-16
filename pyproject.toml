@@ -30,5 +30,5 @@ classifiers = [
 "Homepage" = "https://github.com/c5shen/WITCH"
 
 [tool.setuptools.dynamic]
-version = {attr = "witch.__version__"}
+version = {attr = "witch_msa.__version__"}
 dependencies = {file = ["requirements.txt"]}
