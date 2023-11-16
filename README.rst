@@ -4,7 +4,7 @@ WITCH - WeIghTed Consensus Hmm alignment
 |PyPI version| |Python version| |Build| |License| |DOI|
 
 :Developer:
-   Chengze Shen, Baqiao Liu
+   Chengze Shen
 
 .. contents:: Table of contents
    :backlinks: top
