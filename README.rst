@@ -3,7 +3,8 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 |PyPI version fury.io| |PyPI pyversions| |PyPI license| |DOI|
 
-Developer: Chengze Shen, Baqiao Liu
+:Developer:
+   Chengze Shen, Baqiao Liu
 
 .. contents:: Table of contents
    :backlinks: top
@@ -11,15 +12,16 @@ Developer: Chengze Shen, Baqiao Liu
 
 News
 ----
-* (NEW) Automatically infer data type if None is specified (use ``--molecule`` to specify).
-* (NEW) Checkpoint system set up for most steps except HMMSearch jobs (ongoing).
-* (NEW) Added progress bar (python package ``tqdm``) to visualize the alignment progress at various stages.
+* *(NEW)* Now support PyPI installation! Please install the latest release with ``pip install witch-msa``.
+* Automatically infer data type if None is specified (use ``--molecule`` to specify).
+* Checkpoint system set up for most steps except HMMSearch jobs (ongoing).
+* Added progress bar (python package ``tqdm``) to visualize the alignment progress at various stages.
 * Implemented `WITCH-ng <https://github.com/RuneBlaze/WITCH-NG>`__’s way to align each query sequence with additional tweaks. Now the alignment process for query sequences is **fast and memory-efficient, particularly for short/fragmentary sequences**.
 
 
 TODO list
 ---------
-#. (Priority) Setting up a checkpoint system for HMMSearch jobs.
+#. None for now.
 
 
 Method Overview
@@ -66,18 +68,17 @@ WITCH includes and uses:
 #. `MAFFT <https://mafft.cbrc.jp/alignment/software/macportable.html>`__ (macOS v7.490).
 #. `MCL <https://github.com/micans/mcl>`__ (linux version from MAGUS; macOS version 21-257).
 
+
 Installation
 ------------
 
-This section lays out the necessary steps to run WITCH. We tested
-WITCH on the following systems: \* Red Hat Enterprise Linux Server
-release 7.9 (Maipo) with **Python 3.7.0** \* Ubuntu 18.04.6 LTS with
-**Python 3.7.6**, and Ubuntu 22.04 LTS with **Python 3.7.12** \* macOS
-*(x86 chip)* Monterey 12.4 with **Python 3.9.13**.
+This section lays out the necessary steps to run WITCH. WITCH was tested and passed builds
+on **Python 3.7 to 3.11**.
 
-Now, the program fully supports Linux and macOS systems (for at least the
-ones mentioned above). We provide necessary binary executables for both
-types of systems, but you can supplement your own by changing the paths
+
+Now, the program fully supports Linux and macOS systems.
+We provide necessary binary executables for both systems,
+but you can supplement your own by changing the paths
 in the ``main.config`` file. In cases of conflicting installations
 (e.g., different versions of MAFFT), please supplement with the version
 on your system. If you experience any difficulty running WITCH, please
@@ -86,18 +87,29 @@ contact Chengze Shen (chengze5@illinois.edu).
    For the macOS system on the latest chips (e.g., M1/M2), you may need to compile and supply your own binaries for WITCH to run successfully.
    That is, change the paths of binaries in ``main.config`` to the ones on your system.
 
-Python version (REQUIRED!)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install with PyPI (``pip``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The easiest way to install WITCH is to use the PyPI distribution.
+
+.. code:: bash
+
+   # 1. Install with pip (--user if no root access)
+   pip3 install witch-msa [--user]
+
+   # 2. After installation, users can run WITCH with either "witch-msa" or "witch.py" anywhere in the system
+   witch-msa [-h]    # or,
+   witch.py [-h]
+
+Install from the source file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Requirements
+++++++++++++
 
 ::
 
    python>=3.7
-
-Requirements
-~~~~~~~~~~~~
-
-::
-
    cython>=0.29
    configparser>=5.0.0
    DendroPy>=4.4.0,<4.6.0
@@ -106,7 +118,7 @@ Requirements
    tqdm>=4.0.0
 
 Installation Steps
-~~~~~~~~~~~~~~~~~~
+++++++++++++++++++
 
 .. code:: bash
 
@@ -118,15 +130,24 @@ Installation Steps
    cd WITCH
    pip3 install -r requirements.txt
 
-   # 3. Run setup.py to set up main.config. Please refer to default.config and use `-h` for additional information
-   #    Additionally, software binaries that are available in the user's environment will be prioritized for usage.
-   #    Use "-p false" to disable this priority.
-   python3 setup.py [-h]
+   # 3. Run setup.py to set up main.config. Please refer to "witch_msa/default.config"
+   #    Additionally, software binaries available in the user's environment will be prioritized for usage.
+   #    Use "-c" if want to install to WITCH/.witch_msa/main.config
+   #    Default is to ~/.witch_msa/main.config
+   python3 setup.py config [-c]
 
    # 4. Execute the WITCH python script with -h to see allowed commandline parameter settings
-   #    When running WITCH normally, if step 3 is not run, WITCH will automatically generate a "main.config" file
-   #    using the default "setup.py" settings.
+   #    When running WITCH normally, if step 3 is not run, you will be prompted to generate
+   #    "main.config" when running WITCH for the first time.
    python3 witch.py [-h]
+
+
+``main.config``
+~~~~~~~~~~~~~~~~
+
+``main.config`` file will be created after running WITCH for the first time or created with ``python setup.py config [-c]``.
+If it is not found, you will be prompted to choose where to create the file (default: ``~/.witch_msa/main.config``).
+
 
 Usage
 -----
