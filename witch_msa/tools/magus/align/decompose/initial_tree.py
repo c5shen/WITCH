@@ -21,9 +21,30 @@ The main ones are FastTree (for accuracy) and Clustal Omega's mbed (for speed).
 '''
 
 def buildInitialTree(context, workingDir, treeType):
-    if treeType is not None and os.path.exists(treeType):
-        Configs.log("Found user guide tree {}".format(treeType))
-        return treeType
+    '''
+        11.16.2023 - modified by Chengze Shen
+        Since the guide tree type and guide tree path are using the same arg,
+        there is a chance that even user did not specify the type (default to
+        "fasttree"), the code below will try to find if a file named "fasttree"
+        exist in the directory where the script is run.
+        Hence, if a user accidentally has a file/directory named "fasttree",
+        it will be read and used as the guide tree instead of creating an initial
+        tree with FastTree2.
+
+        Modification: will not check for path existencce if treeType is among
+        [fasttree, fasttree-noml, parttree, clustal]
+    '''
+    default_styles = ['fasttree', 'fasttree-noml', 'parttree', 'clustal']
+    #if treeType is not None and os.path.exists(treeType):
+    if treeType is not None:
+        if treeType.lower() in default_styles:
+            pass
+        elif os.path.exists(treeType):
+            Configs.log("Found user guide tree {}".format(treeType))
+            return treeType
+    else:
+        # by default use fasttree
+        treeType = "fasttree"
     
     tempDir = os.path.join(workingDir, "initial_tree")
     outputTreePath = os.path.join(tempDir, "initial_tree.tre")
@@ -36,12 +57,12 @@ def buildInitialTree(context, workingDir, treeType):
     
     time1 = time.time() 
     
-    if treeType is None or treeType.lower() == "fasttree": 
+    if treeType.lower() == "fasttree": 
         Configs.log("Building PASTA-style FastTree initial tree on {} with skeleton size {}..".format(context.sequencesPath, Configs.decompositionSkeletonSize))
         alignPath = os.path.join(tempDir, "initial_align.txt")
         buildInitialAlignment(context.unalignedSequences, tempDir, Configs.decompositionSkeletonSize, None, alignPath)
         external_tools.runFastTree(alignPath, tempDir, outputTreePath, "fast").run()
-    elif treeType is None or treeType.lower() == "fasttree-noml": 
+    elif treeType.lower() == "fasttree-noml": 
         Configs.log("Building PASTA-style FastTree (NO ML) initial tree on {} with skeleton size {}..".format(context.sequencesPath, Configs.decompositionSkeletonSize))
         alignPath = os.path.join(tempDir, "initial_align.txt")
         buildInitialAlignment(context.unalignedSequences, tempDir, Configs.decompositionSkeletonSize, None, alignPath)

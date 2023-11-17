@@ -7,7 +7,7 @@ from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
 from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.1"
+__version__ = "1.0.2a1"
 
 def witch_runner():
     parser = _init_parser()
@@ -81,11 +81,11 @@ def _init_parser():
     basic_group.add_argument('-t', '--num-cpus', type=int,
             help='Number of cpus for multi-processing. Default: -1 (all)',
             required=False, default=-1)
-    basic_group.add_argument('--max-concurrent-jobs', type=int,
+    basic_group.add_argument('--max-concurrent-jobs', type=int, metavar='INT',
             help=' '.join(['Maximum number of concurrently running jobs.'
                     'Default: max(100, 10 * num_cpus)']),
             required=False, default=None)
-    basic_group.add_argument('--timeout', type=int,
+    basic_group.add_argument('--timeout', type=int, metavar='INT',
             help=' '.join(['Retry a query alignment after [timeout] seconds.',
                     'The retry will always use \'witch-ng mode\' (see WTICH',
                     'option below). Default: 120']),
@@ -139,7 +139,7 @@ def _init_parser():
             help='Keep ALL temporary files in the process (constraints' \
                     + ', backbones, HMMSearch results, GCM results, etc.)',
             default=False)
-    witch_group.add_argument('--keep-decomposition', type=int,
+    witch_group.add_argument('--keep-decomposition', type=int, metavar='{0,1}',
             help=' '.join(['Whether to keep the tree decomposition',
                     '(including temp backbone/frag files and',
                     'HMMBuild/HMMSearch results). Default: 1']),
@@ -152,11 +152,11 @@ def _init_parser():
                     'a query. Default: 10']),
             required=False, default=10)
     witch_group.add_argument('-w', '--use-weight',
-            type=int, required=False,
+            metavar='{0,1}', type=int, required=False,
             help='Whether to use adjusted bitscore (weights). Default: 1',
             default=1)
     witch_group.add_argument('--save-weight',
-            type=int, required=False,
+            metavar='{0,1}', type=int, required=False,
             help='Whether to save weights to [outdir]/weights.txt. Default: 0',
             default=0)
     witch_group.add_argument('-A', '--alignment-size', type=int,

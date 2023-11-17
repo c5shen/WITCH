@@ -35,6 +35,8 @@ def init_config_file(homepath, prioritize_user_software=True):
     _root_dir = input('Create main.config file at [default: ~/.witch_msa/]: ')
     if _root_dir == '':
         _root_dir = os.path.expanduser('~/.witch_msa')
+    else:
+        _root_dir = os.path.abspath(_root_dir)
     main_config_path = os.path.join(_root_dir, 'main.config')
     print('Initializing main configuration file: {}...'.format(main_config_path))
 

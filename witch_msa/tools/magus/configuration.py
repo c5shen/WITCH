@@ -102,10 +102,24 @@ def buildConfigs(args):
         os.makedirs(Configs.workingDir)
     
     Configs.sequencesPath = os.path.abspath(args.sequences) if args.sequences is not None else Configs.sequencesPath
-    
-    Configs.guideTree = os.path.abspath(args.guidetree) if args.guidetree is not None else Configs.guideTree
+
+    '''
+        11.16.2023 - modified by Chengze Shen
+        Making sure that if default guide tree styles are used, then we do not
+        attempt to search for the guide tree in path
+    '''
+    guideTree_styles = ['fasttree', 'fasttree-noml', 'parttree', 'clustal']
     if args.guidetree is not None:
-        Configs.guideTree = os.path.abspath(args.guidetree) if os.path.exists(os.path.abspath(args.guidetree)) else args.guidetree
+        # using existing styles
+        if args.guidetree.lower() in guideTree_styles:
+            Configs.guideTree = args.guidetree.lower()
+        # supplementing with a working path to a file (presumably a tree file)
+        elif os.path.exists(os.path.abspath(args.guidetree)):
+            Configs.guideTree = os.path.abspath(args.guidetree)
+        # otherwise use the default Configs.guideTree value
+    #Configs.guideTree = os.path.abspath(args.guidetree) if args.guidetree is not None else Configs.guideTree
+    #if args.guidetree is not None:
+    #    Configs.guideTree = os.path.abspath(args.guidetree) if os.path.exists(os.path.abspath(args.guidetree)) else args.guidetree
     
     Configs.subalignmentPaths = []
     for p in args.subalignments:
