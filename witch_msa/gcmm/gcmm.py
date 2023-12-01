@@ -30,7 +30,7 @@ from tqdm import tqdm
 
 # max system recursion limit hard encoding to a large number
 # a temp fix for dendropy tree recursion issues
-sys.setrecursionlimit(10000)
+sys.setrecursionlimit(20000)
 
 '''
 Delete all unnecessary intermediate files

@@ -4,6 +4,8 @@
 3. Fixed a bug in the included MAGUS installation such that if the user has 
 a file or directory named `fasttree/` in the folder where WITCH is run, MAGUS
 will try to read it as the guide tree instead of creating a FastTree guide tree.
+4. Changed the executable search from `usr/bin/env python` to `usr/bin/env python3`.
+5. Further added systemrecursionlimit from 10000 to 20000 to combat issues with large tree.
 
 ### WITCH v1.0.1
 1. First working release across different platform and different python versions.
