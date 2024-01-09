@@ -6,8 +6,10 @@ if [[ $1 != "" ]]; then
 fi
 
 if [[ $scenario == 1 ]]; then
-    # Scenario A - unaligned sequences only
-    python3 ../witch.py -i data/unaligned_all.txt -d scenarioA_output \
+    # Scenario A - unaligned sequences only; running WITCH for the first
+    #              time and bypassing the prompt to set up the configuration
+    #              file
+    python3 ../witch.py -y -i data/unaligned_all.txt -d scenarioA_output \
         -o aligned.txt
 elif [[ $scenario == 2 ]]; then
     # Scenario B - unaligned sequences only; using bit scores;
