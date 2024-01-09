@@ -1,3 +1,10 @@
+### WITCH v1.0.2
+1. Added an option to bypass the initial config setup step. Use "-y", or
+"--bypass-setup" in your commandline running WITCH to avoid being asked where
+to generate the config directory (will default to "~/.witch_msa"). Example:
+running `witch.py -y -i [sequence files]` for the first time will directly set
+up WITCH configuration file and start aligning the input sequences.
+
 ### WITCH v1.0.2a1
 1. Fixed not using absolute path when setting up the directory for `main.config`.
 2. Improved metavar naming for argument parameters.

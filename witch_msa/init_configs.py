@@ -1,4 +1,4 @@
-import os, shutil
+import os, sys, shutil
 try:
     import configparser
 except ImportError:
@@ -18,13 +18,18 @@ if it is not installed through github (i.e., python setup.py config)
 will be needed if installed through pip/pypi
 '''
 def init_config_file(homepath, prioritize_user_software=True):
+    # read from sys.argv to find if "-y" or "--bypass-setup" exists
+    args = sys.argv[1:]
+    bypass_setup = False
+    if '-y' in args or '--bypass-setup' in args:
+        bypass_setup = True
 
     # initialize a home.path that points to local user main.config
     # if it exists then pass on
     if os.path.exists(homepath):
         # detecting old home.path file based on creation time
         if os.stat(homepath).st_mtime >= os.stat(__file__).st_mtime:
-            return find_main_config(homepath) 
+            return find_main_config(homepath)
         else:
             print('Found old home.path and regenerating...')
             os.remove(homepath)
@@ -32,7 +37,11 @@ def init_config_file(homepath, prioritize_user_software=True):
         print('Cannot find home.path: {}'.format(homepath))
 
     # install to user local directory
-    _root_dir = input('Create main.config file at [default: ~/.witch_msa/]: ')
+    # bypassing the setup step to directly use the default path
+    _root_dir = ''
+    if not bypass_setup:
+        _root_dir = input('Create main.config file at [default: ~/.witch_msa/]: ')
+
     if _root_dir == '':
         _root_dir = os.path.expanduser('~/.witch_msa')
     else:
@@ -146,5 +155,6 @@ def init_config_file(homepath, prioritize_user_software=True):
     print('\n(Done) main.config written to {}'.format(main_config_path))
     print('If you would like to make manual changes, please directly edit {}'.format(
         main_config_path))
-    exit(0)
-    #return _root_dir, main_config_path
+    # DO NOT EXIT; can start running WITCH with any given commands now
+    #exit(0)
+    return _root_dir, main_config_path

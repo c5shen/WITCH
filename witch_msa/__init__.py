@@ -7,7 +7,7 @@ from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
 from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.2a1"
+__version__ = "1.0.2"
 
 def witch_runner():
     parser = _init_parser()
@@ -172,6 +172,18 @@ def _init_parser():
     #witch_group.add_argument('--weight-adjust', type=str, required=False,
     #        default='none', choices=['none', 'normalize', 'maxto1'],
     #        help='(DEPRECATED) Optional adjustment of weights, default: none')
+
+    # miscellaneous group
+    misc_group = parser.add_argument_group(
+            "Miscellaneous options".upper(),
+            ' '.join(["Optional parameters for WITCH setup/config etc."]))
+    parser.groups['misc_group'] = misc_group
+    misc_group.add_argument('-y', '--bypass-setup', action='store_const',
+            const=True, default=False,
+            help=' '.join(['(Optional) include to bypass the initial',
+                    'step when running WITCH to set up the configuration',
+                    'directory (will use ~/.witch_msa).',
+                    'Note: you only need to use this option once.']))
 
     # GCM option
     #gcm_group = parser.add_argument_group(

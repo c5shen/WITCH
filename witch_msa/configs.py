@@ -71,6 +71,9 @@ class Configs:
     hmmalignpath = None
     hmmbuildpath = None
 
+    # miscellaneous option placeholder (not needed)
+    bypass_setup = False
+
     log_path = None
     error_path = None
     debug_path = None
