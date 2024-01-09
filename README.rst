@@ -12,7 +12,8 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 News
 ----
-* *(NEW)* Now support PyPI installation! Please install the latest release with ``pip install witch-msa``.
+* *(NEW)* Added an option ``-y``/``--bypass-setup`` to avoid being asked where to put the config file when running WITCH for the first time. Usage: ``witch.py -y [...additional parameters]``. You only need to use this option once and you are all set!
+* Now support PyPI installation! Please install the latest release with ``pip install witch-msa``.
 * Automatically infer data type if None is specified (use ``--molecule`` to specify).
 * Checkpoint system set up for most steps except HMMSearch jobs (ongoing).
 * Added progress bar (python package ``tqdm``) to visualize the alignment progress at various stages.
@@ -98,8 +99,11 @@ The easiest way to install WITCH is to use the PyPI distribution.
    pip3 install witch-msa [--user]
 
    # 2. After installation, users can run WITCH with either "witch-msa" or "witch.py" anywhere in the system
-   witch-msa [-h]    # or,
-   witch.py [-h]
+   #    (Optional) Include "-y" or "--bypass-setup" to avoid being asked where to put the WITCH config file.
+   #               Using this option will default to use "~/.witch_msa" as the config directory. You only
+   #               need to use this option once.
+   witch-msa [-h] [-y]   # or,
+   witch.py [-h] [-y]
 
 Install from the source file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,7 +134,7 @@ Installation Steps
    cd WITCH
    pip3 install -r requirements.txt
 
-   # 3. Run setup.py to set up main.config. Please refer to "witch_msa/default.config"
+   # 3. (Optional) Run setup.py to set up main.config. Please refer to "witch_msa/default.config"
    #    Additionally, software binaries available in the user's environment will be prioritized for usage.
    #    Use "-c" if want to install to WITCH/.witch_msa/main.config
    #    Default is to ~/.witch_msa/main.config
@@ -139,7 +143,10 @@ Installation Steps
    # 4. Execute the WITCH python script with -h to see allowed commandline parameter settings
    #    When running WITCH normally, if step 3 is not run, you will be prompted to generate
    #    "main.config" when running WITCH for the first time.
-   python3 witch.py [-h]
+   #    (Optional) Include "-y" or "--bypass-setup" to avoid being asked where to put the
+   #               WITCH config file. Using this option will default to use "~/.witch_msa"
+   #               as the config directory. You only need to use this option once.
+   python3 witch.py [-h] [-y]
 
 
 ``main.config``
@@ -147,6 +154,7 @@ Installation Steps
 
 ``main.config`` file will be created after running WITCH for the first time or created with ``python setup.py config [-c]``.
 If it is not found, you will be prompted to choose where to create the file (default: ``~/.witch_msa/main.config``).
+As mentioned above, you can use ``-y`` or ``--bypass-setup`` to bypass this prompt by defaulting to ``~/.witch_msa/main.config``.
 
 
 Usage
@@ -171,11 +179,11 @@ script.
 
 Scenario A
 ++++++++++
-Unaligned sequences only.
+Unaligned sequences only. **Running WITCH for the first time and bypassing the prompt for setting up the configuration file** (``-y``).
 
 .. code:: bash
 
-   python3 witch.py -i examples/data/unaligned_all.txt \
+   python3 witch.py -y -i examples/data/unaligned_all.txt \
       -d scenarioA_output -o aligned.txt
 
 Scenario B
