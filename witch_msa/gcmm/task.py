@@ -82,6 +82,8 @@ def handleFuture(future, success, ignored, retry, i_retry,
                 *ret, *callback_args)
         return time.time() - s1
     else:
+        # default behavior: attach ret to success
+        success.append(ret)
         return 0.
 
 '''

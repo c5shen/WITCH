@@ -17,6 +17,7 @@ from witch_msa.gcmm import *
 from witch_msa.gcmm.tree import PhylogeneticTree
 from witch_msa.helpers.alignment_tools import Alignment, MutableAlignment 
 from witch_msa.helpers.math_utils import lcm
+from witch_msa.gcmm.task import getTasks, runTasks
 
 import concurrent.futures
 
@@ -129,7 +130,17 @@ class DecompositionAlgorithm(object):
                 self.path, outdirprefix,
                 self.molecule, self.ere, self.symfrac,
                 self.informat, self.backbone_path)
-        ret = list(pool.map(func, subset_args))
+
+        # Updated on 1.11.2024 - Chengze Shen
+        #   - clearly this is an oversight when dealing with large backbone
+        #   - and many subsets (creating too many HMMBuild jobs simultaneously
+        #   - and encounters memory issue (since each job needs to read in
+        #   - the backbone alignment
+        #ret = list(pool.map(func, subset_args))
+        mytasks = getTasks(subset_args)
+        ret, _, _, _ = runTasks(func, pool, mytasks, len(subset_args),
+                max_concurrent_jobs=Configs.max_concurrent_jobs)
+
         hmmbuild_paths = []
         
         # record the retained columns in each HMM subset

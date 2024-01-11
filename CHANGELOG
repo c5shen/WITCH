@@ -1,7 +1,11 @@
+### WITCH v1.0.3
+1. Fixed an oversight in memory issue if the backbone alignment is large and
+we are creating a lot of subsets (`gcmm/algorithm.py`).
+
 ### WITCH v1.0.2
-1. Added an option to bypass the initial config setup step. Use "-y", or
-"--bypass-setup" in your commandline running WITCH to avoid being asked where
-to generate the config directory (will default to "~/.witch_msa"). Example:
+1. Added an option to bypass the initial config setup step. Use `-y`, or
+`--bypass-setup` in your commandline running WITCH to avoid being asked where
+to generate the config directory (will default to `~/.witch_msa`). Example:
 running `witch.py -y -i [sequence files]` for the first time will directly set
 up WITCH configuration file and start aligning the input sequences.
 
