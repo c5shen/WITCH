@@ -143,7 +143,7 @@ def mainAlignmentProcess(args):
         print('\nDecomposing the backbone tree...')
         decomp = DecompositionAlgorithm(
                 Configs.backbone_path, Configs.backbone_tree_path,
-                Configs.alignment_size)
+                Configs.alignment_size, Configs.alignment_upper_bound)
         hmmbuild_paths, subset_to_retained_columns, subset_to_nongaps_per_column = \
                 decomp.decomposition(lock, pool)
         print('\nPerforming all-against-all HMMSearches ' \

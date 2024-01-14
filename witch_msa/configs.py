@@ -54,8 +54,10 @@ class Configs:
     use_weight = True 
     save_weight = False
     alignment_size = 10
+    alignment_upper_bound = None
     #weight_adjust = 'none'
     #subset_size = 1
+
     num_cpus = -1
     max_concurrent_jobs = None
     molecule = 'dna'
@@ -270,6 +272,9 @@ def buildConfigs(args):
     Configs.use_weight = args.use_weight == 1
     Configs.save_weight = args.save_weight == 1
     Configs.alignment_size = args.alignment_size
+    if args.alignment_upper_bound is not None:
+        Configs.alignment_upper_bound = args.alignment_upper_bound \
+                if args.alignment_upper_bound > 0 else None
     #Configs.weight_adjust = args.weight_adjust 
 
     #Configs.chunksize = args.chunksize

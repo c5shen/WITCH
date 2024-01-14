@@ -30,7 +30,8 @@ import concurrent.futures
 Class to perform backbone tree decomposition as does in UPP
 '''
 class DecompositionAlgorithm(object):
-    def __init__(self, backbone_path, backbone_tree_path, alignment_size=10):
+    def __init__(self, backbone_path, backbone_tree_path,
+            alignment_size=10, alignment_upper_bound=None):
         self.symfrac = 0.0
         self.ere = 0.59
         self.informat = 'afa'
@@ -40,6 +41,7 @@ class DecompositionAlgorithm(object):
         self.strategy = 'centroid'              # default in SEPP/UPP
         self.decomp_strategy = 'hierarchical'   # ensemble of HMMs
         self.alignment_size = alignment_size    # default: 10 as UPP
+        self.upper_bound = alignment_upper_bound# default: None as UPP
         self.minsubsetsize = 2
         self.pdistance = 1                      # default in SEPP/UPP
         self.distances = {}
@@ -113,10 +115,20 @@ class DecompositionAlgorithm(object):
         Configs.debug('Alignment subsets: {}'.format(len(alignment_tree_map)))
 
         subset_args = []
+        Configs.log(' '.join(['The ensemble of HMM',
+                'subsets have the following range (# sequences): [{}, {}]'.format(
+                    self.alignment_size, self.upper_bound)]))
         for a_key, a_tree in alignment_tree_map.items():
             assert isinstance(a_tree, PhylogeneticTree)
             label = 'A_0_{}'.format(a_key)
             subset_taxa = a_tree.leaf_node_names()
+            # Added @ 1.14.2024 - Chengze Shen
+            # if Configs.alignment_upper_bound is set, then use it to limit
+            # the subset alignments based on their sizes (# of sequences)
+            if self.upper_bound is not None:
+                # ignore the subset if it has too many sequences
+                if len(subset_taxa) > self.upper_bound:
+                    continue
             subset_args.append((label, subset_taxa))
         
         Configs.log('Creating an ensemble of HMMs: {} subsets'.format(

@@ -7,7 +7,7 @@ from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
 from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.3"
+__version__ = "1.0.4a1"
 
 def witch_runner():
     parser = _init_parser()
@@ -163,6 +163,13 @@ def _init_parser():
             help=' '.join(['Minimum decomposition subset size for tree',
                     'decomposition. Default: 10 (as UPP)']),
             default=10, required=False)
+    # Added @ 1.14.2024 - Chengze Shen
+    # option to set an upper bound to decomposition subset size (complementary
+    # to "-A" but as an upper bound).
+    witch_group.add_argument('-Z', '--alignment-upper-bound', type=int,
+            help=' '.join(['Maximum decomposition subset size for tree',
+                    'decomposition. Default: None (as UPP)']),
+            default=None, required=False)
     witch_group.add_argument('--molecule', type=str,
             help='Whether input is amino/dna/rna. Default: infer from data',
             required=False, default=None, choices=['amino', 'dna', 'rna'])
