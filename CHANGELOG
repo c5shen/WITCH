@@ -1,7 +1,10 @@
-### WITCH v1.0.4a1
+### WITCH v1.0.4
 1. Added an additional parameter option to set an upper bound to the HMM subsets
 created (`-Z`, complementary to `-A` which is for lower bound), based on the
 number of sequences in a subset.
+2. Changed the behavior for creating HMM subsets. Instead of reading in the
+backboen alignment at once, WITCH now reads line by line to avoid large memory
+consumption if the backbone is very large.
 
 ### WITCH v1.0.3
 1. Fixed an oversight in memory issue if the backbone alignment is large and
