@@ -129,7 +129,7 @@ class DecompositionAlgorithm(object):
                 # ignore the subset if it has too many sequences
                 if len(subset_taxa) > self.upper_bound:
                     continue
-            subset_args.append((label, subset_taxa))
+            subset_args.append((label, set(subset_taxa)))
         
         Configs.log('Creating an ensemble of HMMs: {} subsets'.format(
             len(subset_args)))
@@ -367,8 +367,28 @@ alignment.
 def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule, 
         ere, symfrac, informat, backbone_path, args):
     label, taxa = args
-    alignment = Alignment(); alignment.read_file_object(backbone_path)
-    subalignment = alignment.sub_alignment(taxa)
+    #alignment = Alignment(); alignment.read_file_object(backbone_path)
+    #subalignment = alignment.sub_alignment(taxa)
+    #retained_columns = subalignment.delete_all_gaps()
+
+    # Updated @ 1.22.2024 - Chengze Shen
+    # Changed the behavior for reading in backbone alignment from
+    # "at once" to "line by line" (to avoid memory issues with large
+    # backbone alignment)
+    subalignment = Alignment()
+    with open(backbone_path, 'r') as f:
+        taxon, seq = f.readline(), ''
+        while taxon:
+            taxon = taxon.strip()
+            if seq == '':
+                seq = f.readline().strip()  # first entry
+            # only retain taxon defined in taxa
+            if taxon[1:] in taxa:
+                subalignment[taxon[1:]] = seq
+            # update to next entry
+            taxon = f.readline()
+            if taxon:
+                seq = f.readline().strip()
     retained_columns = subalignment.delete_all_gaps()
     
     # also accumulate the number of nongaps for each column
@@ -376,7 +396,7 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
     for seq in subalignment.values():
         nongaps_per_column = map(add, nongaps_per_column,
                 [int(x != '-') for x in seq])
-    del alignment
+    #del alignment
 
     outdir = os.path.join(outdirprefix, label)
     if not os.path.isdir(outdir):
