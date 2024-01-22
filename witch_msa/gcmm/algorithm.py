@@ -119,7 +119,7 @@ class DecompositionAlgorithm(object):
                 'subsets have the following range (# sequences): [{}, {}]'.format(
                     self.alignment_size, self.upper_bound)]))
         for a_key, a_tree in alignment_tree_map.items():
-            assert isinstance(a_tree, PhylogeneticTree)
+            #assert isinstance(a_tree, PhylogeneticTree)
             label = 'A_0_{}'.format(a_key)
             subset_taxa = a_tree.leaf_node_names()
             # Added @ 1.14.2024 - Chengze Shen
@@ -167,10 +167,14 @@ class DecompositionAlgorithm(object):
             subset_to_nongaps_per_column[ind] = item[3]
 
         # convert to list
-        subset_to_retained_columns = [subset_to_retained_columns[k]
-                    for k in sorted(subset_to_retained_columns.keys())]
-        subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
-                    for k in sorted(subset_to_nongaps_per_column.keys())]
+        # Modified @ 1.14.2024 - Chengze Shen
+        # instead of using list, use the original dict with the label as key
+        # this is to avoid idx out of bound issue if we set an upper bound
+        # for subsets
+        #subset_to_retained_columns = [subset_to_retained_columns[k]
+        #            for k in sorted(subset_to_retained_columns.keys())]
+        #subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
+        #            for k in sorted(subset_to_nongaps_per_column.keys())]
         
         assert len(hmmbuild_paths) == len(subset_args), \
                 'Number of HMMs created does not match ' \
@@ -244,10 +248,14 @@ class SearchAlgorithm(object):
             subset_to_nongaps_per_column[int(item[0])] = item[2]
 
         # convert to list
-        subset_to_retained_columns = [subset_to_retained_columns[k]
-                    for k in sorted(subset_to_retained_columns.keys())]
-        subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
-                    for k in sorted(subset_to_nongaps_per_column.keys())]
+        # Modified @ 1.14.2024 - Chengze Shen
+        # instead of using list, use the original dict with the label as key
+        # this is to avoid idx out of bound issue if we set an upper bound
+        # for subsets
+        #subset_to_retained_columns = [subset_to_retained_columns[k]
+        #            for k in sorted(subset_to_retained_columns.keys())]
+        #subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
+        #            for k in sorted(subset_to_nongaps_per_column.keys())]
 
         #del bb_aln
         Configs.log('Finished reading decomposition subsets...')
