@@ -290,15 +290,24 @@ class SearchAlgorithm(object):
             self.molecule = Configs.inferDataType(self.backbone_path)
         func = partial(subset_frag_chunk_hmmsearch, lock, self.path,
                 self.piped, self.elim, self.filters, self.molecule)
+        # Updated on 1.24.2024 - Chengze Shen
+        #   - updated this part of code as well to make sure memory won't
+        #   - be an issue (as the update around line 150)
         hmmsearch_paths, futures = [], []
-        for subset_arg in subset_args:
-            futures.append(pool.submit(func, subset_arg))
-        for future in tqdm(
-                concurrent.futures.as_completed(futures),
-                total=len(subset_args), **tqdm_styles):
-            res = future.result()
-            if res:
-                hmmsearch_paths.append(res)
+        mytasks = getTasks(subset_args)
+        ret, _, _, _ = runTasks(func, pool, mytasks, len(subset_args),
+                max_concurrent_jobs=Configs.max_concurrent_jobs)
+        for item in ret:
+            if item:
+                hmmsearch_paths.append(item)
+        #for subset_arg in subset_args:
+        #    futures.append(pool.submit(func, subset_arg))
+        #for future in tqdm(
+        #        concurrent.futures.as_completed(futures),
+        #        total=len(subset_args), **tqdm_styles):
+        #    res = future.result()
+        #    if res:
+        #        hmmsearch_paths.append(res)
         assert len(hmmsearch_paths) == len(subset_args), \
                 'It seems that some HMMSearch jobs failed'
         Configs.log('Finished {} HMMSearch jobs.'.format(len(hmmsearch_paths)))
