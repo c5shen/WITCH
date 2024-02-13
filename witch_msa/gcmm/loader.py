@@ -2,6 +2,7 @@ import os, time, math, gzip, tempfile
 from collections import defaultdict
 from witch_msa.configs import Configs, tqdm_styles
 from witch_msa.helpers.alignment_tools import ExtendedAlignment, Alignment, read_fasta
+from witch_msa.gcmm.task import getTasks, runTasks
 
 #from multiprocessing import Lock, Pool
 import concurrent.futures
@@ -231,9 +232,18 @@ def getAlignmentSubsets(path, lock, pool):
     # create an AlignmentSubset object for each align_dir
     index_to_hmm = {}
     func = partial(getOneAlignmentSubset, lock)
-    all_dicts = list(pool.map(func, align_dirs))
-    for d in all_dicts:
+    subset_args = align_dirs
+
+    mytasks = getTasks(subset_args)
+    ret, _, _, _ = runTasks(func, pool, mytasks, len(subset_args),
+            max_concurrent_jobs=Configs.max_concurrent_jobs)
+    for d in ret:
         index_to_hmm.update(d)
+
+    #all_dicts = list(pool.map(func, align_dirs))
+    #for d in all_dicts:
+    #    index_to_hmm.update(d)
+
     #for align_dir in align_dirs:
     #    index = int(align_dir.split('/')[-1].split('_')[2])
     #    index_to_hmm[index] = HMMSubset(align_dir, index) 
