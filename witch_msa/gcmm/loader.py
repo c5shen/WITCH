@@ -6,6 +6,7 @@ from witch_msa.gcmm.task import getTasks, runTasks
 
 #from multiprocessing import Lock, Pool
 import concurrent.futures
+import subprocess
 from functools import partial
 from tqdm import tqdm
 
@@ -17,30 +18,51 @@ class HMMSubset(object):
     def __init__(self, path, index):
         self.alignment_dir = path
         self.index = index
+        self.num_taxa = 0
 
         # get hmm build results from target directory
         cmd = "find {} -maxdepth 1 -name hmmbuild.input* -type f".format(path)
         #Configs.debug("Command used: {}".format(cmd))
-        self.alignment_path = os.path.realpath(
-                os.popen(cmd).read().split('\n')[0])
-        #self.alignment = Alignment()
-        #self.alignment.read_file_object(self.alignment_path)
+        #self.alignment_path = os.path.realpath(
+        #        os.popen(cmd).read().split('\n')[0])
+        self.alignment_path = os.path.realpath(subprocess.run(cmd.split(),
+                capture_output=True, text=True).stdout.split('\n')[0])
 
         # also get the hmm model path
         cmd = "find {} -maxdepth 1 -name hmmbuild.model.* -type f".format(path)
         #Configs.debug("Command used: {}".format(cmd))
-        self.hmm_model_path = os.path.realpath(
-                os.popen(cmd).read().split('\n')[0])
+        #self.hmm_model_path = os.path.realpath(
+        #        os.popen(cmd).read().split('\n')[0])
+        self.hmm_model_path = os.path.realpath(subprocess.run(cmd.split(),
+                capture_output=True, text=True).stdout.split('\n')[0])
 
-        self.num_taxa = 0
         _map = {}
         with open(self.hmm_model_path, 'r') as f:
-            lines = f.read().split('\n')[:15]
-            for line in lines:
+            line = f.readline().strip()
+            # Modified @ 2.15.2024 - Chengze Shen
+            # instead of reading in all lines at once, read one by one until
+            # _safe_trigger or encounter field "" NSEQ ""
+            # maybe it can alleviate memory issue encountered with large
+            # dataset
+            _idx, _safe_trigger = 0, 20
+            while line and _idx < _safe_trigger:
                 key, val = line.split()[0], ''.join(line.split()[1:])
                 if key == 'NSEQ':
                     self.num_taxa = int(val)
                     break
+                line = f.readline().strip()
+                _idx += 1
+            if self.num_taxa == 0:
+                raise ValueError(
+                        'Cannot find field: NSEQ, from {}'.format(
+                            path))
+
+            #lines = f.read().split('\n')[:15]
+            #for line in lines:
+            #    key, val = line.split()[0], ''.join(line.split()[1:])
+            #    if key == 'NSEQ':
+            #        self.num_taxa = int(val)
+            #        break
 
 '''
 Function to write an extended alignment output (for a query alignment job)
