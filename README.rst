@@ -22,8 +22,7 @@ News
 
 TODO list
 ---------
-#. None for now.
-
+#. 5.5.2024 - Add a sanity check for each step so that runtime errors are easier to identify. 
 
 Method Overview
 ---------------
