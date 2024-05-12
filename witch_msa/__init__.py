@@ -7,7 +7,7 @@ from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
 from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.4"
+__version__ = "1.0.5a"
 
 def witch_runner():
     parser = _init_parser()
