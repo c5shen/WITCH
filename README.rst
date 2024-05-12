@@ -8,7 +8,6 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 .. contents:: Table of contents
    :backlinks: top
-   :depth: 3
    :local:
 
 News

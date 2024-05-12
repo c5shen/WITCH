@@ -175,12 +175,20 @@ class DecompositionAlgorithm(object):
         #            for k in sorted(subset_to_retained_columns.keys())]
         #subset_to_nongaps_per_column = [subset_to_nongaps_per_column[k]
         #            for k in sorted(subset_to_nongaps_per_column.keys())]
-        
         assert len(hmmbuild_paths) == len(subset_args), \
                 'Number of HMMs created does not match ' \
                 'the original number of subsets'
-        Configs.log('Finished creating {} HMMs to {}'.format(
-            len(hmmbuild_paths), outdirprefix))
+
+        # Added @ 5.11.2024 - Chengze Shen
+        # sanity check for whether all HMMs are created correctly
+        probs = sanityCheckFileCreation(hmmbuild_paths)
+        if len(probs) > 0:
+            Configs.error('Some HMM files are not created correctly: {}'.format(
+                ', '.join(probs)))
+            notifyError(getLineInfo())
+        else:
+            Configs.log('Successfully creating {} HMMs at {}'.format(
+                len(hmmbuild_paths), outdirprefix))
         
         dur = time.time() - start
         Configs.runtime(' '.join(['(DecompositionAlgorithm.decomposition)',
@@ -310,7 +318,17 @@ class SearchAlgorithm(object):
         #        hmmsearch_paths.append(res)
         assert len(hmmsearch_paths) == len(subset_args), \
                 'It seems that some HMMSearch jobs failed'
-        Configs.log('Finished {} HMMSearch jobs.'.format(len(hmmsearch_paths)))
+    
+        # Added @ 5.11.2024 - Chengze Shen
+        # sanity check for whether all HMMSearch jobs completed correctly
+        probs = sanityCheckFileCreation(hmmsearch_paths)
+        if len(probs) > 0:
+            Configs.error('Some HMMSearch jobs are not completed correctly: {}'.format(
+                ', '.join(probs)))
+            notifyError(getLineInfo())
+        else:
+            Configs.log('Successfully completed {} HMMSearch jobs.'.format(
+                len(hmmsearch_paths)))
 
         dur = time.time() - start
         Configs.runtime(' '.join(['(SearchAlgorithm.search) Time to run',
