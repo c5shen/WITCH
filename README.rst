@@ -22,6 +22,7 @@ News
 
 TODO list
 ---------
+#. 5.14.2024 - Add the last missing checkpoint systems (for initial HMMBuild and HMMSearch steps).
 #. 5.5.2024 - Add a sanity check for each step so that runtime errors are easier to identify. 
 
 Method Overview
