@@ -87,7 +87,7 @@ on your system. If you experience any difficulty running WITCH, please
 contact Chengze Shen (chengze5@illinois.edu).
 
    For the macOS system on the latest chips (e.g., M1/M2), you may need to compile and supply your own binaries for WITCH to run successfully.
-   That is, change the paths of binaries in ``main.config`` to the ones on your system.
+   That is, change the paths of binaries in ``main.config`` (or use ``-c /path/to/user/config`` to avoid changing the default config file) to the ones on your system.
 
 
 Install with PyPI (``pip``)
