@@ -70,7 +70,7 @@ def _init_parser():
             required=False, default=-1)
     basic_group.add_argument('--max-concurrent-jobs', type=int, metavar='INT',
             help=' '.join(['Maximum number of concurrently running jobs.'
-                    'Default: max(50, 10 * num_cpus)']),
+                    'Default: min(50, 10 * num_cpus)']),
             required=False, default=None)
     basic_group.add_argument('--timeout', type=int, metavar='INT',
             help=' '.join(['Retry a query alignment after [timeout] seconds.',

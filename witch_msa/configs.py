@@ -299,7 +299,7 @@ def buildConfigs(parser, cmdline_args):
     if args.max_concurrent_jobs:
         Configs.max_concurrent_jobs = args.max_concurrent_jobs
     else:
-        Configs.max_concurrent_jobs = max(50, 10 * Configs.num_cpus)
+        Configs.max_concurrent_jobs = min(50, 10 * Configs.num_cpus)
 
     Configs.molecule = args.molecule
 
