@@ -12,7 +12,8 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 News
 ----
-* *(NEW)* Added an option ``-y``/``--bypass-setup`` to avoid being asked where to put the config file when running WITCH for the first time. Usage: ``witch.py -y [...additional parameters]``. You only need to use this option once and you are all set!
+* *(NEW)* Added new parameter option to allow users to specify a customized config file to override ``main.config``. Use ``-c <user config file>``. An example can be found at ``examples/user.config``.
+* Added an option ``-y``/``--bypass-setup`` to avoid being asked where to put the config file when running WITCH for the first time. Usage: ``witch.py -y [...additional parameters]``. You only need to use this option once and you are all set!
 * Now support PyPI installation! Please install the latest release with ``pip install witch-msa``.
 * Automatically infer data type if None is specified (use ``--molecule`` to specify).
 * Checkpoint system set up for most steps except HMMSearch jobs (ongoing).

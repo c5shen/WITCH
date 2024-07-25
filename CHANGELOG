@@ -1,3 +1,9 @@
+### WITCH v1.0.5b
+1. Added a new parameter option allowing users to specify a customized config
+file to override the default `main.config` (usually can be found at
+`~/.witch_msa/main.config`). Use `-c <user config file>` to do so. The priority
+for arguments: `commandline > user.config > main.config`.
+
 ### WITCH v1.0.5a
 1. Added two sanity checks to HMMBuild and HMMSearch jobs: making sure all files
 are created correctly before proceeding.

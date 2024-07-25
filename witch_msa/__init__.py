@@ -7,27 +7,14 @@ from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
 from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.5a"
+__version__ = "1.0.5b"
 
 def witch_runner():
+    global _root_dir, main_config_path 
     parser = _init_parser()
     cmdline_args = sys.argv[1:]
-    
-    global _root_dir, main_config_path 
-    opts = Namespace()
-    main_cmd_defaults = []
 
-    # generate main.config using default setting if it is missing
-    #if not os.path.exists(main_config_path):
-    #    print('main.config not found, generating {}...'.format(main_config_path))
-    #    os.system('python3 {}/setup.py main'.format(_root_dir))
-    with open(main_config_path, 'r') as cfile:
-        main_cmd_defaults = _read_config_file(cfile, opts)
-
-    input_args = main_cmd_defaults + cmdline_args
-    args = parser.parse_args(input_args, namespace=opts)
-
-    buildConfigs(args)
+    buildConfigs(parser, cmdline_args)
     getConfigs()
 
     Configs.log('WITCH is running with: {}'.format(' '.join(cmdline_args)))
@@ -37,7 +24,7 @@ def witch_runner():
 
     # run the codes
     s1 = time.time()
-    mainAlignmentProcess(args)
+    mainAlignmentProcess(parser, cmdline_args)
     s2 = time.time()
 
     Configs.log('WITCH finished in {} seconds...'.format(s2 - s1))
@@ -94,7 +81,7 @@ def _init_parser():
     # new arg parameter -c to read in user-customized config files
     # usage --> override any existing parameter settings (except cmdline)
     # priority: cmdline > user.config > main.config
-    basic_group.add_argument('-c', '--config', type=str, required=False,
+    basic_group.add_argument('-c', '--config-file', type=str, required=False,
             help=' '.join(['User-specified config file. Override main.config',
                 'but commandline parameters still have the highest priority.']),
             default=None)

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scenario=4
+scenario=5
 if [[ $1 != "" ]]; then
     scenario=$1
 fi
@@ -31,4 +31,11 @@ elif [[ $scenario == 4 ]]; then
         -e data/backbone.tre \
         -q data/unaligned_frag.txt -d scenarioD_output -o aligned.txt \
         --save-weight 1 --keep-decomposition 1
+elif [[ $scenario == 5 ]]; then
+    # 5) Scenario E - same as Scenario D, but with a user-specified config file
+    python3 ../witch.py --num-cpus -1 -b data/backbone.aln.fasta \
+        -e data/backbone.tre \
+        -q data/unaligned_frag.txt -d scenarioD_output -o aligned.txt \
+        --save-weight 1 --keep-decomposition 1 \
+        -c user.config
 fi

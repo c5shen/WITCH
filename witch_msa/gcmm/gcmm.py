@@ -70,17 +70,17 @@ def clearTempFiles():
 '''
 Init function for a queue and get configurations for each worker
 '''
-def initiate_pool(args):
-    buildConfigs(args)
+def initiate_pool(parser, cmdline_args):
+    buildConfigs(parser, cmdline_args)
 
 '''
 6.21.2023 - Additionally, init pool for query alignment with two dicts
           - used later
 '''
-def initiate_pool_query_alignment(q, args,
+def initiate_pool_query_alignment(q, parser, cmdline_args,
         subset_to_retained_columns,
         subset_to_nongaps_per_column):
-    buildConfigs(args)
+    buildConfigs(parser, cmdline_args)
     alignSubQueries.q = q
     alignSubQueriesNew.subset_to_retained_columns = subset_to_retained_columns
     alignSubQueriesNew.subset_to_nongaps_per_column = \
@@ -89,7 +89,7 @@ def initiate_pool_query_alignment(q, args,
 '''
 Main process for WITCH 
 '''
-def mainAlignmentProcess(args):
+def mainAlignmentProcess(parser, cmdline_args):
     m = Manager()
     lock = m.Lock()
     #l = Lock()
@@ -99,7 +99,7 @@ def mainAlignmentProcess(args):
     # intensive
     Configs.warning('Initializing ProcessorPoolExecutor instance...')
     pool = ProcessPoolExecutor(Configs.num_cpus,
-            initializer=initiate_pool, initargs=(args,))
+            initializer=initiate_pool, initargs=(parser, cmdline_args,))
             #mp_context=mp.get_context('spawn'),
 
     # if not user provided, default to <outdir>/tree_decomp/root
@@ -186,7 +186,7 @@ def mainAlignmentProcess(args):
     #pool = ProcessPoolExecutor(Configs.num_cpus,
     pool = WITCHProcessPoolExecutor(Configs.num_cpus,
             initializer=initiate_pool_query_alignment,
-            initargs=(q, args, subset_to_retained_columns,
+            initargs=(q, parser, cmdline_args, subset_to_retained_columns,
                 subset_to_nongaps_per_column))
             #mp_context=mp.get_context('spawn'),
     Configs.warning('ProcessPoolExecutor instance re-opened (for query alignment).')

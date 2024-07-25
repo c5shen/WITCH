@@ -9,7 +9,7 @@ import time
 try:
     import configparser
 except ImportError:
-    import ConfigParser as configparser
+    from ConfigParser import configparser
 from argparse import ArgumentParser, Namespace
 from platform import platform
 from witch_msa.helpers.alignment_tools import inferDataType
@@ -41,7 +41,7 @@ class Configs:
     query_path = None
     outdir = None
     output_path = None
-    user_config_path = None     # Added @ 7.25.2024 
+    config_file = None     # Added @ 7.25.2024 
 
     chunksize = 1
 
@@ -191,11 +191,11 @@ override the config file.
 
 Original functionality comes from SEPP -> sepp/config.py
 '''
-def _read_config_file(filename, opts, expand=None):
+def _read_config_file(filename, cparser, opts, expand=None):
     Configs.debug('Reading config from {}'.format(filename))
     config_defaults = []
-    cparser = configparser.ConfigParser()
-    cparser.optionxform = str
+    #cparser = configparser.ConfigParser()
+    #cparser.optionxform = str
     cparser.read_file(filename)
 
     if cparser.has_section('commandline'):
@@ -220,21 +220,32 @@ def _read_config_file(filename, opts, expand=None):
 '''
 Build configurations
 '''
-#def buildConfigs(parser, cmdline_args):
-def buildConfigs(args):
-    ## read in from config file first
-    #global main_config_path
-    #opts = Namespace()
-    #main_cmd_defaults = []
+#def buildConfigs(args):
+def buildConfigs(parser, cmdline_args):
+    # config parser, which first reads in main.config and later overrides
+    # with user.config (if specified)
+    cparser = configparser.ConfigParser()
+    cparser.optionxform = str
 
-    #if os.path.exists(main_config_path):
-    #    #print('Found main configuration file at {}, '.format(
-    #    #    main_config_path) + 'loading in...')
-    #    with open(main_config_path, 'r') as cfile:
-    #        main_cmd_defaults = _read_config_file(cfile, opts)
-    #input_args = main_cmd_defaults + cmdline_args
+    # load default_args from main.config
+    default_args = Namespace()
+    cmdline_default = []
+    with open(main_config_path, 'r') as cfile:
+        cmdline_default = _read_config_file(cfile, cparser, default_args)
+    
+    # load cmdline args first, then search for user.config if specified
+    args = parser.parse_args(cmdline_args)
+    cmdline_user = []
+    if args.config_file != None:
+        # override default_args
+        Configs.config_file = args.config_file
+        with open(Configs.config_file, 'r') as cfile:
+            cmdline_user = _read_config_file(cfile, cparser, default_args)
 
-    #args = parser.parse_args(input_args, namespace=opts)
+    # finally, re-parse cmdline args in the order:
+    #   [cmdline_default, cmd_user, cmdline_args] 
+    args = parser.parse_args(cmdline_default + cmdline_user + cmdline_args,
+            namespace=default_args)
 
     if args.input_path != None:
         Configs.input_path = os.path.realpath(args.input_path)
@@ -314,6 +325,7 @@ def buildConfigs(args):
             set_valid_configuration(k, k_attr)
             #setattr(Configs, k, k_attr)
 
+    return args
     ## backbone options
     #if args.backbone_size != None:
     #    setattr(Configs.backbone, 'backbone_size', args.backbone_size)
