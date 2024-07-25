@@ -324,8 +324,6 @@ def buildConfigs(parser, cmdline_args):
             # check whether the configuration is valid
             set_valid_configuration(k, k_attr)
             #setattr(Configs, k, k_attr)
-
-    return args
     ## backbone options
     #if args.backbone_size != None:
     #    setattr(Configs.backbone, 'backbone_size', args.backbone_size)
