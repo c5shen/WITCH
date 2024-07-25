@@ -83,13 +83,22 @@ def _init_parser():
             required=False, default=-1)
     basic_group.add_argument('--max-concurrent-jobs', type=int, metavar='INT',
             help=' '.join(['Maximum number of concurrently running jobs.'
-                    'Default: max(100, 10 * num_cpus)']),
+                    'Default: max(50, 10 * num_cpus)']),
             required=False, default=None)
     basic_group.add_argument('--timeout', type=int, metavar='INT',
             help=' '.join(['Retry a query alignment after [timeout] seconds.',
                     'The retry will always use \'witch-ng mode\' (see WTICH',
                     'option below). Default: 120']),
             default=120, required=False)
+    # Added @ 7.25.2024 - Chengze Shen
+    # new arg parameter -c to read in user-customized config files
+    # usage --> override any existing parameter settings (except cmdline)
+    # priority: cmdline > user.config > main.config
+    basic_group.add_argument('-c', '--config', type=str, required=False,
+            help=' '.join(['User-specified config file. Override main.config',
+                'but commandline parameters still have the highest priority.']),
+            default=None)
+
     #basic_group.add_argument('--chunksize', type=int,
     #        help='Chunksize for multiprocessing', required=False,
     #        default=1)
