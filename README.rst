@@ -224,6 +224,18 @@ Backbone alignment available; backbone tree available; query sequences available
       -d scenarioD_output -o aligned.txt \
       --save-weight 1 --keep-decomposition 1
 
+Scenario E - with user-specified config file
++++++++++++++++++++++++++++++++
+It is the same scenario as Scenario D but with a user-specified config file.
+
+.. code:: bash
+
+   python3 witch.py -b examples/data/backbone.aln.fasta \
+      -e examples/data/backbone.tre -q examples/data/unaligned_frag.txt \
+      -d scenarioD_output -o aligned.txt \
+      --save-weight 1 --keep-decomposition 1 \
+      --config-file user.config
+
 .. |publication| image:: https://img.shields.io/badge/Publication-Journal_of_Computational_Biology-green?style=for-the-badge
    :target: https://doi.org/10.1089/cmb.2021.0585
 .. |coverage| image:: https://coveralls.io/repos/github/c5shen/WITCH/badge.svg?branch=main
