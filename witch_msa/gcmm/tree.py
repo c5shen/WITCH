@@ -24,8 +24,8 @@
 
 from dendropy import Tree, Taxon, treecalc
 from dendropy import DataSet as Dataset
-from dendropy.datamodel.treemodel import _convert_node_to_root_polytomy as \
-    convert_node_to_root_polytomy
+#from dendropy.datamodel.treemodel import _convert_node_to_root_polytomy as \
+#    convert_node_to_root_polytomy
 from witch_msa.gcmm.decompose_tree import decompose_by_diameter
 from witch_msa.configs import Configs
 
@@ -279,7 +279,17 @@ for l2 in sys.stdin.readlines():
 
         nr.edge.length = None
         nr.parent_node = None
-        convert_node_to_root_polytomy(nr)
+
+        # 9.30.2024 - for Dendropy > 4.5.2
+        # compatibility with Dendropy version > 4.5.2 
+        try:
+            nr._convert_node_to_root_polytomy()
+        except AttributeError:
+            from dendropy.datamodel.treemodel import \
+                    _convert_node_to_root_polytomy
+            _convert_node_to_root_polytomy(nr)
+        #convert_node_to_root_polytomy(nr)
+
         t1 = PhylogeneticTree(Tree(seed_node=nr))
         # temp we could speed this up,
         # by telling the Phylogenetic tree how many leaves it has

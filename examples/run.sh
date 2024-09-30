@@ -35,7 +35,7 @@ elif [[ $scenario == 5 ]]; then
     # 5) Scenario E - same as Scenario D, but with a user-specified config file
     python3 ../witch.py --num-cpus -1 -b data/backbone.aln.fasta \
         -e data/backbone.tre \
-        -q data/unaligned_frag.txt -d scenarioD_output -o aligned.txt \
+        -q data/unaligned_frag.txt -d scenarioE_output -o aligned.txt \
         --save-weight 1 --keep-decomposition 1 \
         -c user.config
 fi
