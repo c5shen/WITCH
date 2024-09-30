@@ -232,7 +232,7 @@ It is the same scenario as Scenario D but with a user-specified config file.
 
    python3 witch.py -b examples/data/backbone.aln.fasta \
       -e examples/data/backbone.tre -q examples/data/unaligned_frag.txt \
-      -d scenarioD_output -o aligned.txt \
+      -d scenarioE_output -o aligned.txt \
       --save-weight 1 --keep-decomposition 1 \
       --config-file user.config
 
