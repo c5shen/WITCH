@@ -12,13 +12,15 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 News
 ----
-* *(NEW)* Added new parameter option to allow users to specify a customized config file to override ``main.config``. Use ``-c <user config file>``. An example can be found at `examples/user.config </examples/user.config>`_. For example usage please see `Scenario E <#scenario-e-with-user-specified-config-file>`_.
+* *(NEW)* Compatibility with latest version of Dendropy.
+* Added new parameter option to allow users to specify a customized config file to override ``main.config``. Use ``-c <user config file>``. An example can be found at `examples/user.config </examples/user.config>`_. For example usage please see `Scenario E <#scenario-e-with-user-specified-config-file>`_.
 * Added an option ``-y``/``--bypass-setup`` to avoid being asked where to put the config file when running WITCH for the first time. Usage: ``witch.py -y [...additional parameters]``. You only need to use this option once and you are all set!
 * Now support PyPI installation! Please install the latest release with ``pip install witch-msa``.
-* Automatically infer data type if None is specified (use ``--molecule`` to specify).
-* Checkpoint system set up for most steps except HMMSearch jobs (ongoing).
-* Added progress bar (python package ``tqdm``) to visualize the alignment progress at various stages.
-* Implemented `WITCH-ng <https://github.com/RuneBlaze/WITCH-NG>`__’s way to align each query sequence with additional tweaks. Now the alignment process for query sequences is **fast and memory-efficient, particularly for short/fragmentary sequences**.
+..
+  * Automatically infer data type if None is specified (use ``--molecule`` to specify).
+  * Checkpoint system set up for most steps except HMMSearch jobs (ongoing).
+  * Added progress bar (python package ``tqdm``) to visualize the alignment progress at various stages.
+  * Implemented `WITCH-ng <https://github.com/RuneBlaze/WITCH-NG>`__’s way to align each query sequence with additional tweaks. Now the alignment process for query sequences is **fast and memory-efficient, particularly for short/fragmentary sequences**.
 
 
 TODO list
@@ -58,6 +60,19 @@ For a more detailed explanation of the WITCH algorithm, please refer to the publ
 | May 17, 2022.                          |
 | https://doi.org/10.1089/cmb.2021.0585. |
 +----------------------------------------+
+
+Software Output Explanation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+By default, WITCH will write two alignment files to the output directory:
+
+#. ``<name>.fasta``: The final alignment with the original input sequences. In this file, some columns may contain lowercase letters, representing “insertions” that do not have any homologous pairs. They are compressed to neighbor columns to save space, so that you may see lowercase letters from difference rows appear in the same column--They should not be considered aligned!!
+#. ``<name.fasta.masked``: The final alignment with the lowercase letters removed (i.e., sequences will be different from their inputs). This file is useful for any downstream biological analyses that rely on homologous pairs, such as phylogenetic tree estimation, phylogenetic placement, etc.
+
+Additionally, WITCH will write logs to the following files:
+#. ``<outdir>/log.txt``: Main log output file.
+#. ``<outdir>/debug.txt``: Record command usage.
+#. ``<outdir>/error.txt``: Record runtime errors. Only appear when errors occurred.
+#. ``<outdir>/runtime_breakdown.txt``: Record runtime usage of each step.
 
 Note and Acknowledgement
 ~~~~~~~~~~~~~~~~~~~~~~~~

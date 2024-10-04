@@ -7,7 +7,7 @@ from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
 from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
 def witch_runner():
     global _root_dir, main_config_path 
