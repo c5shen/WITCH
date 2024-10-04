@@ -73,8 +73,8 @@ WITCH includes and uses:
 #. `MCL <https://github.com/micans/mcl>`__ (linux version from MAGUS; macOS version 21-257).
 
 
-Software Output Explanation
----------------------------
+(Important) Software Output Explanation
+---------------------------------------
 By default, WITCH will write two alignment files to the output directory:
 
 #. ``<name>.fasta``: The final alignment with the original input sequences. In this file, some columns may contain lowercase letters, representing “insertions” that do not have any homologous pairs. They are compressed to neighbor columns to save space, so that you may see lowercase letters from different rows appear in the same column--**They should not be considered aligned!!**
