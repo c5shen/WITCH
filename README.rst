@@ -61,19 +61,6 @@ For a more detailed explanation of the WITCH algorithm, please refer to the publ
 | https://doi.org/10.1089/cmb.2021.0585. |
 +----------------------------------------+
 
-Software Output Explanation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-By default, WITCH will write two alignment files to the output directory:
-
-#. ``<name>.fasta``: The final alignment with the original input sequences. In this file, some columns may contain lowercase letters, representing “insertions” that do not have any homologous pairs. They are compressed to neighbor columns to save space, so that you may see lowercase letters from difference rows appear in the same column--They should not be considered aligned!!
-#. ``<name.fasta.masked``: The final alignment with the lowercase letters removed (i.e., sequences will be different from their inputs). This file is useful for any downstream biological analyses that rely on homologous pairs, such as phylogenetic tree estimation, phylogenetic placement, etc.
-
-Additionally, WITCH will write logs to the following files:
-#. ``<outdir>/log.txt``: Main log output file.
-#. ``<outdir>/debug.txt``: Record command usage.
-#. ``<outdir>/error.txt``: Record runtime errors. Only appear when errors occurred.
-#. ``<outdir>/runtime_breakdown.txt``: Record runtime usage of each step.
-
 Note and Acknowledgement
 ~~~~~~~~~~~~~~~~~~~~~~~~
 WITCH includes and uses:
@@ -84,6 +71,21 @@ WITCH includes and uses:
 #. `FastTreeMP <http://www.microbesonline.org/fasttree/FastTreeMP>`__ (v2.1). 
 #. `MAFFT <https://mafft.cbrc.jp/alignment/software/macportable.html>`__ (macOS v7.490).
 #. `MCL <https://github.com/micans/mcl>`__ (linux version from MAGUS; macOS version 21-257).
+
+
+Software Output Explanation
+---------------------------
+By default, WITCH will write two alignment files to the output directory:
+
+#. ``<name>.fasta``: The final alignment with the original input sequences. In this file, some columns may contain lowercase letters, representing “insertions” that do not have any homologous pairs. They are compressed to neighbor columns to save space, so that you may see lowercase letters from different rows appear in the same column--**They should not be considered aligned!!**
+#. ``<name>.fasta.masked``: The final alignment with the lowercase letters removed (i.e., sequences can be different from their inputs). This file is useful for any downstream biological analyses that rely on homologous pairs, such as phylogenetic tree estimation, phylogenetic placement, etc.
+
+Additionally, WITCH will write logs to the following files:
+
+#. ``<outdir>/log.txt``: Main log output file.
+#. ``<outdir>/debug.txt``: Record command usage.
+#. ``<outdir>/error.txt``: Record runtime errors. Only appear when errors occurred.
+#. ``<outdir>/runtime_breakdown.txt``: Record runtime usage of each step.
 
 
 Installation
