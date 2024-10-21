@@ -76,11 +76,15 @@ def _init_parser():
     basic_group.add_argument('-q', '--query-path', type=str,
             help='Path to the queries file that we want to align', required=False)
     basic_group.add_argument('-d', '--outdir', type=str,
-            help='Output directory, default: witch_output/', required=False,
+            help='Output directory. Default: witch_output/', required=False,
             default='witch_output')
     basic_group.add_argument('-o', '--output-path', type=str,
-            help='Output file name, default: merged.fasta', required=False,
-            default='merged.fasta')
+            help=' '.join(['Output file name. Note that another file named',
+                    '<output_path>.masked will also be outputted, with',
+                    'all insertion columns of non-backbone sequences removed.',
+                    'Default: aligned.fasta']),
+            required=False,
+            default='aligned.fasta')
     basic_group.add_argument('-t', '--num-cpus', type=int,
             help='Number of cpus for multi-processing. Default: -1 (all)',
             required=False, default=-1)
@@ -202,7 +206,7 @@ def _init_parser():
             help=' '.join(['(Optional) include to bypass the initial',
                     'step when running WITCH to set up the configuration',
                     'directory (will use ~/.witch_msa).',
-                    'Note: by default this opion is ON.',
+                    'Note: enabled by default.',
                     'You also only need to run this option once.']))
 
     # GCM option
