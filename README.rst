@@ -1,7 +1,7 @@
 WITCH - WeIghTed Consensus Hmm alignment
 ========================================
 
-|PyPI version| |Python version| |Build| |License| |DOI| |CHANGELOG|
+|PyPI version| |Python version| |Build| |License| |CHANGELOG| |DOI|
 
 :Developer:
    Chengze Shen
