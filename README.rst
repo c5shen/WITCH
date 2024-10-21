@@ -123,12 +123,10 @@ The easiest way to install WITCH is to use the PyPI distribution.
    # 1. Install with pip (--user if no root access)
    pip3 install witch-msa [--user]
 
-   # 2. After installation, users can run WITCH with either "witch-msa" or "witch.py" anywhere in the system
-   #    (Optional) Include "-y" or "--bypass-setup" to avoid being asked where to put the WITCH config file.
-   #               Using this option will default to use "~/.witch_msa" as the config directory. You only
-   #               need to use this option once.
-   witch-msa [-h] [-y]   # or,
-   witch.py [-h] [-y]
+   # 2. After installation, users can run WITCH with either "witch-msa" or "witch.py" anywhere in the system.
+   #    First time running WITCH will create the config file at ~/.witch_msa/main.config
+   witch-msa [-h]   # or,
+   witch.py [-h]
 
 Install from the source file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -165,21 +163,16 @@ Installation Steps
    #    Default is to ~/.witch_msa/main.config
    python3 setup.py config [-c]
 
-   # 4. Execute the WITCH python script with -h to see allowed commandline parameter settings
-   #    When running WITCH normally, if step 3 is not run, you will be prompted to generate
-   #    "main.config" when running WITCH for the first time.
-   #    (Optional) Include "-y" or "--bypass-setup" to avoid being asked where to put the
-   #               WITCH config file. Using this option will default to use "~/.witch_msa"
-   #               as the config directory. You only need to use this option once.
-   python3 witch.py [-h] [-y]
+   # 4. Execute the WITCH python script with -h to see allowed commandline parameter settings and
+   #    example usages.
+   python3 witch.py [-h]
 
 
 ``main.config``
 ~~~~~~~~~~~~~~~~
 
 ``main.config`` file will be created after running WITCH for the first time or created with ``python setup.py config [-c]``.
-If it is not found, you will be prompted to choose where to create the file (default: ``~/.witch_msa/main.config``).
-As mentioned above, you can use ``-y`` or ``--bypass-setup`` to bypass this prompt by defaulting to ``~/.witch_msa/main.config``.
+If it is not found, a config file will be automatically created at ``~/.witch_msa/main.config``.
 
 user-specified config file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -216,7 +209,7 @@ Unaligned sequences only. **Running WITCH for the first time and bypassing the p
 .. code:: bash
 
    python3 witch.py -y -i examples/data/unaligned_all.txt \
-      -d scenarioA_output -o aligned.txt
+      -d scenarioA_output -o aligned.fasta
 
 Scenario B
 ++++++++++
@@ -225,7 +218,7 @@ Unaligned sequences only; using bit scores (instead of the default weighted bit 
 .. code:: bash
 
    python3 witch.py -i examples/data/unaligned_all.txt \
-      -d scenarioB_output -o aligned.txt -w 0 -k 10
+      -d scenarioB_output -o aligned.fasta -w 0 -k 10
 
 Scenario C
 ++++++++++
@@ -235,7 +228,7 @@ Backbone alignment available; backbone tree missing; query sequences available.
 
    python3 witch.py -b examples/data/backbone.aln.fasta \
       -q examples/data/unaligned_frag.txt -d scenarioC_output \
-      -o aligned.txt
+      -o aligned.fasta
 
 Scenario D - additional options
 +++++++++++++++++++++++++++++++
@@ -245,7 +238,7 @@ Backbone alignment available; backbone tree available; query sequences available
 
    python3 witch.py -b examples/data/backbone.aln.fasta \
       -e examples/data/backbone.tre -q examples/data/unaligned_frag.txt \
-      -d scenarioD_output -o aligned.txt \
+      -d scenarioD_output -o aligned.fasta \
       --save-weight 1 --keep-decomposition 1
 
 Scenario E - with user-specified config file
@@ -256,7 +249,7 @@ It is the same scenario as Scenario D but with a user-specified config file.
 
    python3 witch.py -b examples/data/backbone.aln.fasta \
       -e examples/data/backbone.tre -q examples/data/unaligned_frag.txt \
-      -d scenarioE_output -o aligned.txt \
+      -d scenarioE_output -o aligned.fasta \
       --save-weight 1 --keep-decomposition 1 \
       --config-file user.config
 
