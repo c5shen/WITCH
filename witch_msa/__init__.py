@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import os, sys, time
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 
 from witch_msa.configs import _root_dir, main_config_path, _read_config_file 
 from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
-from witch_msa.helpers.general_tools import SmartHelpFormatter
+#from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 def witch_runner():
     global _root_dir, main_config_path 
@@ -31,12 +31,28 @@ def witch_runner():
     print('\nAll done! WITCH finished in {} seconds...'.format(s2 - s1))
 
 def _init_parser():
+    example_usages = '''Example usages:
+> Default usage - unaligned input sequences
+  %(prog)s -i input.fasta -d witch_output/ -o alignment.fasta
+
+> Adding new sequences to an existing backbone alignment (no tree)
+  %(prog)s -q new_seqs.fasta -b existing_aln.fasta
+
+> Adding new sequences to an existing backbone alignment (with tree)
+  %(prog)s -q new_seqs.fasta -b existing_aln.fasta -e existing_aln.nwk
+
+> Using 5 HMMs to align non-backbone sequences. Limiting to HMMs with 50 to 100 sequences
+  %(prog)s -i input.fasta -k 5 -A 50 -Z 100
+'''
+
     parser = ArgumentParser(
             description=(
                 "This program runs WITCH, an alignment method "
                 "extended from UPP and MAGUS."),
             conflict_handler='resolve',
-            formatter_class=SmartHelpFormatter)
+            epilog=example_usages,
+            formatter_class=RawDescriptionHelpFormatter)
+            #formatter_class=SmartHelpFormatter)
     parser.add_argument('-v', '--version', action='version',
             version="%(prog)s " + __version__)
 
@@ -182,11 +198,12 @@ def _init_parser():
             ' '.join(["Optional parameters for WITCH setup/config etc."]))
     parser.groups['misc_group'] = misc_group
     misc_group.add_argument('-y', '--bypass-setup', action='store_const',
-            const=True, default=False,
+            const=True, default=True,
             help=' '.join(['(Optional) include to bypass the initial',
                     'step when running WITCH to set up the configuration',
                     'directory (will use ~/.witch_msa).',
-                    'Note: you only need to use this option once.']))
+                    'Note: by default this opion is ON.',
+                    'You also only need to run this option once.']))
 
     # GCM option
     #gcm_group = parser.add_argument_group(

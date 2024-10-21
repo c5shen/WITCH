@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scenario=5
+scenario=4
 if [[ $1 != "" ]]; then
     scenario=$1
 fi

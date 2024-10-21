@@ -1,3 +1,10 @@
+### WITCH v1.0.7
+1. Added example usages to `witch.py --help`. Also changed the default formatter
+from a custom one to `argparse.RawDescriptionHelpFormatter`.
+2. Now by default will bypass the initial WITCH setup step. Previously, this was
+achieved by giving WITCH the parameter `-y` (`--bypass-setup`).
+3. Changed the default behavior of `examples/run.sh` to running scenario D.
+
 ### WITCH v1.0.6
 1. Added Software Output Explanation to the README to avoid confusion on what
 alignment file to use for downstream analyses.
