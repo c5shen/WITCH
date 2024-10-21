@@ -1,7 +1,7 @@
 WITCH - WeIghTed Consensus Hmm alignment
 ========================================
 
-|PyPI version| |Python version| |Build| |License| |DOI|
+|PyPI version| |Python version| |Build| |License| |DOI| |CHANGELOG|
 
 :Developer:
    Chengze Shen
@@ -12,9 +12,9 @@ WITCH - WeIghTed Consensus Hmm alignment
 
 News
 ----
+* *(NEW, v1.0.7)* Better example usages when running ``witch.py --help``. Now also will always bypass the initial setup if running WITCH for the first time (previously only achievable by running with ``-y`` or ``--bypass-setup``).
 * *(NEW)* Compatibility with latest version of Dendropy.
 * Added new parameter option to allow users to specify a customized config file to override ``main.config``. Use ``-c <user config file>``. An example can be found at `examples/user.config </examples/user.config>`_. For example usage please see `Scenario E <#scenario-e-with-user-specified-config-file>`_.
-* Added an option ``-y``/``--bypass-setup`` to avoid being asked where to put the config file when running WITCH for the first time. Usage: ``witch.py -y [...additional parameters]``. You only need to use this option once and you are all set!
 * Now support PyPI installation! Please install the latest release with ``pip install witch-msa``.
 
 ..
@@ -279,5 +279,8 @@ It is the same scenario as Scenario D but with a user-specified config file.
 .. |Build| image:: https://img.shields.io/github/actions/workflow/status/c5shen/WITCH/python-package.yml
    :alt: GitHub Workflow Status (with event)
    :target: https://github.com/c5shen/WITCH
+.. |CHANGELOG| image:: https://img.shields.io/badge/CHANGELOG-gray?style=flat
+   :alt: Static Badge
+   :target: CHANGELOG
 
 
