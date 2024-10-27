@@ -4,6 +4,10 @@ from a custom one to `argparse.RawDescriptionHelpFormatter`.
 2. Now by default will bypass the initial WITCH setup step. Previously, this was
 achieved by giving WITCH the parameter `-y` (`--bypass-setup`).
 3. Changed the default behavior of `examples/run.sh` to running scenario D.
+4. Fixed the runtime error when home.path exists but the pointed main.config is
+missing. Now will regenerate `main.config` at the pointed location.
+5. Fixed `--bypass-setup` not working as True by default. Now will always create
+the config path at `~/.witch/main.config`. 
 
 ### WITCH v1.0.6
 1. Added Software Output Explanation to the README to avoid confusion on what

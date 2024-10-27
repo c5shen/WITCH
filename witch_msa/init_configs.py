@@ -10,7 +10,10 @@ def find_main_config(homepath):
     with open(homepath, 'r') as f:
         _root_dir = f.read().strip()
         main_config_path = os.path.join(_root_dir, 'main.config')
-        return _root_dir, main_config_path
+        if os.path.exists(main_config_path):
+            return _root_dir, main_config_path
+        else:
+            return None, None
 
 '''
 first time run, need user to initialize the main.config
@@ -20,16 +23,20 @@ will be needed if installed through pip/pypi
 def init_config_file(homepath, prioritize_user_software=True):
     # read from sys.argv to find if "-y" or "--bypass-setup" exists
     args = sys.argv[1:]
-    bypass_setup = False
-    if '-y' in args or '--bypass-setup' in args:
-        bypass_setup = True
+    bypass_setup = True
+    #if '-y' in args or '--bypass-setup' in args:
+    #    bypass_setup = True
 
     # initialize a home.path that points to local user main.config
     # if it exists then pass on
     if os.path.exists(homepath):
         # detecting old home.path file based on creation time
         if os.stat(homepath).st_mtime >= os.stat(__file__).st_mtime:
-            return find_main_config(homepath)
+            _root_dir, main_config_path = find_main_config(homepath)
+            if _root_dir is None:
+                print('home.path exists but main.config missing, regenerating...')
+            else:
+                return _root_dir, main_config_path
         else:
             print('Found old home.path and regenerating...')
             os.remove(homepath)
