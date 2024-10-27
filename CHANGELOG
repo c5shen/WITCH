@@ -8,6 +8,11 @@ achieved by giving WITCH the parameter `-y` (`--bypass-setup`).
 missing. Now will regenerate `main.config` at the pointed location.
 5. Fixed `--bypass-setup` not working as True by default. Now will always create
 the config path at `~/.witch/main.config`. 
+6. Changed the default filename for the masked alignment output. Previously,
+it will be named as `<name>.fasta.masked`, as `<name>` supplied by the user or
+default to `aligned`. Now will be written as `<name>.masked.fasta`. If the user
+gives `-o <name>.fa` or `-o <name>.fasta`, the masked alignment will use the
+corresponding suffix (e.g., `<name>.masked.fa`).
 
 ### WITCH v1.0.6
 1. Added Software Output Explanation to the README to avoid confusion on what

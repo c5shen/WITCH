@@ -45,7 +45,18 @@ def mergeAlignmentsCollapsed(backbone_alignment_path, queries,
             'with transitivity and singletons from queries collapsed...')
     start = time.time()
     outpath = Configs.output_path
-    masked_outpath = Configs.output_path + '.masked'
+    #masked_outpath = Configs.output_path + '.masked'
+
+    # Updated @ 10.26.2024 by Chengze Shen
+    # masked alignment output name change to <name>.masked.fasta
+    # if user gives `-o <name>.fa` or `<name>.fasta`, then the output name
+    # will adapt to the correct suffix
+    suffix = outpath.split('.')[-1]
+    if suffix in ['fa', 'fasta']:
+        masked_outpath = '.'.join(outpath.split('.')[:-1]) + '.masked.' + suffix
+    else:
+        masked_outpath = outpath + '.masked.fasta'
+
     if not (len(queries) > 0):
         print('No query alignment provided to merger!')
         exit(1)
