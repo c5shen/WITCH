@@ -85,7 +85,7 @@ WITCH includes and uses:
 By default, WITCH will write two alignment files to the output directory:
 
 #. ``<name>.fasta``: The final alignment with the original input sequences. In this file, some columns may contain lowercase letters, representing “insertions” that do not have any homologous pairs. They are compressed to neighbor columns to save space, so that you may see lowercase letters from different rows appear in the same column--**They should not be considered aligned!!**
-#. ``<name>.fasta.masked``: The final alignment with the lowercase letters removed (i.e., sequences can be different from their inputs). This file is useful for any downstream biological analyses that rely on homologous pairs, such as phylogenetic tree estimation, phylogenetic placement, etc.
+#. ``<name>.masked.fasta``: The final alignment with the lowercase letters removed (i.e., sequences can be different from their inputs). This file is useful for any downstream biological analyses that rely on homologous pairs, such as phylogenetic tree estimation, phylogenetic placement, etc.
 
 Additionally, WITCH will write logs to the following files:
 
