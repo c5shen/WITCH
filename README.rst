@@ -125,8 +125,8 @@ Additionally, WITCH will write logs to the following files:
 Installation
 ------------
 
-This section lays out the necessary steps to run WITCH. WITCH was tested and
-passed builds on **Python 3.7 to 3.11**.
+This section lays out the necessary steps to run WITCH. WITCH was originally
+tested on Python 3.7 and passed builds on **Python 3.8 to 3.12**.
 
 
 Now, the program fully supports Linux and macOS systems.
