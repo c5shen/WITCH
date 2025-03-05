@@ -1,13 +1,9 @@
-import time
-import numpy as np
-import re, os, sys
+import re, os, sys, time, io, gzip
 import itertools
 from copy import deepcopy
 from random import random
 from functools import reduce
 from dendropy.datamodel.taxonmodel import Taxon
-import time
-import io
 from collections import defaultdict
 try:
     from collections.abc import Mapping
@@ -32,57 +28,6 @@ _INDEL = re.compile(r"[-]")
 _COACH_INS = re.compile(r"[.]")
 _DANGEROUS_NAME_CHARS = re.compile(r"[^a-zA-Z0-9]")
 ILLEGAL_CHARS = re.compile(r"[^a-zA-Z?-]")
-
-# helper function, prints out all functionalities in this python file
-def printHelper():
-    print("1.\tdef readFastSP(path) --\tRead and parse FastSP output." +
-            "\n\treturns a map of SPFN, SPFP, and Expansion.")
-    print("2.\tdef readHMMSearch(path) --\tRead and parse HMMSearch output." +
-            "\n\treturns a map of taxa to tuples: (e-value, bitscore)")
-    print("3.\tdef read_fasta --\tRead in a fasta file, used in Alignment()")
-    print("4.\tdef write_fasta --\tWrite an Alignment object to local.")
-    print("5.\tclass Alignment() --\tAlignment class, for jobs with alignment")
-
-# Function to read in a log file, which has runtime information attached
-# at the bottom (using /usr/bin/time -v to generate)
-# return: the runtime in minutes
-def readRuntime(file_path):
-    if os.path.isfile(file_path):
-        runtime = 0
-        with open(file_path, 'r') as f:
-            lines = f.read().split('\n')
-            if len(lines) < 23:
-                return np.nan
-            raw = lines[-24:-1][4].split('):')[1].strip().split(':')
-            if len(raw) == 2:
-                runtime = int(raw[0]) + float(raw[1])/60
-            elif len(raw) == 3:
-                runtime = int(raw[0]) * 60 + int(raw[1]) + float(raw[2])/60
-            else:
-                runtime = np.nan
-        return runtime
-    else:
-        return np.nan
-
-# Function to read in a fastsp file and parse the results
-# return: a map of SPFN, SPFP, Expansion score
-def readFastSP(file_path):
-    ret = {'SPFN': np.nan, 'SPFP': np.nan, 'error': np.nan,
-            'Expansion': np.nan}
-    if os.path.isfile(file_path):
-        f = open(file_path, 'r')
-        lines = f.read().split('\n')[:-1]
-    else:
-        return ret
-    if len(lines) > 0:
-        ret['SP-Score'] = float(lines[0].split(' ')[1])
-        ret['Modeler-Score'] = float(lines[1].split(' ')[1])
-        ret['SPFN'] = float(lines[2].split(' ')[1])
-        ret['SPFP'] = float(lines[3].split(' ')[1])
-        ret['Expansion'] = float(lines[4].split(' ')[1])
-        ret['TC'] = float(lines[5].split(' ')[1])
-        ret['error'] = (ret['SPFN'] + ret['SPFP']) / 2
-    return ret
 
 ################    Adapted from SEPP.filemgr.py    ##################
 def open_with_intermediates(filepath, mode):
@@ -117,8 +62,13 @@ def read_fasta(src, remove_gaps=False):
     """
     file_obj = None
     if isinstance(src, str):
+        # find the suffix of the input file
+        suffix = src.strip().split('.')[-1] 
         try:
-            file_obj = open(src, "r")
+            if suffix in ['gz', 'gzip']:
+                file_obj = gzip.open(src, "rt")
+            else:
+                file_obj = open(src, "r")
         except IOError:
             print(("The file `%s` does not exist, exiting gracefully" % src))
     elif isinstance(src, filetypes):

@@ -15,7 +15,7 @@ from dendropy.datamodel.treemodel import Tree
 from witch_msa.configs import Configs, tqdm_styles
 from witch_msa.gcmm import *
 from witch_msa.gcmm.tree import PhylogeneticTree
-from witch_msa.helpers.alignment_tools import Alignment, MutableAlignment 
+from witch_msa.helpers.alignment_tools import Alignment, MutableAlignment, read_fasta 
 from witch_msa.helpers.math_utils import lcm
 from witch_msa.gcmm.task import getTasks, runTasks
 
@@ -403,19 +403,23 @@ def subset_alignment_and_hmmbuild(lock, binary, outdirprefix, molecule,
     # "at once" to "line by line" (to avoid memory issues with large
     # backbone alignment)
     subalignment = Alignment()
-    with open(backbone_path, 'r') as f:
-        taxon, seq = f.readline(), ''
-        while taxon:
-            taxon = taxon.strip()
-            if seq == '':
-                seq = f.readline().strip()  # first entry
-            # only retain taxon defined in taxa
-            if taxon[1:] in taxa:
-                subalignment[taxon[1:]] = seq
-            # update to next entry
-            taxon = f.readline()
-            if taxon:
-                seq = f.readline().strip()
+    for taxon, seq in read_fasta(backbone_path):
+        # only retain taxon defined in taxa
+        if taxon in taxa:
+            subalignment[taxon] = seq
+    #with open(backbone_path, 'r') as f:
+    #    taxon, seq = f.readline(), ''
+    #    while taxon:
+    #        taxon = taxon.strip()
+    #        if seq == '':
+    #            seq = f.readline().strip()  # first entry
+    #        # only retain taxon defined in taxa
+    #        if taxon[1:] in taxa:
+    #            subalignment[taxon[1:]] = seq
+    #        # update to next entry
+    #        taxon = f.readline()
+    #        if taxon:
+    #            seq = f.readline().strip()
     retained_columns = subalignment.delete_all_gaps()
     
     # also accumulate the number of nongaps for each column

@@ -274,6 +274,6 @@ It is the same scenario as Scenario D but with a user-specified config file.
    :target: https://github.com/c5shen/WITCH
 .. |CHANGELOG| image:: https://img.shields.io/badge/CHANGELOG-gray?style=flat
    :alt: Static Badge
-   :target: CHANGELOG
+   :target: CHANGELOG.rst
 
 

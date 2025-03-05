@@ -32,7 +32,8 @@ classifiers = [
 #packages = ["gcmm", "helpers"]
 
 [project.urls]
-"Homepage" = "https://github.com/c5shen/WITCH"
+Homepage = "https://github.com/c5shen/WITCH"
+Changelog = "https://github.com/c5shen/WITCH/blob/main/CHANGELOG.rst"
 
 [tool.setuptools.dynamic]
 version = {attr = "witch_msa.__version__"}
