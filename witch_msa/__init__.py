@@ -10,7 +10,6 @@ from witch_msa.gcmm.gcmm import mainAlignmentProcess
 __version__ = "1.0.8"
 
 def witch_runner():
-    global _root_dir, main_config_path 
     parser = _init_parser()
     cmdline_args = sys.argv[1:]
 
