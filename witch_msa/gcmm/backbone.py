@@ -289,10 +289,22 @@ class BackboneJob(object):
             if Configs.molecule is None:
                 Configs.molecule = Configs.inferDataType(self.backbone_path)
 
+            """
+                modified @ 6.10.2025 by Chengze Shen
+                - made sure gzipped file is read correctly
+            """
+            suffix = self.backbone_path.split('.')[-1]
+            if suffix in ['gz', 'gzip']:
+                subcmd = ['gzip', '-dc', self.backbone_path]
+            else:
+                subcmd = ['cat', self.backbone_path]
+            # run a subcmd to write backbone alignment to stdout
+            # to be used as stdin for FastTree2
+            prev_p = subprocess.Popen(subcmd, text=True, stdout=subprocess.PIPE)
+
             cmd = [self.tree_path, '-gtr']
             if Configs.molecule == 'dna':
                 cmd.extend(['-nt'])
-            cmd.extend([self.backbone_path])
             print('\nRunning {} backbone tree estimation...'.format(
                 self.tree_method))
             Configs.log('Running {} backbone tree estimation...'.format(
@@ -301,7 +313,9 @@ class BackboneJob(object):
                 self.tree_method.upper(), ' '.join(cmd)))
 
             os.system('export OMP_NUM_THREADS={}'.format(Configs.num_cpus))
-            p = subprocess.Popen(cmd, stdout=stdoutdata, stderr=stderrdata)
+            p = subprocess.Popen(cmd, text=True,
+                    stdin=prev_p.stdout,
+                    stdout=stdoutdata, stderr=stderrdata)
             p.wait()
             if not stderrdata.closed:
                 stderrdata.close()

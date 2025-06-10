@@ -27,6 +27,7 @@ from multiprocessing import Lock, Queue, Manager#, Pool
 from concurrent.futures.process import ProcessPoolExecutor
 from functools import partial
 from tqdm import tqdm
+from platform import platform
 
 # max system recursion limit hard encoding to a large number
 # a temp fix for dendropy tree recursion issues
@@ -90,6 +91,14 @@ def initiate_pool_query_alignment(q, parser, cmdline_args,
 Main process for WITCH 
 '''
 def mainAlignmentProcess(parser, cmdline_args):
+    """
+        added @ 6.10.2025 by Chengze Shen
+        - force set MP start method as 'fork', for usability on macOS
+    """
+    platform_name = platform()
+    if 'macos' in platform_name.lower():
+        mp.set_start_method('fork')
+
     m = Manager()
     lock = m.Lock()
     #l = Lock()

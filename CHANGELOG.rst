@@ -1,3 +1,13 @@
+WITCH v1.0.9
+------------
+1. Fixed the issue with feeding FastTree2 with gzipped alignment file for
+   tree estimation. Now use piping to pipe the alignment file (gzipped or
+   not) as stdin to the FastTree2 executable.
+2. Enforced the start method for multiprocessing on macOS to be ``fork``.
+   This ensures WITCH usability on a macOS environment.
+3. Changed the default invocation of example codes from ``python3`` to
+   just ``python``.
+
 WITCH v1.0.8
 ------------
 1. Supported reading gzipped alignment file. That is, when the user supplies
