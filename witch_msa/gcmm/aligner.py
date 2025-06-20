@@ -48,16 +48,19 @@ def getBackbones(index_to_hmm, taxon, taxon_ind, seq, query_path, sorted_weights
 
     # during loading bit-scores/weights, we already trimmed weights/scores
     # so here we just use them
-    top_k_hmms = sorted_weights
+    #top_k_hmms = sorted_weights
     if Configs.use_weight:
-        pass
-        #if Configs.weight_adjust == 'normalize':
-        #    cur_total_w = sum([w[1] for w in top_k_hmms])
-        #    top_k_hmms = [(w[0], w[1] * (1. / cur_total_w))
-        #            for w in top_k_hmms]
-        #elif Configs.weight_adjust == 'maxto1':
-        #    max_w = top_k_hmms[0][1]
-        #    top_k_hmms = [(w[0], w[1] / max_w) for w in top_k_hmms]
+        """
+            Added @ 6.20.2025 by Chengze Shen
+            - add an adaptive inclusion to reduce runtime requirements by
+            adaptively include HMMs until the sum of weights reaches 0.999
+        """
+        target = 0.999   # could be a parameter chosen by the user
+        cur_sum = 0.; idx = 0
+        while idx < len(sorted_weights) and cur_sum < target: 
+            cur_sum += sorted_weights[idx][1]
+            idx += 1
+        top_k_hmms = sorted_weights[:idx]
     else:
         top_k_hmms = [(w[0], 1) for w in top_k_hmms]
     ret_str += '{}\tpassed to main pipeline with top {} weights: {}'.format(

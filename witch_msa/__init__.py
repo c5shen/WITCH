@@ -7,7 +7,7 @@ from witch_msa.configs import *
 from witch_msa.gcmm.gcmm import mainAlignmentProcess
 #from witch_msa.helpers.general_tools import SmartHelpFormatter
 
-__version__ = "1.0.9"
+__version__ = "1.0.10"
 
 def witch_runner():
     parser = _init_parser()
@@ -159,12 +159,11 @@ def _init_parser():
                     '(including temp backbone/frag files and',
                     'HMMBuild/HMMSearch results). Default: 1']),
             default=1, required=False)
-    #witch_group.add_argument('--keepsubalignment',
-    #        action='store_const', const=True,
-    #        help='Keep all subalignments by MAGUS/GCM', default=False)
     witch_group.add_argument('-k', '--num-hmms', type=int,
-            help=' '.join(['The number of top-scored HMMs used for aligning',
-                    'a query. Default: 10']),
+            help=' '.join(['The max number of top-scored HMMs used for aligning',
+                    'a query. Will do an adaptive inclusion until either',
+                    'the max number is reached, or the sum of weights reaches',
+                    '0.999. Default: 10']),
             required=False, default=10)
     witch_group.add_argument('-w', '--use-weight',
             metavar='{0,1}', type=int, required=False,

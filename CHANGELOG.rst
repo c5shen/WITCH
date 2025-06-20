@@ -1,3 +1,11 @@
+WITCH v1.0.10
+-------------
+1. Added an adaptive schematic for inclusion of top HMMs for aligning each
+   query sequence, when using adjusted bitscores (``--use-weights 1``).
+   Previously, all top `k` HMMs will be used. Now, WITCH includes up to `k`
+   HMMs, or until the sum of weights exceeds 0.999. This should keep the
+   core design of WITCH, but this has not been tested with data yet.
+
 WITCH v1.0.9
 ------------
 1. Fixed the issue with feeding FastTree2 with gzipped alignment file for
