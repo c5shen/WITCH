@@ -145,11 +145,17 @@ def set_valid_configuration(name, conf):
             if k == 'alignment_method':
                 assert str(attr).lower() in ['magus', 'pasta', 'mafft'], \
                     'Backbone alignment method {} not implemented'.format(attr)
-            elif k == 'backbone_size':
+            elif k in ['backbone_size']:
                 try:
                     attr = int(str(attr).strip())
                 except Exception as e:
-                    Configs.warning('Backbone size must be an integer, got {}'.format(str(attr).strip()))
+                    Configs.warning('{} must be an integer, got {}. Using default value'.format(k, str(attr).strip()))
+                    continue
+            elif k in ['backbone_threshold']:
+                try:
+                    attr = float(str(attr).strip())
+                except Exception as e:
+                    Configs.warning('{} must be float, got {}. Using default value'.format(k, str(attr).strip()))
                     continue
             elif k == 'selection_strategy':
                 assert str(attr).lower() in ['median_length', 'random'], \
@@ -166,11 +172,11 @@ def set_valid_configuration(name, conf):
             if not attr:
                 continue
             # type check for alignment_size
-            if k == 'alignment_size':
+            if k in ['alignment_size', 'num_hmms', 'chunksize', 'num_cpus']:
                 try:
                     attr = int(str(attr).strip())
                 except Exception as e:
-                    Configs.warning('Alignment size must be an integer, got {}'.format(str(attr).strip()))
+                    Configs.warning('{} must be an integer, got {}. Using default value'.format(k, str(attr).strip()))
                     continue
             # set variable [k] to [attr] if provided
             setattr(Configs, k, attr)

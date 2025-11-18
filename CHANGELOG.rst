@@ -5,6 +5,8 @@ WITCH v1.0.10
    Previously, all top `k` HMMs will be used. Now, WITCH includes up to `k`
    HMMs, or until the sum of weights exceeds 0.999. This should keep the
    core design of WITCH, but this has not been tested with data yet.
+2. Added type check and cast for various user-defined configs in the
+   configuration file before passing them to the main process.
 
 WITCH v1.0.9
 ------------
