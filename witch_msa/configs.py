@@ -146,7 +146,11 @@ def set_valid_configuration(name, conf):
                 assert str(attr).lower() in ['magus', 'pasta', 'mafft'], \
                     'Backbone alignment method {} not implemented'.format(attr)
             elif k == 'backbone_size':
-                assert int(attr) > 0, 'Backbone size needs to be > 0'
+                try:
+                    attr = int(str(attr).strip())
+                except Exception as e:
+                    Configs.warning('Backbone size must be an integer, got {}'.format(str(attr).strip()))
+                    continue
             elif k == 'selection_strategy':
                 assert str(attr).lower() in ['median_length', 'random'], \
                     'Selection strategy {} not implemented'.format(attr)
@@ -161,6 +165,13 @@ def set_valid_configuration(name, conf):
             attr = getattr(conf, k)
             if not attr:
                 continue
+            # type check for alignment_size
+            if k == 'alignment_size':
+                try:
+                    attr = int(str(attr).strip())
+                except Exception as e:
+                    Configs.warning('Alignment size must be an integer, got {}'.format(str(attr).strip()))
+                    continue
             # set variable [k] to [attr] if provided
             setattr(Configs, k, attr)
     elif name == 'MAGUS':
