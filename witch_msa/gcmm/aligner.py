@@ -60,7 +60,7 @@ def getBackbones(index_to_hmm, taxon, taxon_ind, seq, query_path, sorted_weights
         while idx < len(sorted_weights) and cur_sum < target: 
             cur_sum += sorted_weights[idx][1]
             idx += 1
-        top_k_hmms = sorted_weights[:idx]
+        top_k_hmms = [(w[0], float(w[1])) for w in sorted_weights[:idx]]
     else:
         top_k_hmms = [(w[0], 1) for w in top_k_hmms]
     ret_str += '{}\tpassed to main pipeline with top {} weights: {}'.format(
